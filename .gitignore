@@ -1,8 +1,18 @@
+# 注意：.gitignore 不支持行尾注释！
+# 写成 "shots/   # 说明" 会被当成一个整体模式，永远匹配不上。
+# 注释必须独占一行。这个坑真实踩过。
+
 # 依赖：体积大、可由 pnpm install 还原，不进版本库
 node_modules/
 
-# 验证截图：构建产物，随时可由 `node verify.mjs` 重新生成
+# 构建辅助产物：验证截图随时可重新生成
 shots/
+
+# 导图翻译的中间数据；成品已内嵌在 notes/mindmap.html
+_i18n/
+
+# 一次性调试脚本（verify.mjs 是正式的自动化验证，予以保留）
+clicktest.mjs
 
 # 编辑器 / 系统杂项
 .vscode/

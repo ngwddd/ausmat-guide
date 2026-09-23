@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>About · Study Notes</title>
+<meta name="description" content="About · Study Notes">
+<link rel="alternate" hreflang="en" href="../../notes/about.html">
+<link rel="stylesheet" href="../../assets/style.css">
+<link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+</head>
+<body>
+<header class="site">
+  <div class="wrap">
+    <a class="brand" href="../index.html">Study Notes</a>
+    <nav><a href="../index.html">Home</a>
+      <a href="../notes/timetable.html">Timetable</a>
+      <a href="../notes/timeline.html">Timeline</a>
+      <a href="../notes/subjects.html">Subjects</a>
+      <a href="../../notes/mindmap.html">Mind Map</a>
+      <a href="../notes/about.html" class="on">About</a></nav>
+    <div class="lang-switch">
+      <a class="lang-link" href="../../notes/about.html" hreflang="zh" lang="zh">中文</a>
+    </div>
+  </div>
+</header>
+<main><div class="wrap">
+
+<div class="note-head"><a class="back" href="../index.html">← Back</a>
+<h1>About</h1>
+<div class="meta">What this site contains</div></div>
+
+<h2>What it contains</h2>
+<div class="box">
+<ul>
+<li>Assessment dates and weightings I compiled (factual information)</li>
+<li>Subject explanations, formulas and revision advice written by me</li>
+</ul>
+</div>
+
+<h2>What it does not contain</h2>
+<div class="box">
+<ul>
+<li>School-issued handouts, worksheets, exam papers or their solutions</li>
+<li>Any personal information: names, student numbers, contact details</li>
+<li>Anything that cannot be verified</li>
+</ul>
+</div>
+
+<h2>Technical notes</h2>
+<ul>
+<li>Pure static pages: no framework, no build step</li>
+<li>The fonts and scripts needed for maths typesetting are served from this site; no external services are used</li>
+<li>Chinese and English have separate pages, switched with the links at the top — no JavaScript required</li>
+<li>Follows system dark mode; the browser print function can produce a PDF</li>
+</ul>
+
+</div></main>
+<footer class="site"><div class="wrap">AUSMAT May 2026 · personal study notes</div></footer>
+<script src="../../vendor/katex/katex.min.js"></script>
+<script>
+// 只为渲染公式而存在。页面内容与导航不依赖 JS——
+// 语言切换是普通链接，禁用 JS 也能用。
+(function () {
+  if (typeof katex === 'undefined') return;
+  var SKIP = { SCRIPT: 1, STYLE: 1, CODE: 1, PRE: 1 };
+  var RE = /\$\$([\s\S]+?)\$\$|\$([^$\n]+?)\$/g;
+  function render(node) {
+    var text = node.nodeValue;
+    if (text.indexOf('$') === -1) return;
+    var frag = document.createDocumentFragment(), last = 0, m;
+    RE.lastIndex = 0;
+    while ((m = RE.exec(text)) !== null) {
+      if (m.index > last) frag.appendChild(document.createTextNode(text.slice(last, m.index)));
+      var display = m[1] !== undefined, tex = display ? m[1] : m[2];
+      var span = document.createElement('span');
+      try {
+        span.innerHTML = katex.renderToString(tex.trim(), { displayMode: display, throwOnError: false });
+      } catch (e) { span.textContent = m[0]; }
+      frag.appendChild(span);
+      last = m.index + m[0].length;
+    }
+    if (last === 0) return;
+    if (last < text.length) frag.appendChild(document.createTextNode(text.slice(last)));
+    node.parentNode.replaceChild(frag, node);
+  }
+  var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+    acceptNode: function (n) {
+      if (SKIP[n.parentNode.nodeName]) return NodeFilter.FILTER_REJECT;
+      return n.nodeValue.indexOf('$') === -1 ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
+    }
+  });
+  var nodes = [], n;
+  while ((n = walker.nextNode())) nodes.push(n);
+  nodes.forEach(render);
+})();
+</script>
+</body>
+</html>

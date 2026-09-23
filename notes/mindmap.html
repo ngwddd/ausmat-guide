@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title data-i18n="AUSMAT 学习资料思维导图">AUSMAT 学习资料思维导图</title>
+<style>
+  :root{--bg:#f4f6f9;--panel:#fff;--ink:#1f2733;--muted:#6b7684;--line:#dfe4ea;--accent:#2f6fed;}
+  *{box-sizing:border-box;}
+  html,body{height:100%;margin:0;}
+  body{font-family:"Microsoft YaHei","PingFang SC","Hiragino Sans GB",system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink);overflow:hidden;}
+  #app{display:flex;flex-direction:column;height:100vh;}
+  header{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:10px 18px;background:var(--panel);border-bottom:1px solid var(--line);box-shadow:0 1px 3px rgba(16,24,40,.05);z-index:5;}
+  header h1{font-size:16px;margin:0;font-weight:700;letter-spacing:.3px;}
+  header h1 small{font-weight:400;color:var(--muted);font-size:12px;margin-left:8px;}
+  .spacer{flex:1;}
+  button{font-family:inherit;font-size:12.5px;padding:6px 12px;border-radius:7px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;transition:.15s;}
+  button:hover{background:#f0f4ff;border-color:#c3d3f7;color:var(--accent);}
+  button.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+  #search{font-family:inherit;font-size:12.5px;padding:6px 10px;border-radius:7px;border:1px solid var(--line);background:#fff;width:170px;outline:none;}
+  #search:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(47,111,237,.12);}
+  #main{flex:1;display:flex;min-height:0;position:relative;}
+  #canvasWrap{flex:1;position:relative;overflow:hidden;cursor:grab;}
+  #canvasWrap.dragging{cursor:grabbing;}
+  svg{display:block;width:100%;height:100%;}
+  .node-rect{rx:9;ry:9;stroke-width:1.5;cursor:pointer;}
+  .node-label{font-size:12.5px;pointer-events:none;dominant-baseline:middle;}
+  .badge{font-size:11px;pointer-events:none;dominant-baseline:middle;font-weight:700;}
+  .link{fill:none;stroke-width:1.8;opacity:.55;}
+  .node-g{cursor:pointer;}
+  .node-g:hover .node-rect{filter:brightness(.96);}
+  .dim{opacity:.15;transition:opacity .2s;}
+  .hit{opacity:1;}
+  #side{width:335px;flex-shrink:0;background:var(--panel);border-left:1px solid var(--line);padding:16px 18px;overflow-y:auto;}
+  #side h2{font-size:12px;margin:0 0 8px;color:var(--muted);font-weight:600;letter-spacing:.6px;}
+  #sideTitle{font-size:16px;font-weight:700;margin:0 0 10px;line-height:1.45;}
+  #sideBody{font-size:13px;line-height:1.8;color:#333c49;white-space:pre-wrap;}
+  #sideSrc{margin-top:14px;font-size:11.5px;color:var(--muted);background:#f6f8fb;border:1px solid #e8edf4;border-radius:8px;padding:9px 11px;line-height:1.6;word-break:break-all;}
+  .legend{margin-top:22px;border-top:1px solid var(--line);padding-top:14px;}
+  .legend div{display:flex;align-items:center;gap:8px;font-size:12.5px;padding:4px 0;cursor:pointer;border-radius:6px;}
+  .legend i{width:12px;height:12px;border-radius:4px;display:inline-block;flex-shrink:0;}
+  .legend div:hover{color:var(--accent);}
+  .tip{position:absolute;left:14px;bottom:12px;font-size:11.5px;color:#93a0b0;pointer-events:none;}
+  #timeline{position:absolute;inset:0;background:rgba(244,246,249,.99);overflow-y:auto;padding:26px 34px 60px;display:none;}
+  #timeline.show{display:block;}
+  #timeline h2{margin:0 0 4px;font-size:19px;}
+  #timeline p.sub{margin:0 0 20px;color:var(--muted);font-size:12.5px;line-height:1.7;}
+  table{border-collapse:collapse;width:100%;font-size:12.5px;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(16,24,40,.07);}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid #eef1f6;vertical-align:top;line-height:1.6;}
+  th{background:#eef3fd;color:#2b4a86;font-weight:600;font-size:12px;white-space:nowrap;}
+  td.date{white-space:nowrap;font-weight:600;color:#2b3a52;}
+  tr:last-child td{border-bottom:none;}
+  .tag{display:inline-block;padding:1px 7px;border-radius:20px;font-size:11px;font-weight:600;color:#fff;white-space:nowrap;}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <a href="../index.html" class="siteback" style="text-decoration:none;color:#2b6cb0;font-weight:600;font-size:14px;white-space:nowrap;padding:4px 10px;border:1px solid #cfd8e3;border-radius:6px;">← 返回站点</a>
+    <h1>AUSMAT 学习资料思维导图<small id="stat"></small></h1>
+    <div class="spacer"></div>
+    <input id="search" placeholder="搜索知识点…">
+    <button id="btnExpand" data-i18n="全部展开">全部展开</button>
+    <button id="btnCollapse" data-i18n="全部收起">全部收起</button>
+    <button id="btnFit" data-i18n="适应窗口">适应窗口</button>
+    <button id="btnLang" title="切换语言 / Switch language">EN</button>
+    <button id="btnTimeline" data-i18n="考试日程">考试日程</button>
+  </header>
+  <div id="main">
+    <div id="canvasWrap">
+      <svg id="svg"><g id="viewport"></g></svg>
+      <div class="tip" data-i18n="滚轮缩放 · 拖拽平移 · 点击节点展开/收起 · 点击右侧科目名展开整科">滚轮缩放 · 拖拽平移 · 点击节点展开/收起 · 点击右侧科目名展开整科</div>
+      <div id="timeline"></div>
+    </div>
+    <aside id="side">
+      <h2 data-i18n="内容详情">内容详情</h2>
+      <p id="sideTitle" data-i18n="点击导图中的节点查看说明">点击导图中的节点查看说明</p>
+      <div id="sideBody" data-i18n="这里会显示该知识点的具体内容。">这里会显示该知识点的具体内容。</div>
+      <div id="sideSrc" style="display:none"></div>
+      <div class="legend" id="legend"></div>
+    </aside>
+  </div>
+</div>
+
+<script>/* ============ 数据：五科学习资料内容大纲 ============ */
+const DATA = {
+  name: "AUSMAT May 2026 学习资料",
+  note: "AUSMAT May 2026（西澳 WACE / ATAR 课程）五科学习内容总览。\n\n点击节点可展开/收起，右侧面板显示该知识点的说明。",
+  children: [
+/* ===== 1. MAM12 数学方法 ===== */
+{
+  name: "MAM12 数学方法", color: "#2f6fed",
+  note: "Mathematics Methods ATAR Year 12。\n主线是「微积分 + 统计」：Unit 3 学微分、积分、离散随机变量；Unit 4 学对数函数、连续随机变量与正态分布、比例的区间估计。\n\n最终成绩构成：WACE 外部考试 40% + 校本测验与考试 40% + Investigation 探究任务 20%。",
+  children: [
+    { name: "U3 · 微分进阶与应用", note: "Further differentiation and applications（约 20 课时）", children: [
+      { name: "指数函数求导：e 的引入 lim(aʰ−1)/h、d/dx(eˣ)=eˣ、A·e^(kx) 建模" },
+      { name: "三角函数求导：d/dx(sin x)=cos x、d/dx(cos x)=−sin x（含几何构造法）" },
+      { name: "求导法则：乘积法则、商法则、链式法则（复合函数 f(ax−b)）" },
+      { name: "二阶导数：作为变化率的变化率、加速度是位置的二阶导数" },
+      { name: "增量公式 δy ≈ f′(x)·δx（误差与近似计算）" },
+      { name: "凹凸性与拐点；二阶导数判别法判定局部极大/极小" },
+      { name: "用一、二阶导数求驻点与拐点并作图；优化问题（最值应用）" }
+    ]},
+    { name: "U3 · 积分 Integrals", note: "约 20 课时，从反导数到定积分与微积分基本定理", children: [
+      { name: "反导数（不定积分）：∫xⁿdx、∫eˣdx、∫sin x dx、∫cos x dx 等「九公式」" },
+      { name: "∫f(ax−b)dx 型不定积分与反微分的线性性质" },
+      { name: "曲线族：由 f′(x) 与初始条件 f(a)=b 求出 f(x)" },
+      { name: "定积分：Σf(xᵢ)δxᵢ 求和逼近，定义为和的极限" },
+      { name: "定积分作为曲线下面积；带符号面积的相加" },
+      { name: "微积分基本定理：F′(x)=f(x)、∫ₐᵇf′(x)dx = f(b)−f(a)" },
+      { name: "积分应用：由变化率求总变化、曲线间面积、由 v 求位移、由 a 求位置" }
+    ]},
+    { name: "U3 · 离散随机变量", note: "Discrete random variables（约 15 课时）", children: [
+      { name: "离散随机变量与概率函数；用相对频率作概率点估计" },
+      { name: "均匀离散分布与非均匀离散分布" },
+      { name: "期望值/均值（位置度量）、方差与标准差（离散程度，用 CAS 计算）" },
+      { name: "线性变换 Y=aX+b 对均值与标准差的影响" },
+      { name: "Bernoulli 分布：适用情境、均值 p、方差 p(1−p)" },
+      { name: "二项分布：P(X=x)=C(n,x)pˣ(1−p)ⁿ⁻ˣ、均值 np、方差 np(1−p)" }
+    ]},
+    { name: "U4 · 对数函数", note: "The logarithmic function（约 18 课时）", children: [
+      { name: "对数定义为指数：aˣ=b ⇔ x=log_a b；a^(log_a b)=b" },
+      { name: "对数代数性质：log(xy)、log(xⁿ)、log(x/y)、log_a 1=0" },
+      { name: "对数刻度（logarithmic scales）的解释与使用" },
+      { name: "用对数解指数方程；代数法与图像法解对数方程" },
+      { name: "y=log_a x 图像特征、渐近线与 y=log_a(x−c)+b 的平移" },
+      { name: "自然对数 ln x 与 eˣ 的互逆关系" },
+      { name: "d/dx(ln x)=1/x、∫(1/x)dx = ln x + c" },
+      { name: "d/dx(ln f(x)) 与 ∫f′(x)/f(x)dx = ln f(x)+c" }
+    ]},
+    { name: "U4 · 连续随机变量与正态分布", note: "Continuous random variables and the normal distribution（约 15 课时）", children: [
+      { name: "用相对频率直方图估计连续随机变量概率" },
+      { name: "概率密度函数 pdf 与累积分布函数 cdf；概率由积分给出" },
+      { name: "连续随机变量的期望、方差、标准差；线性变换对均值与标准差的影响" },
+      { name: "正态模型适用情境与正态 pdf 图像特征（均值 μ、标准差 σ）" },
+      { name: "标准正态分布；用 CAS 计算概率与分位数/百分位" }
+    ]},
+    { name: "U4 · 比例的区间估计", note: "Interval estimates for proportions（约 22 课时）", children: [
+      { name: "随机抽样：总体 / 样本 / 参数 / 统计量 / 普查" },
+      { name: "抽样偏差来源：选择偏差、设计缺陷、访谈者、回忆与报告、完成、无应答、自选样本" },
+      { name: "样本比例 p̂ 作为随机变量：均值 p、标准差 √(p(1−p)/n)" },
+      { name: "大样本下 p̂ 的近似正态性；中心极限定理 CLT" },
+      { name: "比例的近似置信区间：p̂ ± z√(p̂(1−p̂)/n)" },
+      { name: "误差范围 E = z√(p̂(1−p̂)/n)；误差范围与置信水平的权衡" }
+    ]},
+    { name: "考核与备考资源", children: [
+      { name: "校本任务：Topic Test 1（10%）、Investigation（20%）、Topic Test 2（20%）、Topic Test 3（10%）、Final（40%）" },
+      { name: "Investigation：周长固定的烤盘最大体积优化（3 种形状比较）+ 联系联合国 SDG，28 分制、2 人小组" },
+      { name: "WACE 外部考试：Section 1 禁用计算器 50 分钟（35%）+ Section 2 可用绘图/CAS 计算器 100 分钟（65%，可带 2 张 A4 手写笔记）" },
+      { name: "CAS Manual（46 页）：TI-Nspire CX 指令手册——作图、解方程、微积分、复数、向量矩阵、统计分布与置信区间",},
+      { name: "三大讲义册：1.Differentiation（293 页）、2.Integration n Log（396 页）、3.Statistics（443 页）",},
+      { name: "历年卷与复习：MAM Past Year Papers（WACE 2016–2025，806 页）、Revision Series（878 页）、Test Solutions、Exam Prep 考点清单",},
+      { name: "个人栏目：Class Notes（37 页笔记）、Homework、Quizzes",}
+    ]}
+  ]
+},/* ===== 2. HBY 人体生物学 ===== */
+{
+  name: "HBY 人体生物学", color: "#e5484d",
+  note: "Human Biology ATAR Year 12，教材 Human Perspectives（8th Ed.）。\nUnit 3 = 稳态与疾病（Ch1–8）；Unit 4 = 人类变异与进化（Ch9–13）。\n三条能力主线：科学探究技能、科学的人文事业（SHE）、科学理解。",
+  children: [
+    { name: "U3 · Ch1 探究人体生物学", note: "科学探究技能总纲，是后面所有实验与评估的方法论基础", children: [
+      { name: "探究类型：观察法、对照实验、双盲实验、安慰剂、随机分组、调查、试错、个案/纵向研究" },
+      { name: "科学方法流程：识别问题→文献综述→提出假设→实验→分析→结论→报告" },
+      { name: "变量：自变量 IV / 因变量 DV / 控制变量 CV" },
+      { name: "实验质量：效度 validity、信度 reliability、准确度 accuracy" },
+      { name: "重复 repeats 与复本 replicates 的区别；测量误差与不确定性" },
+      { name: "数据类型：定性/定量、离散/连续；误差识别与图表类型选择" },
+      { name: "伦理：人体受试者知情同意；动物伦理 3R（替代/减少/优化）；风险评估" }
+    ]},
+    { name: "U3 · Ch2 激素调控人体（内分泌）", children: [
+      { name: "外分泌腺 vs 内分泌腺（无导管、直接分泌入血）" },
+      { name: "9 大内分泌腺：下丘脑、垂体（前叶/后叶）、甲状腺、甲状旁腺、胸腺、肾上腺（皮质/髓质）、胰岛、性腺、松果体" },
+      { name: "类固醇激素（脂溶性、源自胆固醇）vs 蛋白/胺类激素（水溶性）" },
+      { name: "作用机制：胞内受体→激活基因→转录翻译 vs 膜受体→第二信使→酶级联放大" },
+      { name: "下丘脑-垂体通讯：前叶（垂体门脉系统与释放因子）vs 后叶（神经细胞直接支配）" },
+      { name: "代表激素：ADH、催产素、FSH、LH、GH、TSH、ACTH、胰岛素、胰高血糖素、肾上腺素、皮质醇、甲状腺素" },
+      { name: "负反馈调节机制；激素失调与激素替代疗法" }
+    ]},
+    { name: "U3 · Ch3 神经元快速通讯", children: [
+      { name: "神经元结构：胞体、树突、轴突、髓鞘（施万细胞）、轴突末梢" },
+      { name: "神经元 4 种结构类型与 3 种功能类型（感觉/中间/运动）" },
+      { name: "静息膜电位（三大维持因素）与钠钾泵" },
+      { name: "动作电位四阶段：去极化→复极化→超极化→恢复静息；阈值 −55 mV、峰值 +30 mV" },
+      { name: "全或无定律 all-or-none、不应期；刺激强度→动作电位频率" },
+      { name: "跳跃式传导 saltatory conduction（有髓鞘）vs 无髓鞘轴突；传导速度" },
+      { name: "化学突触传递：钙内流→突触小泡融合→神经递质→突触后受体；乙酰胆碱酯酶" },
+      { name: "神经-肌肉接头；药物与毒素如何干扰突触" },
+      { name: "6 类受体（温度/渗透压/化学/机械/痛觉/本体感受）与躯体/特殊感觉" },
+      { name: "反射与反射弧五部分：受体→感觉神经元→中间神经元→运动神经元→效应器" },
+      { name: "神经系统与内分泌系统比较：速度、持续时间、信息性质、特异性" }
+    ]},
+    { name: "U3 · Ch4 神经系统的组织", children: [
+      { name: "中枢神经系统 CNS 与三层保护：颅骨脊椎、脑膜、脑脊液" },
+      { name: "脑结构：大脑四叶（额/顶/颞/枕）、小脑、延髓、下丘脑、胼胝体" },
+      { name: "大脑功能分区与语言区：Broca 区（产生）与 Wernicke 区（理解）" },
+      { name: "白质与灰质；神经束 tracts" },
+      { name: "周围神经系统 PNS：传入（躯体/内脏感觉）与传出（躯体运动 + 自主神经）" },
+      { name: "自主神经：交感 vs 副交感对各效应器（心、血管、瞳孔、消化、呼吸、汗腺）的对比" },
+      { name: "战斗或逃跑反应 fight or flight；脊髓背根与腹根结构" }
+    ]},
+    { name: "U3 · Ch5 稳态：血糖与体温", children: [
+      { name: "刺激-反应-反馈模型 SRF；负反馈 vs 正反馈" },
+      { name: "血糖：糖原分解、糖原生成、脂解、脂肪生成、糖异生" },
+      { name: "血糖激素：胰岛素、胰高血糖素、肾上腺素、皮质醇及其分泌腺" },
+      { name: "效应器：肝、肌肉、脂肪组织各自的独特反应" },
+      { name: "糖尿病 mellitus 与临床数据分析" },
+      { name: "体温：7 种产热/散热途径（辐射、传导、对流、蒸发等）" },
+      { name: "体温效应器：血管舒缩、骨骼肌战栗、汗腺与竖毛肌、甲状腺素与肾上腺素、行为性调节" },
+      { name: "体温失调：低体温、中暑、热衰竭" }
+    ]},
+    { name: "U3 · Ch6 体液与气体浓度稳态", children: [
+      { name: "体液类型与分布：细胞内液 / 细胞外液（血浆、组织液）" },
+      { name: "肾单位结构：肾小球、鲍曼囊、近曲小管、髓袢、远曲小管、集合管" },
+      { name: "尿形成四步：滤过→重吸收→分泌→排泄；尿检 urinalysis" },
+      { name: "渗透调节：下丘脑渗透压感受器、ADH→水通道蛋白 aquaporin、醛固酮→钠通道、口渴反应" },
+      { name: "气体浓度：O₂/CO₂ 运输、CO₂ 浓度与血液 pH（碳酸/碳酸氢盐缓冲体系）" },
+      { name: "中枢与外周化学感受器；延髓调节中枢；肋间肌与膈肌" },
+      { name: "换气过度 hyperventilation：深潜的致命风险 vs 缓解焦虑的用途" }
+    ]},
+    { name: "U3 · Ch7 抗感染防御（免疫）", children: [
+      { name: "病原体四大类型：细菌、病毒、真菌、寄生虫" },
+      { name: "细菌：原核 vs 真核、4 种形态（球菌/杆菌/螺旋菌/弧菌）、革兰氏染色与细胞壁结构" },
+      { name: "病毒结构与复制方式；与细菌的三大区别" },
+      { name: "6 种传播途径：直接接触、间接接触、体液、病媒、污染食物与水、空气飞沫" },
+      { name: "外部防御（皮肤、黏膜、纤毛、胃酸、泪液、唾液等）与 4 种保护性反射" },
+      { name: "内部非特异性防御：吞噬作用、炎症（肥大细胞与组织胺）、发热（致热原与体温调定点上移）、淋巴系统" },
+      { name: "特异性免疫·体液免疫：B 细胞→浆细胞→抗体 6 种作用方式 + 记忆细胞" },
+      { name: "特异性免疫·细胞免疫：辅助 T / 细胞毒 T 细胞 + 记忆细胞；B 与 T 细胞比较" },
+      { name: "免疫四大类型（主动/被动 × 自然/人工）；疫苗接种与群体免疫" },
+      { name: "抗生素（抑菌/杀菌、广谱/窄谱）与抗病毒药；耐药性 antibiotic resistance" }
+    ]},
+    { name: "U3 · Ch8 治疗疾病的技术", note: "Science as a Human Endeavour（科学的人文事业）重点章", children: [
+      { name: "重组 DNA 技术：限制性内切酶（平末端/黏末端）、DNA 连接酶、质粒" },
+      { name: "细菌转化 transformation：热激、CaCl₂、LB 培养基、抗生素筛选" },
+      { name: "基因治疗 gene therapy；干细胞与细胞替代疗法；组织工程" },
+      { name: "疾病治疗应用：糖尿病、甲亢/甲减、脑部疾病（Alzheimer's、Parkinson's）" },
+      { name: "合成激素；用重组 DNA 技术生产激素与疫苗" }
+    ]},
+    { name: "U4 · Ch9 进化产生代际变化", children: [
+      { name: "中心法则复习：DNA→RNA→蛋白质" },
+      { name: "突变：基因突变与染色体突变、诱变剂 mutagens；突变是新等位基因的最终来源" },
+      { name: "变异来源：突变、独立分配、交叉互换、随机受精、不分离 non-disjunction" },
+      { name: "基因库 gene pool 与等位基因频率的动态变化" },
+      { name: "进化机制：基因流/迁移、随机遗传漂变（含奠基者效应）、自然选择、选择压力" },
+      { name: "物种形成 speciation；案例：镰状细胞贫血" }
+    ]},
+    { name: "U4 · Ch10 生物技术提供进化证据", children: [
+      { name: "聚合酶链反应 PCR" },
+      { name: "凝胶电泳 gel electrophoresis、DNA 指纹、Sanger 测序" },
+      { name: "比较基因组学 comparative genomics、比较蛋白质（氨基酸序列差异）、生物信息学" },
+      { name: "内源性逆转录病毒、线粒体夏娃、DNA 杂交" },
+      { name: "系统发生树的使用（不要求绘制）" }
+    ]},
+    { name: "U4 · Ch11 其他进化证据", children: [
+      { name: "化石形成 fossilisation 与化石记录的不完整性" },
+      { name: "相对测年：地层学 stratigraphy、标准化石 index fossils" },
+      { name: "绝对测年：碳十四、钾氩法及其各自局限" },
+      { name: "地质时间线；系统发生树 phylogenetic trees 的解读" },
+      { name: "退化器官 vestigial organs；比较解剖学与比较生物化学证据" }
+    ]},
+    { name: "U4 · Ch12 人亚科进化趋势", children: [
+      { name: "人类作为灵长类 / 大猿；种间差异源于 DNA 核苷酸序列差异" },
+      { name: "四大区分特征：大脑皮层相对大小、指趾活动度、姿势与运动、颌凸与齿列" },
+      { name: "运动方式：双足行走 bipedalism、臂行 brachiation、四足行走 quadrupedalism" },
+      { name: "人科化石比较：Australopithecus afarensis / africanus、Paranthropus robustus" },
+      { name: "Homo habilis / erectus / neanderthalensis / sapiens 的脑容量与体型趋势" }
+    ]},
+    { name: "U4 · Ch13 人属进化", children: [
+      { name: "人亚科进化时间线；非洲化石点与 3D 化石模型" },
+      { name: "工具文化趋势：从 Homo habilis 到 sapiens 的制造技术与材料演变" },
+      { name: "其他文化趋势：火的使用、埋葬、艺术、语言、农业" },
+      { name: "人类对环境的控制如何改变选择压力" }
+    ]},
+    { name: "考核与配套资源", children: [
+      { name: "校本任务：TT1（Ch1–3，10%）、ER1（7%）、Lab Assessment（10%）、EE（Ch1–8，20%）、ER2（Ch8–10，8%）、TT2（15%）、FE（30%）" },
+      { name: "WACE 统考：3 小时 + 10 分钟阅读；Section 1 选择 30% + Section 2 简答 50% + Section 3 拓展作答 20%" },
+      { name: "NOTES（436 页）：Ch1–7 全套讲义 + 每章 Chapter Checklist 自查清单",},
+      { name: "TUTORIALS（118 页）：Ch1–6 教程与答案（科学探究、内分泌、神经元、神经系统、血糖、肾单位与气体调节）",},
+      { name: "LAB PROCEDURES（72 页）：15+ 实验手册与答案——反应时间、神经末梢、渗透、尿检、酶活性、显微镜、革兰染色、细菌培养",},
+      { name: "TEXTBOOK ANSWER（394 页）：Human Perspectives 8th Ed. Ch1–13 + 7th Ed. Ch1–20 教材答案",},
+      { name: "REVISION SET（128 页）：Revision 1–7 + Mock Test 全套 + 拓展题三档水平范文",},
+      { name: "WACE EXAM PAPERS：2015–2025 历年真题 + 官方评分标准",},
+      { name: "DIGITAL LIBRARY：Ch1–13 录播课目录 + 按章整理的视频资源（动作电位、免疫、PCR、测年、双足行走等）" },
+      { name: "教师版课件：Ch1–Ch7.4 教材扫描 + 教师批注（364 页）",}
+    ]}
+  ]
+},/* ===== 3. PHY 物理 ===== */
+{
+  name: "PHY 物理", color: "#7c3aed",
+  note: "Physics ATAR Year 12（ATPHY）。\nUnit 3 = 运动与重力 + 电磁学；Unit 4 = 相对论 + 量子理论 + 宇宙学。\n评估：Tests 40%（TT1 14% + TT2 14% + EA 12%）、Examination 50%（EE 20% + FE 30%）、Science Inquiry 10%（实验评估）。",
+  children: [
+    { name: "前置知识（Year 11 复习）", note: "[1.01] PREKNOWLEDGE——进课前必须熟练的基础", children: [
+      { name: "向量 Vectors：标量与矢量、平行四边形/三角形法则、分量法、比例作图法" },
+      { name: "向量应用：相对速度、速度变化量、力桌实验（合力与平衡力）" },
+      { name: "力与斜面：牛顿三大定律、惯性、受力图 FBD、法向力" },
+      { name: "斜面分量：W∥ = mg sinθ、W⊥ = mg cosθ、N = mg cosθ；摩擦力（粗糙/光滑）" },
+      { name: "运动方程：s = ut + ½at²、v = u + at、v² = u² + 2as；静力学与动力学、视重" },
+      { name: "功与能：W = Fs = mgΔh、重力势能 PE = mgΔh、动能 KE = ½mv²" },
+      { name: "能量守恒与转化（PE↔KE→热）；非保守力做功；简谐运动弹簧能量互换" },
+      { name: "动量：p = mv、冲量 I = FΔt = Δp、动量守恒" },
+      { name: "碰撞类型：弹性（KE 守恒）、非弹性、完全非弹性；爆炸过程" },
+      { name: "直线运动：平均速度/加速度、匀加速三方程、自由落体" },
+      { name: "位移-时间图（斜率=速度）与速度-时间图（斜率=加速度、面积=位移）" },
+      { name: "竖直抛体、反应时间与刹车距离" }
+    ]},
+    { name: "U3 · 实验理论与技能", note: "[1.02] LAB THEORY——科学探究技能的完整方法论", children: [
+      { name: "实验报告结构：Title / Aim / Theory-Hypothesis / Apparatus & Diagram / Procedure（被动语态）/ Results / Discussion / Conclusion" },
+      { name: "变量：自变量/因变量/控制变量；定性（名义、序数）与定量（离散、连续）" },
+      { name: "有效数字规则；加减法按小数位、乘除法按最少有效位；统一 3SF 或 3DP" },
+      { name: "绝对不确定度（±1 最小分度、与均值的最大偏差）与百分比不确定度" },
+      { name: "不确定度合成：加减法直接相加、乘除法先转百分比再加；误差棒 error bars" },
+      { name: "作图规范：轴标签含单位、分度用 2/4/5、占 ¾ 页面、最佳拟合线（不强行过原点）" },
+      { name: "由最佳拟合线求梯度（画 gradient triangle），结果保留 2SF" },
+      { name: "线性化 linearisation：y = mx + c 映射，梯度/截距与物理量对应" },
+      { name: "误差类型：系统误差（未校准、方法缺陷）vs 随机误差（读数、低电量）" },
+      { name: "效度 validity / 信度 reliability / 准确度 accuracy / 精密度 precision 的区分" },
+      { name: "误差削减方法与讨论：对比理论值、% error / % difference、异常值识别" }
+    ]},
+    { name: "U3 · 抛体运动", note: "Projectile Motion", children: [
+      { name: "抛体定义与抛物线轨迹；水平与竖直分量相互独立" },
+      { name: "水平方向：a = 0，ux = vx = 常数，射程 R = ux·T" },
+      { name: "竖直方向：a = −g，最高点时竖直速度 v_y = 0" },
+      { name: "速度矢量分解：ux = u cosθ、uy = u sinθ" },
+      { name: "解题步骤：画图→分解→x/y 独立分析→三运动方程→勾股定理求合速度" },
+      { name: "互余角射出同射程（15°/75°）；45° 射程最大" },
+      { name: "空气阻力的影响：减小射程与最大高度、增大下落角度；与截面积和质量有关" },
+      { name: "抛体运动中的能量守恒；应用题型（投弹、射箭、踢球、投石机）" }
+    ]},
+    { name: "U3 · 圆周运动", note: "Circular Motion（课程大纲要求）", children: [
+      { name: "匀速圆周运动（水平面）" },
+      { name: "向心力与向心加速度：F_c = mv²/r = mω²r" },
+      { name: "倾斜弯道 banked track 与飞机转弯" },
+      { name: "竖直圆周运动（匀速与非匀速）；摩天轮顶点/底点的视重" },
+      { name: "圆周运动中的能量守恒" },
+      { name: "实验：锥形摆测向心力（图像法）" }
+    ]},
+    { name: "U3 · 重力与卫星运动", children: [
+      { name: "万有引力定律 F = GmM/r²；力的相互性与矢量性（沿两球心连线）" },
+      { name: "重力场 g-field 与场线：指向质心、密度表示强度、永不相交" },
+      { name: "重力场强度 g = F/m = GM/r²（N/kg）；赤道与两极差异、海拔影响" },
+      { name: "常数：G = 6.67×10⁻¹¹、M_E = 5.97×10²⁴ kg、R_E = 6.38×10⁶ m、地月距离 3.84×10⁸ m" },
+      { name: "轨道运动：引力提供向心力；v = √(GM/r)，与卫星质量无关" },
+      { name: "轨道周期与开普勒第三定律 T²/r³ = 4π²/GM" },
+      { name: "开普勒第一定律（椭圆轨道）与第二定律（面积定律）" },
+      { name: "地球同步卫星（T = 24 h）；通信与电视广播应用" },
+      { name: "质心 barycentre（地月系统，力矩法）；LEO/MEO/GEO 与极轨/太阳同步轨道" }
+    ]},
+    { name: "U3 · 力矩与平衡", children: [
+      { name: "力矩 τ = rF sinθ（单位 N·m）；力臂、支点、力的作用线" },
+      { name: "符号约定：逆时针为正、顺时针为负" },
+      { name: "非垂直力的分解；净力矩" },
+      { name: "平衡条件：ΣF = 0（平动平衡）+ Στ = 0（转动平衡）" },
+      { name: "经典题型：跷跷板、梯子靠墙、跳水板、木板与绳索、悬臂梁" },
+      { name: "撑杆与拉索 struts and ties" },
+      { name: "静平衡与质心；稳定性 stability" }
+    ]},    { name: "U3 · 静电力与电场", children: [
+      { name: "电荷与电场；电场线（+向外/−向内、密度=强度、不可交叉）" },
+      { name: "库仑定律 F = kq₁q₂/r²；k = 9.00×10⁹ N·m²/C²、ε₀ = 8.85×10⁻¹²" },
+      { name: "三电荷以上：叠加原理（矢量和）" },
+      { name: "电场强度 E = F/q = kQ/r²（N/C 或 V/m）；试探电荷 test charge" },
+      { name: "电场中的功与能：W = Eqd = qΔV；W = ΔE_k" },
+      { name: "电势差 ΔV 与重力势能的类比" },
+      { name: "平行板间匀强电场 E = V/d" },
+      { name: "带电粒子在电场中的偏转（类平抛运动）" },
+      { name: "电子伏特 1 eV = 1.60×10⁻¹⁹ J" }
+    ]},
+    { name: "U3 · 磁学 Magnetism", children: [
+      { name: "磁通密度 B（特斯拉 T）与磁场线图" },
+      { name: "长直导线磁场 B = μ₀I/2πr；右手螺旋定则；螺线管与电磁铁" },
+      { name: "载流导体受力（电动机效应）：F = BIl sinθ" },
+      { name: "左手定则 Fleming's Left Hand Rule（力/磁场/电流方向）" },
+      { name: "载流线圈力矩 τ = nBIA；力矩最大的位置" },
+      { name: "直流电动机结构与原理：电枢线圈、换向器、碳刷、磁场线圈；每 180° 反向电流" },
+      { name: "反电动势 back emf 与楞次定律导致恒定转速" },
+      { name: "运动电荷受力 F = qvB sinθ；圆周运动半径 r = mv/qB" },
+      { name: "应用：粒子加速器（直线/回旋/同步加速器）、质谱仪、速度选择器、磁悬浮、MRI" }
+    ]},
+    { name: "U3 · 电场与磁场的应用", note: "提纲所列内容（参考课程大纲与 EA REVISION）", children: [
+      { name: "速度选择器 velocity selector（电场力与磁场力平衡）" },
+      { name: "霍尔效应 Hall Effect：霍尔电压 V_H、漂移速度 drift velocity、F_B = F_E 平衡" },
+      { name: "质谱仪 mass spectrometer 的分离原理" },
+      { name: "粒子加速器如何控制带电粒子的运动" }
+    ]},
+    { name: "U3 · 电磁感应", children: [
+      { name: "磁通量 Φ = BA cosθ（韦伯 Wb）；θ 为 B 与面积法线的夹角" },
+      { name: "产生电磁感应的条件：相对运动、B 大小变化、线圈面积变化、B 方向变化" },
+      { name: "法拉第定律 ε = −N ΔΦ/Δt（感应电动势）" },
+      { name: "楞次定律：感应电流的方向总是阻碍磁通量的变化（能量守恒的体现）" },
+      { name: "右手定则判断感应电流方向；涡电流 eddy current" },
+      { name: "磁铁进出线圈时的受力与做功分析" },
+      { name: "应用：直流/交流发电机、变压器、再生制动、电磁炉、电动车、磁悬浮" }
+    ]},
+    { name: "U3 · 交流发电机与变压器", children: [
+      { name: "发电机：机械能→电能（电动机的逆过程）；能量来源（水力、煤炭、核、风、地热）" },
+      { name: "滑环 slip rings 输出交流 vs 换向器输出直流" },
+      { name: "部件与功能：外磁铁、电枢线圈、滑环/换向器、碳刷" },
+      { name: "线圈旋转各角度（0°/90°/180°/270°/360°）的磁通与电动势变化" },
+      { name: "关系式：Φ = NBA cos ωt；emf = NBAω sin ωt；ε_max = NBAω = 2πfNBA" },
+      { name: "平均电动势 ε_avg = −4BANf；用右手定则与楞次定律判断正负端" },
+      { name: "变压器：两线圈 + 叠片硅钢芯；互感 mutual induction" },
+      { name: "匝数比 Vs/Vp = Ns/Np；升压与降压；理想变压器功率守恒" },
+      { name: "电力输送：为何要升压、为何铁芯要叠片" },
+      { name: "欧姆定律 V = IR；电阻串并联（实验）" }
+    ]},    { name: "U4 · 狭义相对论", children: [
+      { name: "参考系与惯性参考系（恒定速度）" },
+      { name: "光速不变 c = 3.00×10⁸ m/s；爱因斯坦两条基本假设" },
+      { name: "同时性的相对性（火车思想实验）" },
+      { name: "时间膨胀 t = t₀/√(1−v²/c²)；固有时间 t₀ 与洛伦兹因子 γ；双生子佯谬" },
+      { name: "长度收缩 L = L₀√(1−v²/c²)；固有长度；梯子-车库佯谬" },
+      { name: "相对论速度叠加 u = (u′ + v)/(1 + u′v/c²)" },
+      { name: "相对论动量 p = mv/√(1−v²/c²)（高速下增大，阻止达到光速）" },
+      { name: "质能等价 E = mc²；静止质量能量" },
+      { name: "总能量与能量-动量关系 E² = p²c² + m²c⁴；光子 E = pc" },
+      { name: "实验证据：Rossi–Hall 实验（μ 子）、μ 子寿命与长度收缩、GPS 修正、粒子加速器" }
+    ]},
+    { name: "U4 · 广义相对论", children: [
+      { name: "牛顿的引力观 vs 爱因斯坦：引力不是力，而是时空弯曲的效应" },
+      { name: "时空弯曲（质量-能量弯曲时空；时空 = x, y, z + t）" },
+      { name: "测地线 geodesics 与自由落体；失重" },
+      { name: "光沿时空测地线传播；引力透镜 gravitational lensing" },
+      { name: "引力时间膨胀（引力势越低，时间越慢）" },
+      { name: "应用：GPS 需同时考虑狭义与广义相对论（每天约 10 km 位置误差）" },
+      { name: "黑洞：极端曲率、事件视界 event horizon、奇点、吸积盘" },
+      { name: "证据：飞机上的原子钟、GPS、引力波、引力透镜" }
+    ]},
+    { name: "U4 · 光的波动性", children: [
+      { name: "电磁波 = 振荡的电场与磁场；麦克斯韦方程组；加速电荷产生电磁波" },
+      { name: "电磁波谱：无线电→微波→红外→可见光→紫外→X 射线→γ 射线" },
+      { name: "电磁波性质：横波、E ⊥ B 且同相、c = 3.0×10⁸ m/s、无需介质" },
+      { name: "波方程 c = fλ；周期；频率与波长成反比" },
+      { name: "反射、折射（斯涅尔定律）、衍射、干涉、偏振" },
+      { name: "衍射：波长 ≥ 孔径时显著；波长不变" },
+      { name: "干涉：相长与相消、光程差 path difference、相位" },
+      { name: "杨氏双缝实验：明暗条纹；粒子说预言与实际不符，成为光的波动性的证据" },
+      { name: "应用：光的折射性质实验、用衍射理论测激光波长" }
+    ]},
+    { name: "U4 · 光的粒子性", children: [
+      { name: "牛顿微粒说 vs 惠更斯波动说的历史争论" },
+      { name: "光电效应实验装置（阴极/阳极、石英窗、光电子、电流计、真空管）" },
+      { name: "波动模型的三大预言与实际结果的矛盾：亮度↑只增电子数不增能量、存在截止频率、发射是瞬时的" },
+      { name: "光子：E = hf = hc/λ；h = 6.63×10⁻³⁴ Js；一个光子对应一个电子、完全吸收" },
+      { name: "逸出功 W = hf₀ 与截止频率；不同金属的逸出功数值" },
+      { name: "光电方程 KE_max = hf − W；遏止电压 stopping potential" },
+      { name: "波粒二象性 wave–particle duality" }
+    ]},
+    { name: "U4 · 黑体辐射与光谱", children: [
+      { name: "黑体辐射：光谱形状及其随温度的依赖；经典波动模型无法解释" },
+      { name: "德布罗意物质波 λ = h/p = h/mv" },
+      { name: "宏观物体/人/电子三案例对比：宏观波长过小不可观测，电子可检测" },
+      { name: "戴维孙-革末实验：电子衍射证实物质波" },
+      { name: "双缝实验重做：电子逐个通过也会累积出干涉图样" },
+      { name: "应用：电子显微镜（TEM/SEM/STEM，分辨率约 10⁻¹⁰ m）、中子衍射、X 射线衍射" },
+      { name: "四类光谱：线状发射光谱、带状光谱、连续光谱、吸收光谱" },
+      { name: "光谱分析：元素的特征谱线" }
+    ]},
+    { name: "U4 · 玻尔原子模型", children: [
+      { name: "玻尔假设：电子只能在特定轨道上具有固定能量；基态与激发态" },
+      { name: "氢原子能级图（−13.60、−3.40、−1.51、−0.85、−0.54 eV，电离为 0.00）" },
+      { name: "跃迁规则：吸收或释放的能量必须恰好等于两能级之差" },
+      { name: "激发态寿命约 10⁻⁸ s；退激可一步或多步，每次跃迁释放一个光子" },
+      { name: "电离 Ionisation：电离能；超过阈值的多余能量成为电子的动能" },
+      { name: "用 ΔE = hf = hc/λ 解释发射光谱与吸收光谱" },
+      { name: "氢光谱系列：Lyman（紫外）、Balmer（可见光）、Paschen（红外）" },
+      { name: "能级计算 E = −13.6 Z²/n²" },
+      { name: "应用：荧光与磷光、X 射线产生、激光、光伏电池、LED、荧光标记" }
+    ]},
+    { name: "U4 · 宇宙学", note: "Cosmology——大爆炸理论与证据", children: [
+      { name: "天文距离单位：AU（1.50×10¹¹ m）、光年、秒差距 parsec（3.1×10¹⁶ m）、Mpc" },
+      { name: "稳恒态理论 Steady State（各向同性 + 均匀 + 静态）及其被否定" },
+      { name: "多普勒效应；红移与蓝移（波长变长/变短）" },
+      { name: "红移参数 z = (λ_观测 − λ_静止)/λ_静止 ≈ v/c" },
+      { name: "哈勃定律 v = H₀d；H₀ = 70.0 km·s⁻¹·Mpc⁻¹；图像斜率即哈勃常数" },
+      { name: "距离测量：亮度与光度；造父变星 Cepheid 作为标准烛光" },
+      { name: "宇宙膨胀的含义：空间本身在膨胀（星系与地球内部由引力/电磁力维系）" },
+      { name: "宇宙年龄估算 t = 1/H₀ ≈ 137 亿年" },
+      { name: "大爆炸时间线：暴胀→夸克汤→冷却形成质子中子→核合成（H、He、Li，约 3 分钟）" },
+      { name: "四大证据：哈勃定律、宇宙微波背景辐射 CMBR（2.7 K）、轻元素丰度、星系光谱红移" },
+      { name: "宇宙的未来：闭合、平坦、开放三种模型；临界密度约 9×10⁻²⁷ kg·m⁻³" },
+      { name: "宇宙学原理：各向同性 + 均匀性" }
+    ]},
+    { name: "实验与实践", children: [
+      { name: "科学探究技能：提出问题、假设、设计实验、安全操作、收集有效数据" },
+      { name: "SI 单位与有效数字表达；识别趋势、规律与关系" },
+      { name: "不确定度的陈述、计算与合成；异常数据识别与 % difference" },
+      { name: "用证据得出结论、评价过程、构建科学论证、量纲分析" },
+      { name: "抛体运动实验（测水平初速度并与能量守恒对比）；单摆测重力加速度 g" },
+      { name: "锥形摆测向心力；力桌实验验证矢量合成" },
+      { name: "磁学实验：条形磁铁力-距离关系、载流导体受力、长直导线磁场强度" },
+      { name: "光学实验：折射性质探究、衍射法测激光波长、可见光谱与原子发射光谱" },
+      { name: "普朗克常数测定；电阻串并联" },
+      { name: "演示实验：电动机与交流发电机、光电效应模拟、范德格拉夫起电机、玻尔模型、狭义相对论" },
+      { name: "实验报告范例：胡克定律测弹簧劲度系数（静态 F−x 与动态 T²−m 双法）、密度与不确定度" }
+    ]},
+    { name: "考核与配套资源", children: [
+      { name: "校本任务：TT1（14%）、EA 评估与分析（12%）、EE 评估考试（20%）、Lab Assessment（10%）、TT2（14%）、FE（30%）" },
+      { name: "TT1 范围：重力、水平/竖直圆周运动、静平衡与质心；EE 范围：静平衡与质心、相对论、电磁学" },
+      { name: "TT2 范围：电磁学、波粒二象性与量子理论；FE 覆盖 Unit 3 + Unit 4 全部" },
+      { name: "WACE 外部考试（180 分 / 3 小时）：Section 1 短答 30% + Section 2 长答 50% + Section 3 阅读理解与数据分析 20%" },
+      { name: "考试规则：最终答案 3 位有效数字、估算最多 2 位、必须带单位、须写全过程、使用公式与数据册" },
+      { name: "VAULT OF ATPHY（79 页）：课程总览、评估大纲、科学探究技能、公式册、实验手册与报告范例",},
+      { name: "各 Topic 讲义：向量、力与斜面、功与能、动量、直线运动、抛体、重力与卫星、力矩、相对论、电磁学、量子、宇宙学",},
+      { name: "REVISION 复习卷：TT1 / EA / FE 复习（含 WACE 2019–2024 真题汇编与完整解答）",},
+      { name: "实时物理 Real World Physics 拓展 + DIGITAL LIBRARY 数字资源索引" }
+    ]}
+  ]
+},/* ===== 4. ELD 英语 ===== */
+{
+  name: "ELD 英语", color: "#d97706",
+  note: "English as an Additional Language or Dialect（EAL/D）ATAR Year 12，面向英语非第一语言的学生。\nUnit 3 = 澳大利亚作为文化共同体；Unit 4 = 语言与赋权。\n另含 WACE 毕业必需的 OLNA 读写与算术测试。外部笔试占 50%。",
+  children: [
+    { name: "U3 · 澳大利亚作为文化共同体", note: "Australia as a Cultural Community——分析语言选择如何在不同语境中达成目的与效果", children: [
+      { name: "核心概念：cultural schemas 文化图式、cultural constructs 文化建构" },
+      { name: "多元社会与个人自由；commonality and difference 共通性与差异" },
+      { name: "意义是协商而来而非既定（meaning is negotiated, not given）" },
+      { name: "文本：Growing Up Aboriginal / Asian / African in Australia 三部文集" },
+      { name: "文本：Sticks and Stones and Such-like、The relative advantages of relearning my language、Cronulla to Papunya" },
+      { name: "NRW 2020 材料：27 May Referendum、Mabo decision、Native Title" },
+      { name: "《Life in Australia — Australian Values and Principles》" },
+      { name: "澳洲国旗（米字旗/南十字星/联邦星）与国歌 Advance Australia Fair 解析" }
+    ]},
+    { name: "U4 · 语言与赋权", note: "Language and Empowerment——分析、评估并运用语言来表征与回应议题、观念和态度", children: [
+      { name: "核心概念：power of language 语言的力量" },
+      { name: "语言如何赋权或边缘化个体、群体与意识形态" },
+      { name: "文化概念化如何嵌入语言" },
+      { name: "修辞与劝服装置如何制造权力关系" },
+      { name: "文本：《Speeches that Changed the World》（含音频）" }
+    ]},
+    { name: "语言能力表 Language Table", note: "Unit 4 结束前须熟练，是所有听说读看写任务的底层能力清单", children: [
+      { name: "语音特征：发音、重音、节奏、语调、音高；音素与词素" },
+      { name: "非语言特征：文化合宜的手势与行为" },
+      { name: "正字法：标点系统、学科词汇拼写、缩写符号、印刷体/草书" },
+      { name: "词汇能力：metalanguage、discourse markers、搭配 collocation、习语、口语化表达、同反义词、词汇链" },
+      { name: "语法能力：从句与句子结构、词类、动词时态、情态、语态（主动/被动）" },
+      { name: "语法能力：四种从句类型（陈述/疑问/祈使/感叹）、名词化 nominalisation" },
+      { name: "语法能力：四类连词（增补/比较/时间/因果）、主谓一致、直接与间接引语、指代衔接" },
+      { name: "语义能力：听主旨/论点/细节、语义场、言外之意、歧义、appraisal 评价理论、事实与观点" },
+      { name: "社会语言学：澄清提问、意义协商、劝服语言、语域 register 实验、话轮起承转合" },
+      { name: "社会文化：语域变异（熟悉/半正式/正式）、文化指涉、反讽与幽默、礼貌规范、眼神与体距" }
+    ]},
+    { name: "学术写作与文本分析", children: [
+      { name: "Discursive Essay 结构：引言 = 背景与语境 + 含 3 个分论点的论点句（漏斗式）" },
+      { name: "正文 3 段：Point/Topic sentence → Explanation（3 句，不放证据）→ Evidence/Example → Link（≥3 句分析 + Tieback）" },
+      { name: "结论：重述论点 + 收尾，不引入新观点" },
+      { name: "3-Whys Technique（5W1H 追问链）提升批判性思考深度" },
+      { name: "语言控制：正式衔接词（Anyway→Nevertheless）、高级词汇（Get→Obtain）" },
+      { name: "tentative / hedging 模糊限定语（It could be argued that…）以避免偏向" },
+      { name: "Speech Writing 演讲稿：演讲惯例、语言技巧与听众诉求、register 一致、修辞手法" },
+      { name: "文本分析：persuasive techniques、figurative language、反讽与幽默、叙事视角、多模态版面" },
+      { name: "研究与引用：研究问题框架、来源相关性/可靠性/有效性、改写 paraphrase、文内引用与文末参考文献" },
+      { name: "文本类型：analytical / imaginative / interpretive / persuasive 四类" }
+    ]},
+    { name: "OLNA 读写与算术测试", note: "Online Literacy and Numeracy Assessment——取得 WACE 完成证书的必要条件。三项各须达 Level 3（相当于 Year 9 水平），未过需重考该单项", children: [
+      { name: "Numeracy 算术：45 题多项选择，50 分钟" },
+      { name: "Reading 阅读：45 题多项选择，50 分钟" },
+      { name: "Writing 写作：1 题打字作答，不超过 600 词，60 分钟" },
+      { name: "阅读内容：段落理解、推断、作者目的、结论类型、词汇题（同反义词、语境猜词）" },
+      { name: "写作 7 项评分标准：读者导向、结构组织、词汇、衔接、句子结构、标点、拼写" },
+      { name: "写作训练文本类型：书评、书信、专题特写、新闻报道、个人叙事、劝服与论证、多视角议论、事件报告" },
+      { name: "语法覆盖：时态（现在/过去/将来）、情态动词、条件句、语态、分词、句子类型、标点" },
+      { name: "词汇覆盖：同义词、搭配 collocation、词形变化、副词位置" },
+      { name: "练习平台：assess2.scsa.wa.edu.au 的 example test 与 practice test" },
+      { name: "学术诚信：签订学生协议，SCSA 用相似度检测查重，抄袭立即不及格" }
+    ]},
+    { name: "考核任务", note: "校本 8 项任务共 100 分（占总成绩 50%）+ WACE 外部笔试 50%", children: [
+      { name: "Task 1 课内多视角议论文：就 unseen question 写作并引用所学澳洲文本（10%）" },
+      { name: "Task 2A 口头研究提案：2–3 人组，含问题陈述、目标、背景、参考文献（5%）" },
+      { name: "Task 3 COAT 口语统考：官方统一任务，5 分钟准备 + 10 分钟访谈，录音录像送 SCSA（10%）" },
+      { name: "COAT 四类问题各一：字面理解、推断、分析、评价；题材来自 Unit 3" },
+      { name: "Task 4 听力理解：两篇口语文本（7%）" },
+      { name: "Task 5 阅读与视觉理解：两篇书面 + 一篇视觉文本，短答 + 综合写作 synthesis（8%）" },
+      { name: "Task 6 课内说服性演讲：就 unseen 话题呼吁同伴行动（10%）" },
+      { name: "Task 7 口头说服演讲：围绕 language and empowerment 发表观点（10%）" },
+      { name: "Task 2B 研究报告：Unit 3 议题，2 人 1000 词 / 3 人 1500 词（10%）" },
+      { name: "Task 8 期末考试（30%）" },
+      { name: "WACE 外部笔试：听力 25% + 阅读与视觉 25% + 演讲稿写作 20% + 议论文写作 30%，共 3 小时" }
+    ]},
+    { name: "配套资源", children: [
+      { name: "Course Information（syllabus 全文）、Course Outline 周次表、Assessment Outline、ATELD Roadmap",},
+      { name: "Unit 3 Material（245 页）：核心文本、讲义与课堂材料",},
+      { name: "Eligibility（30 页）：学生资格在线申报五步流程指南",},
+      { name: "OLNA（218 页）+ 个人 OLNA 练习（48 页）：阅读、语法、词汇、写作全套练习与答案",},
+      { name: "Tasks（112 页）：8 项任务的详细说明、评分标准与样卷",},
+      { name: "评分标准：COAT Marking Key、Task 2A Marking Key、议论文/演讲 25 分制、Synthesis Writing 评分细则",},
+      { name: "写作指南：Discursive Writing Structure 与 Language、《2024 Good Answer Guide》、EALD Revision Manual",},
+      { name: "个人栏目：1_Notetaking、3_Unit 3 Handouts、6_Oral Tasks、7_OLNA",},
+      { name: "协作空间：[FA1] Discursive Group Essay 多视角小组议论文",}
+    ]}
+  ]
+},/* ===== 5. CSC 计算机科学 ===== */
+{
+  name: "CSC 计算机科学", color: "#059669",
+  note: "Computer Science ATAR Year 12，授课语言与 ATAR 考试指定语言为 Python。\nUnit 3 = Topic 1 编程 + Topic 2 网络通信；Unit 4 = Topic 3 网络安全 + Topic 4 数据管理。\n技术流程四阶段 Investigate→Design→Develop→Evaluate 贯穿全程，每个知识点都分 Knowledge 理论与 Skills 实操两层。",
+  children: [
+    { name: "Topic 1 · 编程 Programming", note: "Unit 3 第一部分，四个 Topic 中最大的一个", children: [
+      { name: "控制结构：顺序 sequence、选择 selection、迭代 iteration（定次数/后测/前测循环）" },
+      { name: "数据类型：整数、浮点、字符串、布尔" },
+      { name: "运算符：算术（+ − * /、DIV、MOD）、关系、逻辑（AND/OR/NOT）与优先级" },
+      { name: "模块化编码：函数、参数 parameters 与实参 arguments" },
+      { name: "变量作用域：全局 global 与局部 local" },
+      { name: "参数传递：值传递 value 与引用传递 reference" },
+      { name: "数据结构：一维数组、二维数组、字典 dictionary" },
+      { name: "伪代码规范：关键字大写、缩进、IF…END IF、= 赋值与 == 比较、CONST 常量" },
+      { name: "开发框架四阶段：investigate（问题描述、定义需求、甘特图进度表）" },
+      { name: "design 设计数据结构与算法；develop 编码调试与单元测试；evaluate 用户验收测试与复盘" },
+      { name: "开发方法论对比：线性 vs 迭代（Waterfall / Agile / SDLC）" },
+      { name: "12 项良好编程实践：验证输入、清晰简洁的主线、每个子程序单一逻辑任务、桩模块 stubs" },
+      { name: "12 项良好编程实践：便于后续维护、版本控制、定期备份、识别社会伦理问题、异常处理、函数只返回单一数据结构" },
+      { name: "结构化算法与 Big O 记法（识别查找与排序算法的复杂度）" },
+      { name: "查找算法：线性查找、二分查找（要求已排序）" },
+      { name: "排序算法：冒泡排序、插入排序、选择排序" },
+      { name: "测试：验收测试、实时测试数据、负载测试 load testing、单元测试" },
+      { name: "错误检测与调试：语法错误、逻辑错误、运行时错误（除零、数组越界）" },
+      { name: "调试技术：断点、打印语句、手工检查与追踪表 desk checking" },
+      { name: "面向对象编程 OOP：类、对象、属性、方法、抽象、多态、实例化、继承、封装" },
+      { name: "OOP 技能：建类与对象、用继承扩展类、在对象内使用变量与控制结构" },
+      { name: "开发者伦理与法律：承认他人知识产权、遵守行为准则、不生成恶意软件" },
+      { name: "软件的社会影响：恶意软件、对软件的依赖、社交网络、网络安全、网络虚假信息" }
+    ]},
+    { name: "Topic 2 · 网络通信", note: "Unit 3 第二部分", children: [
+      { name: "OSI 七层模型：各层角色、MAC 地址与第 2 层交换、IP 地址与第 3 层路由" },
+      { name: "DoD TCP/IP 四层模型：application / transport / internet / network" },
+      { name: "OSI 与 DoD TCP/IP 模型的对比" },
+      { name: "应用层协议：SMTP、FTP、HTTP、HTTPS、DHCP、DNS、PING" },
+      { name: "传输层协议：TCP、UDP、TLS" },
+      { name: "互联网层协议：IPv4、IPv6、ARP；网络层：Ethernet (802.3)、Wi-Fi (802.11)" },
+      { name: "TCP 与 UDP 的差异及数据包结构对比" },
+      { name: "IP 编址：私有 vs 公网、子网掩码、CIDR 记法、默认网关、DNS、端口 ports" },
+      { name: "IPv4 类别 A/B/C 与默认子网掩码（10.0.0.0/8、172.16.0.0/12、192.168.0.0/16）" },
+      { name: "子网划分 subnetting：切分子网、广播域与分段 segmentation" },
+      { name: "数据包架构：data → segment → packet → frame → bits" },
+      { name: "网络组件：传输介质、调制解调器、路由器、网关、交换机、无线接入点、防火墙" },
+      { name: "客户端-服务器 vs 对等网络 peer-to-peer；LAN vs WAN；网络拓扑；VLAN 与冲突域" },
+      { name: "网络性能：带宽 bandwidth、安全与性能导向的拓扑设计" },
+      { name: "故障排查工具：ping、traceroute" },
+      { name: "用 CISCO 规范绘制与解读网络拓扑图（含中间设备与终端设备）" }
+    ]},    { name: "Topic 3 · 网络安全 Cyber security", note: "Unit 4 第一部分", children: [
+      { name: "伦理与法律：《Privacy Act 1988》与澳大利亚隐私原则 APP 11" },
+      { name: "《Privacy Amendment (Notifiable Data Breaches) Act 2017》数据泄露强制通报" },
+      { name: "外部威胁：社会工程/钓鱼、DoS 与 DDoS、后门 back door、IP 欺骗" },
+      { name: "外部威胁：SQL 注入、中间人 man-in-the-middle、跨站脚本 XSS" },
+      { name: "恶意软件类型：病毒、蠕虫、木马、间谍软件、广告软件、勒索软件" },
+      { name: "物理网络威胁与零日漏洞 zero day vulnerabilities" },
+      { name: "内部威胁：设备丢失被盗、凭证泄露、员工滥用" },
+      { name: "安全解决方案：日志分析、反恶意软件、防火墙过滤、访问控制列表 ACL" },
+      { name: "安全解决方案：入侵防御系统 IPS、虚拟专用网 VPN、用户培训、ICT 行为准则、物理安全" },
+      { name: "安全框架 CIA 三元组：机密性 confidentiality、完整性 integrity、可用性 availability" },
+      { name: "安全框架 AAA：认证 authentication、授权 authorisation、计费/审计 accounting" },
+      { name: "密码学：对称加密 vs 非对称加密（公钥/私钥）；证书 certificate 的用途" },
+      { name: "加密方法演变：替换密码、维吉尼亚密码、Enigma、DES（56 位密钥）" },
+      { name: "现代最佳实践：AES（128/192/256 位）、RSA（2048–4096 位）、ECC、密钥管理与 NIST 指南" },
+      { name: "互联网安全通信：用非对称加密建立连接 + 用对称加密交换数据" },
+      { name: "道德黑客与渗透测试：蓝队 blue team vs 红队 red team；法律与伦理责任" }
+    ]},
+    { name: "Topic 4 · 数据管理 Data Management", note: "Unit 4 第二部分，核心是关系数据库设计与 SQL", children: [
+      { name: "关系数据库组织：实体 entities、属性 attributes、关系（1:1 / 1:M / M:N）" },
+      { name: "表作为实体的实现：字段 fields 与记录 records" },
+      { name: "数据类型：integer / float / Boolean / text / date" },
+      { name: "主键 primary key、外键 foreign key、复合键 composite key" },
+      { name: "数据异常 data anomalies：插入、更新、删除异常" },
+      { name: "数据库与其他系统交互：ODBC；事务 ACID（原子性/一致性/隔离性/持久性）" },
+      { name: "数据字典 data dictionary：元素名、数据类型、长度、描述、约束" },
+      { name: "ER 图（鸦爪记法 crow's foot）：分析 3–10 张表的 ER 图、创建 3–8 张表" },
+      { name: "关系记法 relational notation；解析 M:N 关系（引入连接实体）" },
+      { name: "数据完整性：参照完整性、域完整性、实体完整性" },
+      { name: "数据质量因素：时效性 currency、真实性 authenticity、相关性 relevance、准确性 accuracy、离群值剔除" },
+      { name: "规范化 Normalisation：1NF 原子值且无重复属性" },
+      { name: "2NF 无部分依赖 partial dependency；3NF 无传递依赖 transitive dependency" },
+      { name: "SQL 建表与修改：CREATE / MODIFY / DROP，用约束保证数据有效性" },
+      { name: "SQL 数据操作：SELECT / INSERT / UPDATE / DELETE（含级联删除 cascading deletes）" },
+      { name: "SQL 聚合：COUNT / SUM / AVG / MAX / MIN" },
+      { name: "SQL 分组与排序：ORDER BY、GROUP BY、HAVING、DISTINCT" },
+      { name: "SQL 多表内连接 inner join（最多 4 张表）、计算字段、拼接字段、别名 aliases" },
+      { name: "SQL 运算符：AND、OR、NOT、ANY、BETWEEN、EXISTS、IN、LIKE（通配符 % 与 _）" },
+      { name: "开发中的伦理问题：个人数据收集、隐私顾虑、数据来源可靠性、来源标注、数据挖掘" },
+      { name: "开发中的安全与法律问题：数据保密与备份、访问限制、数据所有权、澳大利亚隐私原则 APP 5/8/10/11/12" }
+    ]},    { name: "语言、工具与考核资源", children: [
+      { name: "编程语言 Python（课程指定，ATAR 考试用）；算法用 SCSA 规范伪代码表达" },
+      { name: "数据库：推荐 SQLite，另附 MySQL with VSCode 指南；建模用鸦爪 ER 记法与关系记法" },
+      { name: "网络制图用 CISCO 拓扑图标规范；排障工具 ping、traceroute" },
+      { name: "明确不要求开发图形用户界面 GUI（程序与数据库均不要求）" },
+      { name: "校本考核四类：Project 项目、Theory test 理论测试、Practical test 实操测试、Examination 考试" },
+      { name: "WACE 外部考试：3 小时 + 10 分钟阅读；Section 1 简答 40% + Section 2 扩展回答 60%，考场提供 Source Booklet 刺激材料册" },
+      { name: "Topic 讲义 PPT：编程 235 页、网络通信 55 页、网络安全 72 页、数据管理 163 页",},
+      { name: "Past ATAR Course Exam（452 页）：2016–2025 全套 WACE 试卷 + Source Booklet",},
+      { name: "Reading Materials（159 页）：Introduction to Scientific Programming with Python 及网络安全专题阅读",},
+      { name: "Mentor Worksheet 9 份（W1–W9）：从算术运算、循环、伪代码追踪表，到网络、数据库规范化、网络安全",},
+      { name: "Lab Practice（50 页）与 Homework：良好编程实践汇报、网络组件信息图、WACE 真题练习",},
+      { name: "Course Introduction（100 页）：SCSA syllabus 全文、Additional Syllabus Support Booklet（伪代码/算法/协议表/CISCO 图例/ER 图/SQL 速查）",},
+      { name: "个人栏目：Class Notes、Handouts（含全部作业答案）、Homework、Quizzes",}
+    ]}
+  ]
+}
+  ]
+};/* ============ 考试日程 ============ */
+const TIMELINE = [
+{date:"9/21（周一）16:30–17:30", subject:"全体", detail:"★ACCT 考试说明会 "},
+{date:"9/21–10/2", subject:"CSC", detail:"Task 3 第一学期期末考试（15%，3 小时）⚠ 与官方 EE 10/27 的关系待老师确认"},
+{date:"10/2（周五）", subject:"PHY", detail:"Task 2 Evaluation &amp; Analysis 评估分析（12%）——另一班为 10/12，按自己班级确认"},
+{date:"10/17（周六）", subject:"HBY", detail:"Lab Assessment 实验考核（Ch1，10%）"},
+{date:"10/27（周二）14:00–15:35", subject:"CSC", detail:"EE（Evaluation Exam）95 分钟"},
+{date:"10/29（周四）14:00–15:00", subject:"CSC", detail:"ACCT 60 分钟 · 是否计分待确认"},
+{date:"10/30（周五）09:00–10:35", subject:"ELD", detail:"EE 95 分钟 ＝ Task 4 听力 7% + Task 5 阅读/视觉理解与综合写作 8%，共 15%"},
+{date:"10/30（周五）14:00–15:00", subject:"ELD", detail:"ACCT 60 分钟 · 与 EE 同一天"},
+{date:"11/2（周一）09:20–10:20", subject:"MAM12", detail:"ACCT 60 分钟 · 范围：微分、积分、离散随机变量（不含对数）"},
+{date:"11/2（周一）14:00–15:35", subject:"MAM12", detail:"Topic Test 2 ＝ EE（20%，95 分钟）· 范围：微分、积分、对数函数"},
+{date:"11/3（周二）", subject:"全体", detail:"全院 NO EXAM"},
+{date:"11/4（周三）09:20–10:20", subject:"PHY", detail:"ACCT 60 分钟"},
+{date:"11/4（周三）14:00–15:35", subject:"PHY", detail:"Task 3 Evaluation Exam（EE，20%，95 分钟）"},
+{date:"11/5（周四）09:20–10:20", subject:"HBY", detail:"ACCT 60 分钟"},
+{date:"11/5（周四）14:00–15:35", subject:"HBY", detail:"Evaluation Exam（Ch1–8，20%，95 分钟）⚠ 官方为 11/5 周四，课程表原印 11/6"},
+{date:"11/12（周四）", subject:"全体", detail:"全院 NO EXAM"},
+{date:"11/19（周四）", subject:"CSC", detail:"Task 4 Theory Test 理论考（10%，网络与网络安全）⚠ 周次表另写 10/22，需确认"},
+{date:"11/23（周一）", subject:"CSC", detail:"Task 5 Project 2 发布/开始（数据库项目，20%）"},
+{date:"11/27（周五）", subject:"PHY", detail:"Task 4 Lab Assessment —— 实验操作部分"},
+{date:"12/9（周三）", subject:"PHY", detail:"Task 4 Lab Assessment —— 笔试部分（实验+笔试合计 10%）"},
+{date:"12/9（周三）", subject:"ELD", detail:"Task 6 课堂说服性演讲（10%）"},
+{date:"12/14（周一）", subject:"CSC", detail:"Project 2 Part 2 课堂验证（Project Validation）"},
+{date:"12/16（周三）", subject:"MAM12", detail:"Topic Test 3（10%）· 离散/连续随机变量、二项分布、正态分布、比例区间估计"},
+{date:"12/17（周四）", subject:"HBY", detail:"Extended Response 2（Ch8–10，8%）"},
+{date:"12/18（周五）", subject:"CSC", detail:"Project 2 Part 1（设计与开发，8%）提交"},
+{date:"1/4（周一）", subject:"CSC", detail:"Project 2 Part 2（SQL/RDBMS 实操验证，12%）截止"},
+{date:"1/4–1/8", subject:"ELD", detail:"Task 7 口头说服演讲（10%）"},
+{date:"1/8（周五）", subject:"ELD", detail:"Task 2B Investigation Part B 研究报告截止（10%）"},
+{date:"1/13（周三）", subject:"HBY", detail:"Topic Test 2（Ch10–12，15%）· 暂定，可能因 Talk/大学访问改期"},
+{date:"1/14（周四）", subject:"PHY", detail:"Task 5 Topic Test 2（14%）· 电磁学、波粒二象性、量子理论"},
+{date:"1/25–2/4", subject:"CSC", detail:"Task 6 第二学期期末考试（25%，3 小时）"},
+{date:"1/29–2/12", subject:"ELD", detail:"Task 8 Final Examination（30%）"},
+{date:"1/29–2/12", subject:"HBY", detail:"Final Exam（Ch1–13，30%）"},
+{date:"1/29–2/13", subject:"PHY", detail:"Task 6 Final Evaluation（FE，30%，Unit 3+4 全部）"},
+{date:"2/1–2/12", subject:"MAM12", detail:"Final Examination（40%，Unit 3+4 全部）"}
+];/* ============ 布局与渲染 ============ */
+const SVG_NS = "http://www.w3.org/2000/svg";
+const NODE_H = 30, V_GAP = 9, H_GAP = 46, PAD_X = 13, MAX_W = 250;
+const measureCtx = document.createElement("canvas").getContext("2d");
+function fontFor(d){ return (d<=1 ? "600 " : "") + (d<=1 ? 13 : 12.5) + "px 'Microsoft YaHei','PingFang SC',system-ui,sans-serif"; }
+function textW(s, d){ measureCtx.font = fontFor(d); return measureCtx.measureText(s).width; }
+
+function wrapText(text, d, maxW){
+  if (textW(text, d) <= maxW) return [text];
+  const parts = text.split(/(?<=[\s\/、,，])/);
+  const lines = []; let cur = "";
+  for (const pt of parts){
+    if (textW(cur + pt, d) > maxW && cur){ lines.push(cur.trim()); cur = pt; }
+    else cur += pt;
+  }
+  if (cur.trim()) lines.push(cur.trim());
+  return lines.slice(0, 3);
+}
+
+let UID = 0;
+function normalize(n, d, color){
+  n._id = UID++;
+  n._depth = d;
+  n._color = n.color || color;
+  n._lines = wrapText(n.name, d, MAX_W);
+  n._w = Math.max(46, Math.max.apply(null, n._lines.map(l => textW(l, d))) + PAD_X*2 + (n.children && n.children.length ? 16 : 0));
+  n._h = n._lines.length > 1 ? NODE_H + (n._lines.length-1)*15 : NODE_H;
+  n._open = d < 2;
+  if (n.children) n.children.forEach(c => normalize(c, d+1, n._color));
+  return n;
+}
+
+function layout(root){
+  const colW = [];
+  (function measure(n){
+    if (!n._visible) return;
+    colW[n._depth] = Math.max(colW[n._depth] || 0, n._w);
+    if (n._open && n.children) n.children.forEach(measure);
+  })(root);
+  const colX = []; let acc = 0;
+  for (let i=0;i<colW.length;i++){ colX[i] = acc; acc += (colW[i]||0) + H_GAP; }
+  let cursor = 0;
+  (function place(n){
+    if (!n._visible) return;
+    n._x = colX[n._depth];
+    const kids = (n._open && n.children) ? n.children.filter(c => c._visible) : [];
+    if (!kids.length){ n._y = cursor + n._h/2; cursor += n._h + V_GAP; return; }
+    const start = cursor;
+    kids.forEach(place);
+    n._y = (start + cursor - V_GAP) / 2;
+  })(root);
+  return { width: acc, height: cursor };
+}
+
+function refreshVisibility(root){
+  (function walk(n, visible){
+    n._visible = visible;
+    if (n.children) n.children.forEach(c => walk(c, visible && n._open));
+  })(root, true);
+}const viewport = document.getElementById("viewport");
+const wrapEl = document.getElementById("canvasWrap");
+let view = {x:0, y:0, k:1};
+
+function applyTransform(){
+  viewport.setAttribute("transform", "translate(" + view.x + "," + view.y + ") scale(" + view.k + ")");
+}
+
+function render(){
+  refreshVisibility(DATA);
+  layout(DATA);
+  while (viewport.firstChild) viewport.removeChild(viewport.firstChild);
+
+  const nodes = [], links = [];
+  (function collect(n){
+    if (!n._visible) return;
+    nodes.push(n);
+    if (n._open && n.children) n.children.forEach(c => { if (c._visible){ links.push([n,c]); collect(c); } });
+  })(DATA);
+
+  links.forEach(function(pair){
+    const p = pair[0], c = pair[1];
+    const x1 = p._x + p._w, y1 = p._y, x2 = c._x, y2 = c._y;
+    const mx = x1 + (x2-x1)*0.5;
+    const path = document.createElementNS(SVG_NS, "path");
+    path.setAttribute("d", "M" + x1 + "," + y1 + " C" + mx + "," + y1 + " " + mx + "," + y2 + " " + x2 + "," + y2);
+    path.setAttribute("class", "link");
+    path.setAttribute("stroke", c._color);
+    viewport.appendChild(path);
+  });
+
+  nodes.forEach(function(n){
+    const g = document.createElementNS(SVG_NS, "g");
+    g.setAttribute("class", "node-g");
+    g.setAttribute("transform", "translate(" + n._x + "," + (n._y - n._h/2) + ")");
+    const isLeaf = !(n.children && n.children.length);
+    const r = document.createElementNS(SVG_NS, "rect");
+    r.setAttribute("class", "node-rect");
+    r.setAttribute("width", n._w); r.setAttribute("height", n._h);
+    if (n._depth <= 1){ r.setAttribute("fill", n._color); r.setAttribute("stroke", n._color); }
+    else { r.setAttribute("fill", "#ffffff"); r.setAttribute("stroke", n._color); }
+    g.appendChild(r);
+
+    const dark = n._depth <= 1;
+    n._lines.forEach(function(line, i){
+      const t = document.createElementNS(SVG_NS, "text");
+      t.setAttribute("class", "node-label");
+      t.setAttribute("x", PAD_X);
+      t.setAttribute("y", n._h/2 + (i - (n._lines.length-1)/2)*15);
+      t.setAttribute("fill", dark ? "#ffffff" : "#1f2733");
+      t.textContent = line;
+      g.appendChild(t);
+    });
+
+    if (!isLeaf){
+      const b = document.createElementNS(SVG_NS, "text");
+      b.setAttribute("class", "badge");
+      b.setAttribute("x", n._w - 11);
+      b.setAttribute("y", n._h/2);
+      b.setAttribute("text-anchor", "middle");
+      b.setAttribute("fill", dark ? "rgba(255,255,255,.85)" : n._color);
+      b.textContent = n._open ? "–" : "+";
+      g.appendChild(b);
+    }
+
+    g.addEventListener("click", function(ev){
+      ev.stopPropagation();
+      if (!isLeaf){ n._open = !n._open; render(); }
+      showDetail(n);
+    });
+    g.addEventListener("mouseenter", function(){ showDetail(n); });
+    viewport.appendChild(g);
+  });
+
+  applyTransform();
+  document.getElementById("stat").textContent = statText(nodes.length, DATA.children.length);
+}
+
+function fit(floorK){
+  const rect = wrapEl.getBoundingClientRect();
+  refreshVisibility(DATA);
+  const b = layout(DATA);
+  const pad = 46;
+  const k = Math.min((rect.width - pad*2)/b.width, (rect.height - pad*2)/b.height, 1.15);
+  view.k = Math.max(k, floorK || 0.1);
+  view.x = pad;
+  view.y = Math.max(20, (rect.height - b.height*view.k)/2);
+  applyTransform();
+}
+function initialView(){
+  refreshVisibility(DATA); layout(DATA);
+  view.k = 0.85; view.x = 46; view.y = 28;
+  applyTransform();
+}/* ============ 交互：平移与缩放 ============ */
+let drag = null;
+wrapEl.addEventListener("mousedown", function(e){
+  drag = {x:e.clientX, y:e.clientY, vx:view.x, vy:view.y};
+  wrapEl.classList.add("dragging");
+});
+window.addEventListener("mousemove", function(e){
+  if (!drag) return;
+  view.x = drag.vx + (e.clientX - drag.x);
+  view.y = drag.vy + (e.clientY - drag.y);
+  applyTransform();
+});
+window.addEventListener("mouseup", function(){ drag = null; wrapEl.classList.remove("dragging"); });
+wrapEl.addEventListener("wheel", function(e){
+  e.preventDefault();
+  const rect = wrapEl.getBoundingClientRect();
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+  const factor = e.deltaY < 0 ? 1.12 : 1/1.12;
+  const k2 = Math.min(4, Math.max(0.05, view.k*factor));
+  view.x = mx - (mx - view.x) * (k2/view.k);
+  view.y = my - (my - view.y) * (k2/view.k);
+  view.k = k2;
+  applyTransform();
+}, {passive:false});
+
+/* ============ 右侧详情面板 ============ */
+const sideTitle = document.getElementById("sideTitle");
+const sideBody = document.getElementById("sideBody");
+const sideSrc = document.getElementById("sideSrc");
+function showDetail(n){
+  sideTitle.textContent = n.name;
+  sideBody.textContent = n.note || ((n.children && n.children.length) ? "（分类目录节点，展开可查看下属知识点）" : "（具体知识点）");
+  if (n.src){ sideSrc.style.display = "block"; sideSrc.textContent = "📁 桌面资料位置：Ausmart\\" + n.src; }
+  else sideSrc.style.display = "none";
+}
+
+/* ============ 搜索 ============ */
+document.getElementById("search").addEventListener("input", function(e){
+  const q = e.target.value.trim().toLowerCase();
+  document.querySelectorAll(".node-g").forEach(function(g){ g.classList.remove("dim","hit"); });
+  if (!q) return;
+  const flat = [];
+  (function walk(n){ flat.push(n); if (n.children) n.children.forEach(walk); })(DATA);
+  const matched = flat.filter(function(n){
+    return n.name.toLowerCase().indexOf(q) >= 0 || (n.note||"").toLowerCase().indexOf(q) >= 0;
+  });
+  if (!matched.length) return;
+  matched.forEach(function(m){ expandAncestors(DATA, m, []); });
+  render();
+  const ids = new Set(matched.map(function(m){ return m._id; }));
+  const idx = [];
+  (function collect(n){ if (n._visible) idx.push(n); if (n._visible && n._open && n.children) n.children.forEach(collect); })(DATA);
+  Array.prototype.forEach.call(document.querySelectorAll(".node-g"), function(g, i){
+    if (idx[i] && ids.has(idx[i]._id)) g.classList.add("hit"); else g.classList.add("dim");
+  });
+});
+function expandAncestors(node, target, path){
+  if (node === target){ path.forEach(function(p){ p._open = true; }); return true; }
+  if (!node.children) return false;
+  for (let i=0;i<node.children.length;i++){
+    if (expandAncestors(node.children[i], target, path.concat(node))) return true;
+  }
+  return false;
+}
+
+/* ============ 图例：点击科目名展开整科 ============ */
+function buildLegend(){
+  const el = document.getElementById("legend");
+  el.innerHTML = "<h2>科目（点击展开整科）</h2>";
+  DATA.children.forEach(function(s){
+    const d = document.createElement("div");
+    d.innerHTML = '<i style="background:' + s._color + '"></i><span>' + s.name + '</span>';
+    d.onclick = function(){
+      (function walk(n){ n._open = true; if (n.children) n.children.forEach(walk); })(s);
+      render(); fit(0.5); showDetail(s);
+    };
+    el.appendChild(d);
+  });
+}
+
+/* ============ 工具栏 ============ */
+document.getElementById("btnExpand").onclick = function(){
+  (function walk(n){ n._open = true; if (n.children) n.children.forEach(walk); })(DATA);
+  render(); fit();
+};
+document.getElementById("btnCollapse").onclick = function(){
+  (function walk(n, d){ n._open = d < 1; if (n.children) n.children.forEach(function(c){ walk(c, d+1); }); })(DATA, 0);
+  render(); fit();
+};
+document.getElementById("btnFit").onclick = function(){ fit(); };
+  document.getElementById("btnLang").onclick = function(){ applyLang(LANG === "en" ? "zh" : "en", true); };
+
+/* ============ 考试日程表 ============ */
+function buildTimeline(){
+  const box = document.getElementById("timeline");
+  let html = '<h2>AUSMAT May 2026 · 五科考核日程</h2>' +
+    '<p class="sub">整理自五科 OneNote 笔记本内的官方 Assessment Outline / Course Outline、9/20 Teams 通知及 9/21 说明会发放的全院官方考试时间表。<br>10/27–11/13 考试季每科两份卷：上午 ACCT（60 分钟）+ 下午 EE（95 分钟）。</p>' +
+    '<table><thead><tr><th>日期</th><th>科目</th><th>考核内容与权重</th></tr></thead><tbody>';
+  TIMELINE.forEach(function(r){
+    let color = "#8896a8";
+    DATA.children.forEach(function(c){ if (c.name.indexOf(r.subject) >= 0) color = c._color; });
+    html += '<tr><td class="date">' + r.date + '</td><td><span class="tag" style="background:' + color + '">' + r.subject + '</span></td><td>' + r.detail + '</td></tr>';
+  });
+  html += "</tbody></table>";
+  box.innerHTML = html;
+}
+document.getElementById("btnTimeline").onclick = function(e){
+  const box = document.getElementById("timeline");
+  box.classList.toggle("show");
+  e.target.classList.toggle("active");
+  e.target.textContent = box.classList.contains("show") ? "返回导图" : "考试日程";
+};
+
+/* ============ 启动 ============ */
+
+// ============ 双语支持（由构建脚本注入）============
+function statText(n, s){
+  return LANG === "en"
+    ? "  " + n + " visible nodes · " + s + " subjects"
+    : "　共 " + n + " 个可见节点 · " + s + " 个科目";
+}
+
+
+// 界面文案表（英文）。下面这行不能带 // 前缀——
+// 占位符会被替换成 "var UI_EN = {...}"，若前面有 // 就会把整个声明注释掉，
+// 导致运行时报 "UI_EN is not defined"。这个坑真实踩过。
+var UI_EN = {"AUSMAT 学习资料思维导图": "AUSMAT Study Notes — Mind Map", "全部展开": "Expand all", "全部收起": "Collapse all", "适应窗口": "Fit", "考试日程": "Timeline", "滚轮缩放 · 拖拽平移 · 点击节点展开/收起 · 点击右侧科目名展开整科": "Scroll to zoom · drag to pan · click a node to expand/collapse · click a subject on the right to expand it", "内容详情": "Details", "点击导图中的节点查看说明": "Click a node to see its details", "这里会显示该知识点的具体内容。": "Details of the selected topic appear here.", "搜索知识点…": "Search topics…", "科目（点击展开整科）": "Subjects (click to expand)", "（分类目录节点，展开可查看下属知识点）": "(Category node — expand to see the topics under it)", "（具体知识点。相关讲义、练习与真题见桌面 Ausmart 文件夹内对应科目目录）": "(A specific topic.)", "返回站点": "Back to site"};
+var I18N = {"<root>/note": {"name": "", "note": "Overview of the five subjects in AUSMAT May 2026 (Western Australian WACE / ATAR courses).\n\nClick a node to expand/collapse it; the panel on the right shows the explanation for that topic."}, "AUSMAT May 2026 学习资料": {"name": "AUSMAT May 2026 Study Materials", "note": "Overview of the five subjects in AUSMAT May 2026 (Western Australian WACE / ATAR courses).\n\nClick a node to expand/collapse it; the panel on the right shows the explanation for that topic."}, "AUSMAT May 2026 学习资料/MAM12 数学方法": {"name": "MAM12 Mathematics Methods", "note": "Mathematics Methods ATAR Year 12.\nThe main thread is 'calculus + statistics': Unit 3 covers differentiation, integrals and discrete random variables; Unit 4 covers the logarithmic function, continuous random variables and the normal distribution, and interval estimates for proportions.\n\nFinal grade composition: WACE external examination 40% + school-based tests and examinations 40% + Investigation task 20%."}, "AUSMAT May 2026 学习资料/MAM12 数学方法/U3 · 微分进阶与应用": {"name": "U3 · Further Differentiation and Applications", "note": "Further differentiation and applications (about 20 lessons)"}, "AUSMAT May 2026 学习资料/MAM12 数学方法/U3 · 微分进阶与应用/指数函数求导：e 的引入 lim(aʰ−1)/h、d/dx(eˣ)=eˣ、A·e^(kx) 建模": {"name": "Differentiating exponential functions: introducing e via lim(aʰ−1)/h, d/dx(eˣ)=eˣ, modelling with A·e^(kx)", "note": ""}, "AUSMAT May 2026 学习资料/MAM12 数学方法/U3 · 微分进阶与应用/三角函数求导：d/dx(sin x)=cos x、d/dx(cos x)=−sin x（含几何构造法）": {"name": "Differentiating trigonometric functions: d/dx(sin x)=cos x, d/dx(cos x)=−sin x (including the geometric construction)", "note": ""}, "AUSMAT May 2026 学习资料/MAM12 数学方法/U3 · 微分进阶与应用/求导法则：乘积法则、商法则、链式法则（复合函数 f(ax−b)）": {"name": "Differentiation rules: product rule, quotient rule, chain rule (composite functions f(ax−b))", "note": ""}, "AUSMAT May 2026 学习资料/MAM12 数学方法/U3 · 微分进阶与应用/二阶导数：作为变化率的变化率、加速度是位置的二阶导数": {"name": "Second derivative: the rate of change of a rate of change; acceleration as the second derivative of position", "note": ""}, "AUSMAT May 2026 学习资料/MAM12 数学方法/U3 · 微分进阶与应用/增量公式 δy ≈ f′(x)·δx（误差与近似计算）": {"name": "The increment formula δy ≈ f′(x)·δx (error and approximation calculations)", "note": ""}, "AUSMAT May 2026 学习资料/MAM12 数学方法/U3 · 微分进阶与应用/凹凸性与拐点；二阶导数判别法判定局部极大/极小": {"name": "Concavity and points of inflection; using the second derivative test to determine local maxima/minima", "note": ""}, "AUSMAT May 2026 学习资料/MAM12 数学方法/U3 · 微分进阶与应用/用一、二阶导数求驻点与拐点并作图；优化问题（最值应用）": {"name": "Using the first and second derivatives to find stationary points and points of inflection and sketch graphs; optimisation problems (applied maxima and minima)", "note": ""}, "AUSMAT May 2026 学习资料/MAM12 数学方法/U3 · 积分 Integrals": {"name": "U3 · Integrals", "note": "About 20 lessons, from anti-differentiation to definite integrals and the Fundamental Theorem of Calculus"}, "AUSMAT May 2026 学习资料/MAM12 数学方法/U3 · 积分 Integrals/反导数（不定积分）：∫xⁿdx、∫eˣdx、∫sin x dx、∫cos x dx 等「九公式」": {"name": "Anti-differentiation (indefinite integrals): the 'nine formulas' such as ∫xⁿdx, ∫eˣdx, ∫sin x dx, ∫cos x dx", "note": ""}, "AUSMAT May 2026 学习资料/MAM12 数学方法/U3 · 积分 Integrals/∫f(ax−b)dx 型不定积分与反微分的线性性质": {"name": "Indefinite integrals of the form ∫f(ax−b)dx and the linearity properties of anti-differentiation", "note": ""}, "AUSMAT May 2026 学习资料/MAM12 数学方法/U3 · 积分 Integrals/曲线族：由 f′(x) 与初始条件 f(a)=b 求出 f(x)": {"name": "Families of curves: finding f(x) from f′(x) and the initial condition f(a)=b", "note": ""}, "AUSMAT May 2026 学习资料/MAM12 数学方法/U3 · 积分 Integrals/定积分：Σf(xᵢ)δxᵢ 求和逼近，定义为和的极限": {"name": "Definite integrals: approximation by the sum Σf(xᵢ)δxᵢ, defined as the limit of a sum", "note": ""}, "AUSMAT May 2026 学习资料/MAM12 数学方法/U3 · 积分 Integrals/定积分作为曲线下面积；带符号面积的相加": {"name": "The definite integral as the area under a curve; adding signed areas", "note": ""}, "AUSMAT May 2026 学习资料/MAM12 数学方法/U3 · 积分 Integrals/微积分基本定理：F′(x)=f(x)、∫ₐᵇf′(x)dx = f(b)−f(a)": {"name": "The Fundamental Theorem of Calculus: F′(x)=f(x), ∫ₐᵇf′(x)dx = f(b)−f(a)", "note": ""}, "AUSMAT May 2026 学习资料/MAM12 数学方法/U3 · 积分 Integrals/积分应用：由变化率求总变化、曲线间面积、由 v 求位移、由 a 求位置": {"name": "Applications of integration: total change from a rate of change, area between curves, displacement from v, position from a", "note": ""}, "AUSMAT May 2026 学习资料/MAM12 数学方法/U3 · 离散随机变量": {"name": "U3 · Discrete Random Variables", "note": "Discrete random variables (about 15 lessons)"}, "AUSMAT May 2026 学习资料/MAM12 数学方法/U3 · 离散随机变量/离散随机变量与概率函数；用相对频率作概率点估计": {"name": "Discrete random variables and probability functions; using relative frequencies as point estimates of probability", "note": ""}, "AUSMAT May 2026 学习资料/MAM12 数学方法/U3 · 离散随机变量/均匀离散分布与非均匀离散分布": {"name": "Uniform and non-uniform discrete distributions", "note": ""}, "AUSMAT May 2026 学习资料/MAM12 数学方法/U3 · 离散随机变量/期望值/均值（位置度量）、方差与标准差（离散程度，用 CAS 计算）": {"name": "Expected value/mean (measure of location), variance and standard deviation (measure of spread, calculated with CAS)", "note": ""}, "AUSMAT May 2026 学习资料/MAM12 数学方法/U3 · 离散随机变量/线性变换 Y=aX+b 对均值与标准差的影响": {"name": "The effect of the linear transformation Y=aX+b on the mean and standard deviation", "note": ""}, "AUSMAT May 2026 学习资料/MAM12 数学方法/U3 · 离散随机变量/Bernoulli 分布：适用情境、均值 p、方差 p(1−p)": {"name": "The Bernoulli distribution: when it applies, mean p, variance p(1−p)", "note": ""}, "AUSMAT May 2026 学习资料/MAM12 数学方法/U3 · 离散随机变量/二项分布：P(X=x)=C(n,x)pˣ(1−p)ⁿ⁻ˣ、均值 np、方差 np(1−p)": {"name": "The binomial distribution: P(X=x)=C(n,x)pˣ(1−p)ⁿ⁻ˣ, mean np, variance np(1−p)", "note": ""}, "AUSMAT May 2026 学习资料/MAM12 数学方法/U4 · 对数函数": {"name": "U4 · The Logarithmic Function", "note": "The logarithmic function (about 18 lessons)"}, "AUSMAT May 2026 学习资料/MAM12 数学方法/U4 · 对数函数/对数定义为指数：aˣ=b ⇔ x=log_a b；a^(log_a b)=b": {"name": "Logarithms defined as exponents: aˣ=b ⇔ x=log_a b; a^(log_a b)=b", "note": ""}, "AUSMAT May 2026 学习资料/MAM12 数学方法/U4 · 对数函数/对数代数性质：log(xy)、log(xⁿ)、log(x/y)、log_a 1=0": {"name": "Algebraic properties of logarithms: log(xy), log(xⁿ), log(x/y), log_a 1=0", "note": ""}, "AUSMAT May 2026 学习资料/MAM12 数学方法/U4 · 对数函数/对数刻度（logarithmic scales）的解释与使用": {"name": "Interpreting and using logarithmic scales", "note": ""}, "AUSMAT May 2026 学习资料/MAM12 数学方法/U4 · 对数函数/用对数解指数方程；代数法与图像法解对数方程": {"name": "Solving exponential equations using logarithms; solving logarithmic equations algebraically and graphically", "note": ""}, "AUSMAT May 2026 学习资料/MAM12 数学方法/U4 · 对数函数/y=log_a x 图像特征、渐近线与 y=log_a(x−c)+b 的平移": {"name": "Graph features of y=log_a x, the asymptote, and translations of y=log_a(x−c)+b", "note": ""}, "AUSMAT May 2026 学习资料/MAM12 数学方法/U4 · 对数函数/自然对数 ln x 与 eˣ 的互逆关系": {"name": "The inverse relationship between the natural logarithm ln x and eˣ", "note": ""}, "AUSMAT May 2026 学习资料/MAM12 数学方法/U4 · 对数函数/d/dx(ln x)=1/x、∫(1/x)dx = ln x + c": {"name": "d/dx(ln x)=1/x, ∫(1/x)dx = ln x + c", "note": ""}, "AUSMAT May 2026 学习资料/MAM12 数学方法/U4 · 对数函数/d/dx(ln f(x)) 与 ∫f′(x)/f(x)dx = ln f(x)+c": {"name": "d/dx(ln f(x)) and ∫f′(x)/f(x)dx = ln f(x)+c", "note": ""}, "AUSMAT May 2026 学习资料/MAM12 数学方法/U4 · 连续随机变量与正态分布": {"name": "U4 · Continuous Random Variables and the Normal Distribution", "note": "Continuous random variables and the normal distribution (about 15 lessons)"}, "AUSMAT May 2026 学习资料/MAM12 数学方法/U4 · 连续随机变量与正态分布/用相对频率直方图估计连续随机变量概率": {"name": "Estimating probabilities for continuous random variables from relative frequency histograms", "note": ""}, "AUSMAT May 2026 学习资料/MAM12 数学方法/U4 · 连续随机变量与正态分布/概率密度函数 pdf 与累积分布函数 cdf；概率由积分给出": {"name": "Probability density function (pdf) and cumulative distribution function (cdf); probabilities given by integration", "note": ""}, "AUSMAT May 2026 学习资料/MAM12 数学方法/U4 · 连续随机变量与正态分布/连续随机变量的期望、方差、标准差；线性变换对均值与标准差的影响": {"name": "Expected value, variance and standard deviation of continuous random variables; the effect of a linear transformation on the mean and standard deviation", "note": ""}, "AUSMAT May 2026 学习资料/MAM12 数学方法/U4 · 连续随机变量与正态分布/正态模型适用情境与正态 pdf 图像特征（均值 μ、标准差 σ）": {"name": "When the normal model applies, and graph features of the normal pdf (mean μ, standard deviation σ)", "note": ""}, "AUSMAT May 2026 学习资料/MAM12 数学方法/U4 · 连续随机变量与正态分布/标准正态分布；用 CAS 计算概率与分位数/百分位": {"name": "The standard normal distribution; using CAS to calculate probabilities and quantiles/percentiles", "note": ""}, "AUSMAT May 2026 学习资料/MAM12 数学方法/U4 · 比例的区间估计": {"name": "U4 · Interval Estimates for Proportions", "note": "Interval estimates for proportions (about 22 lessons)"}, "AUSMAT May 2026 学习资料/MAM12 数学方法/U4 · 比例的区间估计/随机抽样：总体 / 样本 / 参数 / 统计量 / 普查": {"name": "Random sampling: population / sample / parameter / statistic / census", "note": ""}, "AUSMAT May 2026 学习资料/MAM12 数学方法/U4 · 比例的区间估计/抽样偏差来源：选择偏差、设计缺陷、访谈者、回忆与报告、完成、无应答、自选样本": {"name": "Sources of sampling bias: selection bias, flawed study design, interviewer bias, recall and reporting bias, completion bias, non-response bias, self-selected samples", "note": ""}, "AUSMAT May 2026 学习资料/MAM12 数学方法/U4 · 比例的区间估计/样本比例 p̂ 作为随机变量：均值 p、标准差 √(p(1−p)/n)": {"name": "The sample proportion p̂ as a random variable: mean p, standard deviation √(p(1−p)/n)", "note": ""}, "AUSMAT May 2026 学习资料/MAM12 数学方法/U4 · 比例的区间估计/大样本下 p̂ 的近似正态性；中心极限定理 CLT": {"name": "Approximate normality of p̂ for large samples; the central limit theorem (CLT)", "note": ""}, "AUSMAT May 2026 学习资料/MAM12 数学方法/U4 · 比例的区间估计/比例的近似置信区间：p̂ ± z√(p̂(1−p̂)/n)": {"name": "Approximate confidence interval for a proportion: p̂ ± z√(p̂(1−p̂)/n)", "note": ""}, "AUSMAT May 2026 学习资料/MAM12 数学方法/U4 · 比例的区间估计/误差范围 E = z√(p̂(1−p̂)/n)；误差范围与置信水平的权衡": {"name": "Margin of error E = z√(p̂(1−p̂)/n); the trade-off between margin of error and confidence level", "note": ""}, "AUSMAT May 2026 学习资料/MAM12 数学方法/考核与备考资源": {"name": "Assessment and Exam Preparation Resources", "note": ""}, "AUSMAT May 2026 学习资料/MAM12 数学方法/考核与备考资源/校本任务：Topic Test 1（10%）、Investigation（20%）、Topic Test 2（20%）、Topic Test 3（10%）、Final（40%）": {"name": "School-based tasks: Topic Test 1 (10%), Investigation (20%), Topic Test 2 (20%), Topic Test 3 (10%), Final (40%)", "note": ""}, "AUSMAT May 2026 学习资料/MAM12 数学方法/考核与备考资源/Investigation：周长固定的烤盘最大体积优化（3 种形状比较）+ 联系联合国 SDG，28 分制、2 人小组": {"name": "Investigation: maximising the volume of a baking tray with a fixed perimeter (comparing 3 shapes) + links to the UN SDGs, out of 28 marks, groups of 2", "note": ""}, "AUSMAT May 2026 学习资料/MAM12 数学方法/考核与备考资源/WACE 外部考试：Section 1 禁用计算器 50 分钟（35%）+ Section 2 可用绘图/CAS 计算器 100 分钟（65%，可带 2 张 A4 手写笔记）": {"name": "WACE external examination: Section 1 calculator-free 50 minutes (35%) + Section 2 graphics/CAS calculator permitted 100 minutes (65%, 2 sheets of handwritten A4 notes allowed)", "note": ""}, "AUSMAT May 2026 学习资料/MAM12 数学方法/考核与备考资源/CAS Manual（46 页）：TI-Nspire CX 指令手册——作图、解方程、微积分、复数、向量矩阵、统计分布与置信区间": {"name": "CAS Manual (46 pages): TI-Nspire CX command manual — graphing, solving equations, calculus, complex numbers, vectors and matrices, statistical distributions and confidence intervals", "note": ""}, "AUSMAT May 2026 学习资料/MAM12 数学方法/考核与备考资源/三大讲义册：1.Differentiation（293 页）、2.Integration n Log（396 页）、3.Statistics（443 页）": {"name": "Three main course booklets: 1. Differentiation (293 pages), 2. Integration n Log (396 pages), 3. Statistics (443 pages)", "note": ""}, "AUSMAT May 2026 学习资料/MAM12 数学方法/考核与备考资源/历年卷与复习：MAM Past Year Papers（WACE 2016–2025，806 页）、Revision Series（878 页）、Test Solutions、Exam Prep 考点清单": {"name": "Past papers and revision: MAM Past Year Papers (WACE 2016–2025, 806 pages), Revision Series (878 pages), Test Solutions, Exam Prep topic checklist", "note": ""}, "AUSMAT May 2026 学习资料/MAM12 数学方法/考核与备考资源/个人栏目：Class Notes（37 页笔记）、Homework、Quizzes": {"name": "Personal section: Class Notes (37 pages of notes), Homework, Quizzes", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学": {"name": "HBY Human Biology", "note": "Human Biology ATAR Year 12, textbook Human Perspectives (8th Ed.).\nUnit 3 = homeostasis and disease (Ch1–8); Unit 4 = human variation and evolution (Ch9–13).\nThree strands: science inquiry skills, science as a human endeavour (SHE), science understanding."}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch1 探究人体生物学": {"name": "U3 · Ch1 Investigating Human Biology", "note": "An overview of science inquiry skills; the methodological basis for all later practical work and assessments"}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch1 探究人体生物学/探究类型：观察法、对照实验、双盲实验、安慰剂、随机分组、调查、试错、个案/纵向研究": {"name": "Types of inquiry: observational studies, controlled experiments, double-blind experiments, placebos, random allocation, surveys, trial and error, case/longitudinal studies", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch1 探究人体生物学/科学方法流程：识别问题→文献综述→提出假设→实验→分析→结论→报告": {"name": "The scientific method process: identify a problem → literature review → formulate a hypothesis → experiment → analyse → conclude → report", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch1 探究人体生物学/变量：自变量 IV / 因变量 DV / 控制变量 CV": {"name": "Variables: independent variable IV / dependent variable DV / controlled variable CV", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch1 探究人体生物学/实验质量：效度 validity、信度 reliability、准确度 accuracy": {"name": "Experimental quality: validity, reliability, accuracy", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch1 探究人体生物学/重复 repeats 与复本 replicates 的区别；测量误差与不确定性": {"name": "The difference between repeats and replicates; measurement error and uncertainty", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch1 探究人体生物学/数据类型：定性/定量、离散/连续；误差识别与图表类型选择": {"name": "Data types: qualitative/quantitative, discrete/continuous; identifying errors and choosing graph types", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch1 探究人体生物学/伦理：人体受试者知情同意；动物伦理 3R（替代/减少/优化）；风险评估": {"name": "Ethics: informed consent for human participants; the 3Rs of animal ethics (replacement/reduction/refinement); risk assessment", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch2 激素调控人体（内分泌）": {"name": "U3 · Ch2 Hormonal Regulation of the Body (Endocrine)", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch2 激素调控人体（内分泌）/外分泌腺 vs 内分泌腺（无导管、直接分泌入血）": {"name": "Exocrine vs endocrine glands (ductless, secreting directly into the blood)", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch2 激素调控人体（内分泌）/9 大内分泌腺：下丘脑、垂体（前叶/后叶）、甲状腺、甲状旁腺、胸腺、肾上腺（皮质/髓质）、胰岛、性腺、松果体": {"name": "The 9 major endocrine glands: hypothalamus, pituitary (anterior/posterior lobe), thyroid, parathyroid, thymus, adrenal (cortex/medulla), pancreatic islets, gonads, pineal gland", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch2 激素调控人体（内分泌）/类固醇激素（脂溶性、源自胆固醇）vs 蛋白/胺类激素（水溶性）": {"name": "Steroid hormones (lipid-soluble, derived from cholesterol) vs protein/amine hormones (water-soluble)", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch2 激素调控人体（内分泌）/作用机制：胞内受体→激活基因→转录翻译 vs 膜受体→第二信使→酶级联放大": {"name": "Mechanisms of action: intracellular receptors → gene activation → transcription and translation vs membrane receptors → second messengers → enzyme cascade amplification", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch2 激素调控人体（内分泌）/下丘脑-垂体通讯：前叶（垂体门脉系统与释放因子）vs 后叶（神经细胞直接支配）": {"name": "Hypothalamus–pituitary communication: anterior lobe (hypophyseal portal system and releasing factors) vs posterior lobe (direct innervation by neurons)", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch2 激素调控人体（内分泌）/代表激素：ADH、催产素、FSH、LH、GH、TSH、ACTH、胰岛素、胰高血糖素、肾上腺素、皮质醇、甲状腺素": {"name": "Representative hormones: ADH, oxytocin, FSH, LH, GH, TSH, ACTH, insulin, glucagon, adrenaline, cortisol, thyroxine", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch2 激素调控人体（内分泌）/负反馈调节机制；激素失调与激素替代疗法": {"name": "Negative feedback mechanisms; hormonal disorders and hormone replacement therapy", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch3 神经元快速通讯": {"name": "U3 · Ch3 Rapid Communication by Neurons", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch3 神经元快速通讯/神经元结构：胞体、树突、轴突、髓鞘（施万细胞）、轴突末梢": {"name": "Neuron structure: cell body, dendrites, axon, myelin sheath (Schwann cells), axon terminals", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch3 神经元快速通讯/神经元 4 种结构类型与 3 种功能类型（感觉/中间/运动）": {"name": "The 4 structural types and 3 functional types of neurons (sensory/interneuron/motor)", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch3 神经元快速通讯/静息膜电位（三大维持因素）与钠钾泵": {"name": "Resting membrane potential (three main maintaining factors) and the sodium–potassium pump", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch3 神经元快速通讯/动作电位四阶段：去极化→复极化→超极化→恢复静息；阈值 −55 mV、峰值 +30 mV": {"name": "The four phases of the action potential: depolarisation → repolarisation → hyperpolarisation → return to resting; threshold −55 mV, peak +30 mV", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch3 神经元快速通讯/全或无定律 all-or-none、不应期；刺激强度→动作电位频率": {"name": "The all-or-none law, refractory period; stimulus strength → action potential frequency", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch3 神经元快速通讯/跳跃式传导 saltatory conduction（有髓鞘）vs 无髓鞘轴突；传导速度": {"name": "Saltatory conduction (myelinated) vs unmyelinated axons; conduction velocity", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch3 神经元快速通讯/化学突触传递：钙内流→突触小泡融合→神经递质→突触后受体；乙酰胆碱酯酶": {"name": "Chemical synaptic transmission: calcium influx → synaptic vesicle fusion → neurotransmitter → postsynaptic receptors; acetylcholinesterase", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch3 神经元快速通讯/神经-肌肉接头；药物与毒素如何干扰突触": {"name": "The neuromuscular junction; how drugs and toxins interfere with synapses", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch3 神经元快速通讯/6 类受体（温度/渗透压/化学/机械/痛觉/本体感受）与躯体/特殊感觉": {"name": "The 6 types of receptors (thermoreceptors/osmoreceptors/chemoreceptors/mechanoreceptors/pain/proprioceptors) and somatic/special senses", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch3 神经元快速通讯/反射与反射弧五部分：受体→感觉神经元→中间神经元→运动神经元→效应器": {"name": "Reflexes and the five parts of the reflex arc: receptor → sensory neuron → interneuron → motor neuron → effector", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch3 神经元快速通讯/神经系统与内分泌系统比较：速度、持续时间、信息性质、特异性": {"name": "Comparing the nervous and endocrine systems: speed, duration, nature of the information, specificity", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch4 神经系统的组织": {"name": "U3 · Ch4 Organisation of the Nervous System", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch4 神经系统的组织/中枢神经系统 CNS 与三层保护：颅骨脊椎、脑膜、脑脊液": {"name": "The central nervous system (CNS) and its three layers of protection: skull and vertebral column, meninges, cerebrospinal fluid", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch4 神经系统的组织/脑结构：大脑四叶（额/顶/颞/枕）、小脑、延髓、下丘脑、胼胝体": {"name": "Brain structure: the four lobes of the cerebrum (frontal/parietal/temporal/occipital), cerebellum, medulla oblongata, hypothalamus, corpus callosum", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch4 神经系统的组织/大脑功能分区与语言区：Broca 区（产生）与 Wernicke 区（理解）": {"name": "Functional areas of the cerebrum and the language areas: Broca's area (production) and Wernicke's area (comprehension)", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch4 神经系统的组织/白质与灰质；神经束 tracts": {"name": "White matter and grey matter; nerve tracts", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch4 神经系统的组织/周围神经系统 PNS：传入（躯体/内脏感觉）与传出（躯体运动 + 自主神经）": {"name": "Peripheral nervous system PNS: afferent (somatic/visceral sensory) and efferent (somatic motor + autonomic)", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch4 神经系统的组织/自主神经：交感 vs 副交感对各效应器（心、血管、瞳孔、消化、呼吸、汗腺）的对比": {"name": "Autonomic nervous system: sympathetic vs parasympathetic comparison across effectors (heart, blood vessels, pupils, digestion, respiration, sweat glands)", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch4 神经系统的组织/战斗或逃跑反应 fight or flight；脊髓背根与腹根结构": {"name": "Fight or flight response; structure of the dorsal and ventral roots of the spinal cord", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch5 稳态：血糖与体温": {"name": "U3 · Ch5 Homeostasis: blood glucose and body temperature", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch5 稳态：血糖与体温/刺激-反应-反馈模型 SRF；负反馈 vs 正反馈": {"name": "Stimulus-Response-Feedback model SRF; negative feedback vs positive feedback", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch5 稳态：血糖与体温/血糖：糖原分解、糖原生成、脂解、脂肪生成、糖异生": {"name": "Blood glucose: glycogenolysis, glycogenesis, lipolysis, lipogenesis, gluconeogenesis", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch5 稳态：血糖与体温/血糖激素：胰岛素、胰高血糖素、肾上腺素、皮质醇及其分泌腺": {"name": "Blood glucose hormones: insulin, glucagon, adrenaline, cortisol and their secreting glands", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch5 稳态：血糖与体温/效应器：肝、肌肉、脂肪组织各自的独特反应": {"name": "Effectors: the distinct responses of liver, muscle and adipose tissue", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch5 稳态：血糖与体温/糖尿病 mellitus 与临床数据分析": {"name": "Diabetes mellitus and clinical data analysis", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch5 稳态：血糖与体温/体温：7 种产热/散热途径（辐射、传导、对流、蒸发等）": {"name": "Body temperature: 7 heat production/heat loss pathways (radiation, conduction, convection, evaporation, etc.)", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch5 稳态：血糖与体温/体温效应器：血管舒缩、骨骼肌战栗、汗腺与竖毛肌、甲状腺素与肾上腺素、行为性调节": {"name": "Thermoregulatory effectors: vasoconstriction/vasodilation, skeletal muscle shivering, sweat glands and arrector pili muscles, thyroxine and adrenaline, behavioural regulation", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch5 稳态：血糖与体温/体温失调：低体温、中暑、热衰竭": {"name": "Thermoregulatory disorders: hypothermia, heat stroke, heat exhaustion", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch6 体液与气体浓度稳态": {"name": "U3 · Ch6 Homeostasis of body fluids and gas concentrations", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch6 体液与气体浓度稳态/体液类型与分布：细胞内液 / 细胞外液（血浆、组织液）": {"name": "Body fluid types and distribution: intracellular fluid / extracellular fluid (plasma, interstitial fluid)", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch6 体液与气体浓度稳态/肾单位结构：肾小球、鲍曼囊、近曲小管、髓袢、远曲小管、集合管": {"name": "Nephron structure: glomerulus, Bowman's capsule, proximal convoluted tubule, loop of Henle, distal convoluted tubule, collecting duct", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch6 体液与气体浓度稳态/尿形成四步：滤过→重吸收→分泌→排泄；尿检 urinalysis": {"name": "Four steps of urine formation: filtration → reabsorption → secretion → excretion; urinalysis", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch6 体液与气体浓度稳态/渗透调节：下丘脑渗透压感受器、ADH→水通道蛋白 aquaporin、醛固酮→钠通道、口渴反应": {"name": "Osmoregulation: hypothalamic osmoreceptors, ADH → aquaporin water channels, aldosterone → sodium channels, thirst response", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch6 体液与气体浓度稳态/气体浓度：O₂/CO₂ 运输、CO₂ 浓度与血液 pH（碳酸/碳酸氢盐缓冲体系）": {"name": "Gas concentrations: O₂/CO₂ transport, CO₂ concentration and blood pH (carbonic acid/bicarbonate buffer system)", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch6 体液与气体浓度稳态/中枢与外周化学感受器；延髓调节中枢；肋间肌与膈肌": {"name": "Central and peripheral chemoreceptors; medullary control centre; intercostal muscles and diaphragm", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch6 体液与气体浓度稳态/换气过度 hyperventilation：深潜的致命风险 vs 缓解焦虑的用途": {"name": "Hyperventilation: fatal risk in deep diving vs use for relieving anxiety", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch7 抗感染防御（免疫）": {"name": "U3 · Ch7 Defence against infection (immunity)", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch7 抗感染防御（免疫）/病原体四大类型：细菌、病毒、真菌、寄生虫": {"name": "Four major types of pathogens: bacteria, viruses, fungi, parasites", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch7 抗感染防御（免疫）/细菌：原核 vs 真核、4 种形态（球菌/杆菌/螺旋菌/弧菌）、革兰氏染色与细胞壁结构": {"name": "Bacteria: prokaryotic vs eukaryotic, 4 shapes (cocci/bacilli/spirilla/vibrio), Gram staining and cell wall structure", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch7 抗感染防御（免疫）/病毒结构与复制方式；与细菌的三大区别": {"name": "Virus structure and replication; three key differences from bacteria", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch7 抗感染防御（免疫）/6 种传播途径：直接接触、间接接触、体液、病媒、污染食物与水、空气飞沫": {"name": "6 modes of transmission: direct contact, indirect contact, body fluids, vectors, contaminated food and water, airborne droplets", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch7 抗感染防御（免疫）/外部防御（皮肤、黏膜、纤毛、胃酸、泪液、唾液等）与 4 种保护性反射": {"name": "External defences (skin, mucous membranes, cilia, stomach acid, tears, saliva, etc.) and 4 protective reflexes", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch7 抗感染防御（免疫）/内部非特异性防御：吞噬作用、炎症（肥大细胞与组织胺）、发热（致热原与体温调定点上移）、淋巴系统": {"name": "Internal non-specific defences: phagocytosis, inflammation (mast cells and histamine), fever (pyrogens and rising temperature set point), lymphatic system", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch7 抗感染防御（免疫）/特异性免疫·体液免疫：B 细胞→浆细胞→抗体 6 种作用方式 + 记忆细胞": {"name": "Specific immunity · humoral immunity: B cells → plasma cells → antibodies, 6 modes of action + memory cells", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch7 抗感染防御（免疫）/特异性免疫·细胞免疫：辅助 T / 细胞毒 T 细胞 + 记忆细胞；B 与 T 细胞比较": {"name": "Specific immunity · cell-mediated immunity: helper T / cytotoxic T cells + memory cells; B vs T cell comparison", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch7 抗感染防御（免疫）/免疫四大类型（主动/被动 × 自然/人工）；疫苗接种与群体免疫": {"name": "Four types of immunity (active/passive × natural/artificial); vaccination and herd immunity", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch7 抗感染防御（免疫）/抗生素（抑菌/杀菌、广谱/窄谱）与抗病毒药；耐药性 antibiotic resistance": {"name": "Antibiotics (bacteriostatic/bactericidal, broad-spectrum/narrow-spectrum) and antivirals; antibiotic resistance", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch8 治疗疾病的技术": {"name": "U3 · Ch8 Technologies for treating disease", "note": "Key chapter for Science as a Human Endeavour"}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch8 治疗疾病的技术/重组 DNA 技术：限制性内切酶（平末端/黏末端）、DNA 连接酶、质粒": {"name": "Recombinant DNA technology: restriction enzymes (blunt/sticky ends), DNA ligase, plasmids", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch8 治疗疾病的技术/细菌转化 transformation：热激、CaCl₂、LB 培养基、抗生素筛选": {"name": "Bacterial transformation: heat shock, CaCl₂, LB medium, antibiotic selection", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch8 治疗疾病的技术/基因治疗 gene therapy；干细胞与细胞替代疗法；组织工程": {"name": "Gene therapy; stem cells and cell replacement therapy; tissue engineering", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch8 治疗疾病的技术/疾病治疗应用：糖尿病、甲亢/甲减、脑部疾病（Alzheimer's、Parkinson's）": {"name": "Disease treatment applications: diabetes, hyperthyroidism/hypothyroidism, brain disorders (Alzheimer's, Parkinson's)", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U3 · Ch8 治疗疾病的技术/合成激素；用重组 DNA 技术生产激素与疫苗": {"name": "Synthetic hormones; producing hormones and vaccines using recombinant DNA technology", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U4 · Ch9 进化产生代际变化": {"name": "U4 · Ch9 Evolution produces change between generations", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U4 · Ch9 进化产生代际变化/中心法则复习：DNA→RNA→蛋白质": {"name": "Central dogma review: DNA → RNA → protein", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U4 · Ch9 进化产生代际变化/突变：基因突变与染色体突变、诱变剂 mutagens；突变是新等位基因的最终来源": {"name": "Mutation: gene mutations and chromosomal mutations, mutagens; mutation is the ultimate source of new alleles", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U4 · Ch9 进化产生代际变化/变异来源：突变、独立分配、交叉互换、随机受精、不分离 non-disjunction": {"name": "Sources of variation: mutation, independent assortment, crossing over, random fertilisation, non-disjunction", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U4 · Ch9 进化产生代际变化/基因库 gene pool 与等位基因频率的动态变化": {"name": "Gene pool and dynamic changes in allele frequencies", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U4 · Ch9 进化产生代际变化/进化机制：基因流/迁移、随机遗传漂变（含奠基者效应）、自然选择、选择压力": {"name": "Mechanisms of evolution: gene flow/migration, random genetic drift (including the founder effect), natural selection, selection pressure", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U4 · Ch9 进化产生代际变化/物种形成 speciation；案例：镰状细胞贫血": {"name": "Speciation; case study: sickle cell anaemia", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U4 · Ch10 生物技术提供进化证据": {"name": "U4 · Ch10 Biotechnology provides evidence for evolution", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U4 · Ch10 生物技术提供进化证据/聚合酶链反应 PCR": {"name": "Polymerase chain reaction PCR", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U4 · Ch10 生物技术提供进化证据/凝胶电泳 gel electrophoresis、DNA 指纹、Sanger 测序": {"name": "Gel electrophoresis, DNA fingerprinting, Sanger sequencing", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U4 · Ch10 生物技术提供进化证据/比较基因组学 comparative genomics、比较蛋白质（氨基酸序列差异）、生物信息学": {"name": "Comparative genomics, comparative proteins (amino acid sequence differences), bioinformatics", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U4 · Ch10 生物技术提供进化证据/内源性逆转录病毒、线粒体夏娃、DNA 杂交": {"name": "Endogenous retroviruses, mitochondrial Eve, DNA hybridisation", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U4 · Ch10 生物技术提供进化证据/系统发生树的使用（不要求绘制）": {"name": "Using phylogenetic trees (drawing not required)", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U4 · Ch11 其他进化证据": {"name": "U4 · Ch11 Other evidence for evolution", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U4 · Ch11 其他进化证据/化石形成 fossilisation 与化石记录的不完整性": {"name": "Fossilisation and the incompleteness of the fossil record", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U4 · Ch11 其他进化证据/相对测年：地层学 stratigraphy、标准化石 index fossils": {"name": "Relative dating: stratigraphy, index fossils", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U4 · Ch11 其他进化证据/绝对测年：碳十四、钾氩法及其各自局限": {"name": "Absolute dating: carbon-14, potassium-argon dating and their respective limitations", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U4 · Ch11 其他进化证据/地质时间线；系统发生树 phylogenetic trees 的解读": {"name": "Geological timeline; interpreting phylogenetic trees", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U4 · Ch11 其他进化证据/退化器官 vestigial organs；比较解剖学与比较生物化学证据": {"name": "Vestigial organs; comparative anatomy and comparative biochemistry evidence", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U4 · Ch12 人亚科进化趋势": {"name": "U4 · Ch12 Hominin evolutionary trends", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U4 · Ch12 人亚科进化趋势/人类作为灵长类 / 大猿；种间差异源于 DNA 核苷酸序列差异": {"name": "Humans as primates / great apes; differences between species arise from differences in DNA nucleotide sequences", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U4 · Ch12 人亚科进化趋势/四大区分特征：大脑皮层相对大小、指趾活动度、姿势与运动、颌凸与齿列": {"name": "Four distinguishing features: relative size of the cerebral cortex, mobility of digits, posture and locomotion, jaw protrusion and dentition", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U4 · Ch12 人亚科进化趋势/运动方式：双足行走 bipedalism、臂行 brachiation、四足行走 quadrupedalism": {"name": "Locomotion: bipedalism, brachiation, quadrupedalism", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U4 · Ch12 人亚科进化趋势/人科化石比较：Australopithecus afarensis / africanus、Paranthropus robustus": {"name": "Hominid fossil comparison: Australopithecus afarensis / africanus, Paranthropus robustus", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U4 · Ch12 人亚科进化趋势/Homo habilis / erectus / neanderthalensis / sapiens 的脑容量与体型趋势": {"name": "Brain size and body size trends in Homo habilis / erectus / neanderthalensis / sapiens", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U4 · Ch13 人属进化": {"name": "U4 · Ch13 Evolution of the genus Homo", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U4 · Ch13 人属进化/人亚科进化时间线；非洲化石点与 3D 化石模型": {"name": "Hominin evolutionary timeline; African fossil sites and 3D fossil models", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U4 · Ch13 人属进化/工具文化趋势：从 Homo habilis 到 sapiens 的制造技术与材料演变": {"name": "Tool culture trends: evolution of manufacturing techniques and materials from Homo habilis to sapiens", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U4 · Ch13 人属进化/其他文化趋势：火的使用、埋葬、艺术、语言、农业": {"name": "Other cultural trends: use of fire, burial, art, language, agriculture", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/U4 · Ch13 人属进化/人类对环境的控制如何改变选择压力": {"name": "How human control of the environment changes selection pressures", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/考核与配套资源": {"name": "Assessment and supporting resources", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/考核与配套资源/校本任务：TT1（Ch1–3，10%）、ER1（7%）、Lab Assessment（10%）、EE（Ch1–8，20%）、ER2（Ch8–10，8%）、TT2（15%）、FE（30%）": {"name": "School-based tasks: TT1 (Ch1–3, 10%), ER1 (7%), Lab Assessment (10%), EE (Ch1–8, 20%), ER2 (Ch8–10, 8%), TT2 (15%), FE (30%)", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/考核与配套资源/WACE 统考：3 小时 + 10 分钟阅读；Section 1 选择 30% + Section 2 简答 50% + Section 3 拓展作答 20%": {"name": "WACE external exam: 3 hours + 10 minutes reading time; Section 1 multiple choice 30% + Section 2 short answer 50% + Section 3 extended response 20%", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/考核与配套资源/NOTES（436 页）：Ch1–7 全套讲义 + 每章 Chapter Checklist 自查清单": {"name": "NOTES (436 pages): full Ch1–7 lecture notes + Chapter Checklist self-check list for each chapter", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/考核与配套资源/TUTORIALS（118 页）：Ch1–6 教程与答案（科学探究、内分泌、神经元、神经系统、血糖、肾单位与气体调节）": {"name": "TUTORIALS (118 pages): Ch1–6 tutorials with answers (scientific inquiry, endocrine system, neurons, nervous system, blood glucose, nephron and gas regulation)", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/考核与配套资源/LAB PROCEDURES（72 页）：15+ 实验手册与答案——反应时间、神经末梢、渗透、尿检、酶活性、显微镜、革兰染色、细菌培养": {"name": "LAB PROCEDURES (72 pages): 15+ practical manuals with answers — reaction time, nerve endings, osmosis, urinalysis, enzyme activity, microscopy, Gram staining, bacterial culture", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/考核与配套资源/TEXTBOOK ANSWER（394 页）：Human Perspectives 8th Ed. Ch1–13 + 7th Ed. Ch1–20 教材答案": {"name": "TEXTBOOK ANSWER (394 pages): Human Perspectives 8th Ed. Ch1–13 + 7th Ed. Ch1–20 textbook answers", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/考核与配套资源/REVISION SET（128 页）：Revision 1–7 + Mock Test 全套 + 拓展题三档水平范文": {"name": "REVISION SET (128 pages): Revision 1–7 + complete Mock Tests + model answers for extended-response questions at three achievement levels", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/考核与配套资源/WACE EXAM PAPERS：2015–2025 历年真题 + 官方评分标准": {"name": "WACE EXAM PAPERS: 2015–2025 past exam papers + official marking criteria", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/考核与配套资源/DIGITAL LIBRARY：Ch1–13 录播课目录 + 按章整理的视频资源（动作电位、免疫、PCR、测年、双足行走等）": {"name": "DIGITAL LIBRARY: Ch1–13 recorded lesson catalogue + video resources organised by chapter (action potential, immunity, PCR, dating, bipedalism, etc.)", "note": ""}, "AUSMAT May 2026 学习资料/HBY 人体生物学/考核与配套资源/教师版课件：Ch1–Ch7.4 教材扫描 + 教师批注（364 页）": {"name": "Teacher's edition courseware: Ch1–Ch7.4 textbook scans + teacher annotations (364 pages)", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理": {"name": "PHY Physics", "note": "Physics ATAR Year 12 (ATPHY).\nUnit 3 = Motion and gravity + Electromagnetism; Unit 4 = Relativity + Quantum theory + Cosmology.\nAssessment: Tests 40% (TT1 14% + TT2 14% + EA 12%), Examination 50% (EE 20% + FE 30%), Science Inquiry 10% (practical assessment)."}, "AUSMAT May 2026 学习资料/PHY 物理/前置知识（Year 11 复习）": {"name": "Prior knowledge (Year 11 review)", "note": "[1.01] PREKNOWLEDGE — foundations that must be mastered before starting the course"}, "AUSMAT May 2026 学习资料/PHY 物理/前置知识（Year 11 复习）/向量 Vectors：标量与矢量、平行四边形/三角形法则、分量法、比例作图法": {"name": "Vectors: scalars and vectors, parallelogram/triangle laws, component method, scale diagram method", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/前置知识（Year 11 复习）/向量应用：相对速度、速度变化量、力桌实验（合力与平衡力）": {"name": "Vector applications: relative velocity, change in velocity, force table experiment (resultant and equilibrant forces)", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/前置知识（Year 11 复习）/力与斜面：牛顿三大定律、惯性、受力图 FBD、法向力": {"name": "Forces and inclined planes: Newton's three laws of motion, inertia, free body diagrams FBD, normal force", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/前置知识（Year 11 复习）/斜面分量：W∥ = mg sinθ、W⊥ = mg cosθ、N = mg cosθ；摩擦力（粗糙/光滑）": {"name": "Inclined plane components: W∥ = mg sinθ, W⊥ = mg cosθ, N = mg cosθ; friction (rough/smooth)", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/前置知识（Year 11 复习）/运动方程：s = ut + ½at²、v = u + at、v² = u² + 2as；静力学与动力学、视重": {"name": "Equations of motion: s = ut + ½at², v = u + at, v² = u² + 2as; statics and dynamics, apparent weight", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/前置知识（Year 11 复习）/功与能：W = Fs = mgΔh、重力势能 PE = mgΔh、动能 KE = ½mv²": {"name": "Work and energy: W = Fs = mgΔh, gravitational potential energy PE = mgΔh, kinetic energy KE = ½mv²", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/前置知识（Year 11 复习）/能量守恒与转化（PE↔KE→热）；非保守力做功；简谐运动弹簧能量互换": {"name": "Conservation and transformation of energy (PE↔KE→heat); work done by non-conservative forces; energy interchange in a simple harmonic motion spring", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/前置知识（Year 11 复习）/动量：p = mv、冲量 I = FΔt = Δp、动量守恒": {"name": "Momentum: p = mv, impulse I = FΔt = Δp, conservation of momentum", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/前置知识（Year 11 复习）/碰撞类型：弹性（KE 守恒）、非弹性、完全非弹性；爆炸过程": {"name": "Collision types: elastic (KE conserved), inelastic, perfectly inelastic; explosion processes", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/前置知识（Year 11 复习）/直线运动：平均速度/加速度、匀加速三方程、自由落体": {"name": "Linear motion: average velocity/acceleration, three equations of uniformly accelerated motion, free fall", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/前置知识（Year 11 复习）/位移-时间图（斜率=速度）与速度-时间图（斜率=加速度、面积=位移）": {"name": "Displacement–time graphs (slope = velocity) and velocity–time graphs (slope = acceleration, area = displacement)", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/前置知识（Year 11 复习）/竖直抛体、反应时间与刹车距离": {"name": "Vertical projectile motion, reaction time and braking distance", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 实验理论与技能": {"name": "U3 · Lab Theory and Skills", "note": "[1.02] LAB THEORY — a complete methodology of scientific inquiry skills"}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 实验理论与技能/实验报告结构：Title / Aim / Theory-Hypothesis / Apparatus & Diagram / Procedure（被动语态）/ Results / Discussion / Conclusion": {"name": "Experiment report structure: Title / Aim / Theory-Hypothesis / Apparatus & Diagram / Procedure (passive voice) / Results / Discussion / Conclusion", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 实验理论与技能/变量：自变量/因变量/控制变量；定性（名义、序数）与定量（离散、连续）": {"name": "Variables: independent / dependent / controlled; qualitative (nominal, ordinal) and quantitative (discrete, continuous)", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 实验理论与技能/有效数字规则；加减法按小数位、乘除法按最少有效位；统一 3SF 或 3DP": {"name": "Significant figure rules; addition/subtraction by decimal places, multiplication/division by least significant figures; standardise to 3SF or 3DP", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 实验理论与技能/绝对不确定度（±1 最小分度、与均值的最大偏差）与百分比不确定度": {"name": "Absolute uncertainty (smallest scale division ±1, maximum deviation from the mean) and percentage uncertainty", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 实验理论与技能/不确定度合成：加减法直接相加、乘除法先转百分比再加；误差棒 error bars": {"name": "Combining uncertainties: add directly for addition/subtraction, convert to percentages and add for multiplication/division; error bars", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 实验理论与技能/作图规范：轴标签含单位、分度用 2/4/5、占 ¾ 页面、最佳拟合线（不强行过原点）": {"name": "Graphing conventions: axis labels with units, scale divisions of 2/4/5, fill ¾ of the page, line of best fit (not forced through the origin)", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 实验理论与技能/由最佳拟合线求梯度（画 gradient triangle），结果保留 2SF": {"name": "Finding the gradient from the line of best fit (drawing a gradient triangle), result to 2SF", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 实验理论与技能/线性化 linearisation：y = mx + c 映射，梯度/截距与物理量对应": {"name": "Linearisation: mapping to y = mx + c, matching gradient/intercept to physical quantities", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 实验理论与技能/误差类型：系统误差（未校准、方法缺陷）vs 随机误差（读数、低电量）": {"name": "Types of error: systematic error (lack of calibration, flawed method) vs random error (reading, low battery)", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 实验理论与技能/效度 validity / 信度 reliability / 准确度 accuracy / 精密度 precision 的区分": {"name": "Distinguishing validity / reliability / accuracy / precision", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 实验理论与技能/误差削减方法与讨论：对比理论值、% error / % difference、异常值识别": {"name": "Error reduction methods and discussion: comparison with theoretical values, % error / % difference, identifying outliers", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 抛体运动": {"name": "U3 · Projectile Motion", "note": "Projectile Motion"}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 抛体运动/抛体定义与抛物线轨迹；水平与竖直分量相互独立": {"name": "Definition of a projectile and parabolic trajectory; horizontal and vertical components are independent", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 抛体运动/水平方向：a = 0，ux = vx = 常数，射程 R = ux·T": {"name": "Horizontal direction: a = 0, ux = vx = constant, range R = ux·T", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 抛体运动/竖直方向：a = −g，最高点时竖直速度 v_y = 0": {"name": "Vertical direction: a = −g, vertical velocity at the highest point v_y = 0", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 抛体运动/速度矢量分解：ux = u cosθ、uy = u sinθ": {"name": "Resolving velocity vectors: ux = u cosθ, uy = u sinθ", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 抛体运动/解题步骤：画图→分解→x/y 独立分析→三运动方程→勾股定理求合速度": {"name": "Problem-solving steps: draw a diagram → resolve components → analyse x/y independently → the three equations of motion → Pythagoras to find resultant velocity", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 抛体运动/互余角射出同射程（15°/75°）；45° 射程最大": {"name": "Complementary angles give the same range (15°/75°); 45° gives maximum range", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 抛体运动/空气阻力的影响：减小射程与最大高度、增大下落角度；与截面积和质量有关": {"name": "Effect of air resistance: reduces range and maximum height, increases the descent angle; depends on cross-sectional area and mass", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 抛体运动/抛体运动中的能量守恒；应用题型（投弹、射箭、踢球、投石机）": {"name": "Conservation of energy in projectile motion; applied question types (dropping a bomb, archery, kicking a ball, catapult)", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 圆周运动": {"name": "U3 · Circular Motion", "note": "Circular Motion (required by the syllabus)"}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 圆周运动/匀速圆周运动（水平面）": {"name": "Uniform circular motion (horizontal plane)", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 圆周运动/向心力与向心加速度：F_c = mv²/r = mω²r": {"name": "Centripetal force and centripetal acceleration: F_c = mv²/r = mω²r", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 圆周运动/倾斜弯道 banked track 与飞机转弯": {"name": "Banked tracks and aircraft turning", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 圆周运动/竖直圆周运动（匀速与非匀速）；摩天轮顶点/底点的视重": {"name": "Vertical circular motion (uniform and non-uniform); apparent weight at the top/bottom of a Ferris wheel", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 圆周运动/圆周运动中的能量守恒": {"name": "Conservation of energy in circular motion", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 圆周运动/实验：锥形摆测向心力（图像法）": {"name": "Experiment: measuring centripetal force with a conical pendulum (graphical method)", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 重力与卫星运动": {"name": "U3 · Gravity and Satellite Motion", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 重力与卫星运动/万有引力定律 F = GmM/r²；力的相互性与矢量性（沿两球心连线）": {"name": "Newton's law of universal gravitation F = GmM/r²; the force is mutual and vectorial (along the line joining the centres)", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 重力与卫星运动/重力场 g-field 与场线：指向质心、密度表示强度、永不相交": {"name": "Gravitational field (g-field) and field lines: directed towards the centre of mass, density indicates strength, never intersect", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 重力与卫星运动/重力场强度 g = F/m = GM/r²（N/kg）；赤道与两极差异、海拔影响": {"name": "Gravitational field strength g = F/m = GM/r² (N/kg); difference between the equator and the poles, effect of altitude", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 重力与卫星运动/常数：G = 6.67×10⁻¹¹、M_E = 5.97×10²⁴ kg、R_E = 6.38×10⁶ m、地月距离 3.84×10⁸ m": {"name": "Constants: G = 6.67×10⁻¹¹, M_E = 5.97×10²⁴ kg, R_E = 6.38×10⁶ m, Earth–Moon distance 3.84×10⁸ m", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 重力与卫星运动/轨道运动：引力提供向心力；v = √(GM/r)，与卫星质量无关": {"name": "Orbital motion: gravity provides the centripetal force; v = √(GM/r), independent of the satellite's mass", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 重力与卫星运动/轨道周期与开普勒第三定律 T²/r³ = 4π²/GM": {"name": "Orbital period and Kepler's third law T²/r³ = 4π²/GM", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 重力与卫星运动/开普勒第一定律（椭圆轨道）与第二定律（面积定律）": {"name": "Kepler's first law (elliptical orbits) and second law (law of areas)", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 重力与卫星运动/地球同步卫星（T = 24 h）；通信与电视广播应用": {"name": "Geostationary satellites (T = 24 h); applications in communications and television broadcasting", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 重力与卫星运动/质心 barycentre（地月系统，力矩法）；LEO/MEO/GEO 与极轨/太阳同步轨道": {"name": "Barycentre (Earth–Moon system, torque method); LEO/MEO/GEO and polar/sun-synchronous orbits", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 力矩与平衡": {"name": "U3 · Torque and Equilibrium", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 力矩与平衡/力矩 τ = rF sinθ（单位 N·m）；力臂、支点、力的作用线": {"name": "Torque τ = rF sinθ (unit N·m); lever arm, pivot, line of action of the force", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 力矩与平衡/符号约定：逆时针为正、顺时针为负": {"name": "Sign convention: anticlockwise positive, clockwise negative", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 力矩与平衡/非垂直力的分解；净力矩": {"name": "Resolving non-perpendicular forces; net torque", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 力矩与平衡/平衡条件：ΣF = 0（平动平衡）+ Στ = 0（转动平衡）": {"name": "Conditions for equilibrium: ΣF = 0 (translational equilibrium) + Στ = 0 (rotational equilibrium)", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 力矩与平衡/经典题型：跷跷板、梯子靠墙、跳水板、木板与绳索、悬臂梁": {"name": "Classic question types: seesaw, ladder against a wall, diving board, plank with a rope, cantilever", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 力矩与平衡/撑杆与拉索 struts and ties": {"name": "Struts and ties", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 力矩与平衡/静平衡与质心；稳定性 stability": {"name": "Static equilibrium and centre of mass; stability", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 静电力与电场": {"name": "U3 · Electrostatic Forces and Electric Fields", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 静电力与电场/电荷与电场；电场线（+向外/−向内、密度=强度、不可交叉）": {"name": "Charge and electric fields; electric field lines (+ outward / − inward, density = strength, must not cross)", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 静电力与电场/库仑定律 F = kq₁q₂/r²；k = 9.00×10⁹ N·m²/C²、ε₀ = 8.85×10⁻¹²": {"name": "Coulomb's law F = kq₁q₂/r²; k = 9.00×10⁹ N·m²/C², ε₀ = 8.85×10⁻¹²", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 静电力与电场/三电荷以上：叠加原理（矢量和）": {"name": "Three or more charges: principle of superposition (vector sum)", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 静电力与电场/电场强度 E = F/q = kQ/r²（N/C 或 V/m）；试探电荷 test charge": {"name": "Electric field strength E = F/q = kQ/r² (N/C or V/m); test charge", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 静电力与电场/电场中的功与能：W = Eqd = qΔV；W = ΔE_k": {"name": "Work and energy in an electric field: W = Eqd = qΔV; W = ΔE_k", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 静电力与电场/电势差 ΔV 与重力势能的类比": {"name": "Potential difference ΔV and the analogy with gravitational potential energy", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 静电力与电场/平行板间匀强电场 E = V/d": {"name": "Uniform electric field between parallel plates E = V/d", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 静电力与电场/带电粒子在电场中的偏转（类平抛运动）": {"name": "Deflection of charged particles in an electric field (projectile-like motion)", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 静电力与电场/电子伏特 1 eV = 1.60×10⁻¹⁹ J": {"name": "Electronvolt 1 eV = 1.60×10⁻¹⁹ J", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 磁学 Magnetism": {"name": "U3 · Magnetism", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 磁学 Magnetism/磁通密度 B（特斯拉 T）与磁场线图": {"name": "Magnetic flux density B (tesla, T) and magnetic field line diagrams", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 磁学 Magnetism/长直导线磁场 B = μ₀I/2πr；右手螺旋定则；螺线管与电磁铁": {"name": "Magnetic field of a long straight conductor B = μ₀I/2πr; right-hand grip rule; solenoids and electromagnets", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 磁学 Magnetism/载流导体受力（电动机效应）：F = BIl sinθ": {"name": "Force on a current-carrying conductor (motor effect): F = BIl sinθ", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 磁学 Magnetism/左手定则 Fleming's Left Hand Rule（力/磁场/电流方向）": {"name": "Fleming's Left Hand Rule (directions of force / magnetic field / current)", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 磁学 Magnetism/载流线圈力矩 τ = nBIA；力矩最大的位置": {"name": "Torque on a current-carrying coil τ = nBIA; position of maximum torque", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 磁学 Magnetism/直流电动机结构与原理：电枢线圈、换向器、碳刷、磁场线圈；每 180° 反向电流": {"name": "Structure and principle of a DC motor: armature coil, commutator, carbon brushes, field coils; current reversed every 180°", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 磁学 Magnetism/反电动势 back emf 与楞次定律导致恒定转速": {"name": "Back emf and Lenz's law producing a constant rotation speed", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 磁学 Magnetism/运动电荷受力 F = qvB sinθ；圆周运动半径 r = mv/qB": {"name": "Force on a moving charge F = qvB sinθ; radius of circular motion r = mv/qB", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 磁学 Magnetism/应用：粒子加速器（直线/回旋/同步加速器）、质谱仪、速度选择器、磁悬浮、MRI": {"name": "Applications: particle accelerators (linear / cyclotron / synchrotron), mass spectrometer, velocity selector, maglev, MRI", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 电场与磁场的应用": {"name": "U3 · Applications of Electric and Magnetic Fields", "note": "Content listed in the outline (refer to the syllabus and EA REVISION)"}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 电场与磁场的应用/速度选择器 velocity selector（电场力与磁场力平衡）": {"name": "Velocity selector (electric force balanced by magnetic force)", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 电场与磁场的应用/霍尔效应 Hall Effect：霍尔电压 V_H、漂移速度 drift velocity、F_B = F_E 平衡": {"name": "Hall Effect: Hall voltage V_H, drift velocity, F_B = F_E equilibrium", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 电场与磁场的应用/质谱仪 mass spectrometer 的分离原理": {"name": "Separation principle of the mass spectrometer", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 电场与磁场的应用/粒子加速器如何控制带电粒子的运动": {"name": "How particle accelerators control the motion of charged particles", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 电磁感应": {"name": "U3 · Electromagnetic Induction", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 电磁感应/磁通量 Φ = BA cosθ（韦伯 Wb）；θ 为 B 与面积法线的夹角": {"name": "Magnetic flux Φ = BA cosθ (weber, Wb); θ is the angle between B and the normal to the area", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 电磁感应/产生电磁感应的条件：相对运动、B 大小变化、线圈面积变化、B 方向变化": {"name": "Conditions for electromagnetic induction: relative motion, change in magnitude of B, change in coil area, change in direction of B", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 电磁感应/法拉第定律 ε = −N ΔΦ/Δt（感应电动势）": {"name": "Faraday's law ε = −N ΔΦ/Δt (induced emf)", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 电磁感应/楞次定律：感应电流的方向总是阻碍磁通量的变化（能量守恒的体现）": {"name": "Lenz's law: the direction of the induced current always opposes the change in magnetic flux (a manifestation of conservation of energy)", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 电磁感应/右手定则判断感应电流方向；涡电流 eddy current": {"name": "Right-hand rule for determining the direction of induced current; eddy currents", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 电磁感应/磁铁进出线圈时的受力与做功分析": {"name": "Analysis of forces and work done as a magnet enters and leaves a coil", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 电磁感应/应用：直流/交流发电机、变压器、再生制动、电磁炉、电动车、磁悬浮": {"name": "Applications: DC/AC generators, transformers, regenerative braking, induction cooktops, electric vehicles, maglev", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 交流发电机与变压器": {"name": "U3 · AC Generators and Transformers", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 交流发电机与变压器/发电机：机械能→电能（电动机的逆过程）；能量来源（水力、煤炭、核、风、地热）": {"name": "Generators: mechanical energy → electrical energy (the reverse of a motor); energy sources (hydro, coal, nuclear, wind, geothermal)", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 交流发电机与变压器/滑环 slip rings 输出交流 vs 换向器输出直流": {"name": "Slip rings output AC vs commutator outputs DC", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 交流发电机与变压器/部件与功能：外磁铁、电枢线圈、滑环/换向器、碳刷": {"name": "Components and functions: external magnets, armature coil, slip rings/commutator, carbon brushes", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 交流发电机与变压器/线圈旋转各角度（0°/90°/180°/270°/360°）的磁通与电动势变化": {"name": "Variation of flux and emf at each angle of coil rotation (0°/90°/180°/270°/360°)", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 交流发电机与变压器/关系式：Φ = NBA cos ωt；emf = NBAω sin ωt；ε_max = NBAω = 2πfNBA": {"name": "Relations: Φ = NBA cos ωt; emf = NBAω sin ωt; ε_max = NBAω = 2πfNBA", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 交流发电机与变压器/平均电动势 ε_avg = −4BANf；用右手定则与楞次定律判断正负端": {"name": "Average emf ε_avg = −4BANf; using the right-hand rule and Lenz's law to determine the positive and negative terminals", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 交流发电机与变压器/变压器：两线圈 + 叠片硅钢芯；互感 mutual induction": {"name": "Transformer: two coils + laminated silicon steel core; mutual induction", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 交流发电机与变压器/匝数比 Vs/Vp = Ns/Np；升压与降压；理想变压器功率守恒": {"name": "Turns ratio Vs/Vp = Ns/Np; step-up and step-down; power conservation in an ideal transformer", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 交流发电机与变压器/电力输送：为何要升压、为何铁芯要叠片": {"name": "Power transmission: why step up the voltage, why transformer cores are laminated", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U3 · 交流发电机与变压器/欧姆定律 V = IR；电阻串并联（实验）": {"name": "Ohm's law V = IR; resistors in series and parallel (experiment)", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 狭义相对论": {"name": "U4 · Special Relativity", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 狭义相对论/参考系与惯性参考系（恒定速度）": {"name": "Frames of reference and inertial frames of reference (constant velocity)", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 狭义相对论/光速不变 c = 3.00×10⁸ m/s；爱因斯坦两条基本假设": {"name": "Constancy of the speed of light c = 3.00×10⁸ m/s; Einstein's two postulates", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 狭义相对论/同时性的相对性（火车思想实验）": {"name": "Relativity of simultaneity (train thought experiment)", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 狭义相对论/时间膨胀 t = t₀/√(1−v²/c²)；固有时间 t₀ 与洛伦兹因子 γ；双生子佯谬": {"name": "Time dilation t = t₀/√(1−v²/c²); proper time t₀ and the Lorentz factor γ; twin paradox", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 狭义相对论/长度收缩 L = L₀√(1−v²/c²)；固有长度；梯子-车库佯谬": {"name": "Length contraction L = L₀√(1−v²/c²); proper length; ladder-and-garage paradox", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 狭义相对论/相对论速度叠加 u = (u′ + v)/(1 + u′v/c²)": {"name": "Relativistic velocity addition u = (u′ + v)/(1 + u′v/c²)", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 狭义相对论/相对论动量 p = mv/√(1−v²/c²)（高速下增大，阻止达到光速）": {"name": "Relativistic momentum p = mv/√(1−v²/c²) (increases at high speed, preventing reaching the speed of light)", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 狭义相对论/质能等价 E = mc²；静止质量能量": {"name": "Mass–energy equivalence E = mc²; rest mass energy", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 狭义相对论/总能量与能量-动量关系 E² = p²c² + m²c⁴；光子 E = pc": {"name": "Total energy and the energy–momentum relation E² = p²c² + m²c⁴; photon E = pc", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 狭义相对论/实验证据：Rossi–Hall 实验（μ 子）、μ 子寿命与长度收缩、GPS 修正、粒子加速器": {"name": "Experimental evidence: Rossi–Hall experiment (muons), muon lifetime and length contraction, GPS corrections, particle accelerators", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 广义相对论": {"name": "U4 · General Relativity", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 广义相对论/牛顿的引力观 vs 爱因斯坦：引力不是力，而是时空弯曲的效应": {"name": "Newton's view of gravity vs Einstein's: gravity is not a force but an effect of curved spacetime", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 广义相对论/时空弯曲（质量-能量弯曲时空；时空 = x, y, z + t）": {"name": "Curved spacetime (mass–energy curves spacetime; spacetime = x, y, z + t)", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 广义相对论/测地线 geodesics 与自由落体；失重": {"name": "Geodesics and free fall; weightlessness", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 广义相对论/光沿时空测地线传播；引力透镜 gravitational lensing": {"name": "Light travels along spacetime geodesics; gravitational lensing", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 广义相对论/引力时间膨胀（引力势越低，时间越慢）": {"name": "Gravitational time dilation (the lower the gravitational potential, the slower time passes)", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 广义相对论/应用：GPS 需同时考虑狭义与广义相对论（每天约 10 km 位置误差）": {"name": "Application: GPS must account for both special and general relativity (about 10 km position error per day)", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 广义相对论/黑洞：极端曲率、事件视界 event horizon、奇点、吸积盘": {"name": "Black holes: extreme curvature, event horizon, singularity, accretion disc", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 广义相对论/证据：飞机上的原子钟、GPS、引力波、引力透镜": {"name": "Evidence: atomic clocks on aircraft, GPS, gravitational waves, gravitational lensing", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 光的波动性": {"name": "U4 · The Wave Nature of Light", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 光的波动性/电磁波 = 振荡的电场与磁场；麦克斯韦方程组；加速电荷产生电磁波": {"name": "Electromagnetic waves = oscillating electric and magnetic fields; Maxwell's equations; accelerating charges produce electromagnetic waves", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 光的波动性/电磁波谱：无线电→微波→红外→可见光→紫外→X 射线→γ 射线": {"name": "The electromagnetic spectrum: radio → microwave → infrared → visible light → ultraviolet → X-rays → gamma rays", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 光的波动性/电磁波性质：横波、E ⊥ B 且同相、c = 3.0×10⁸ m/s、无需介质": {"name": "Properties of electromagnetic waves: transverse, E ⊥ B and in phase, c = 3.0×10⁸ m/s, no medium required", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 光的波动性/波方程 c = fλ；周期；频率与波长成反比": {"name": "Wave equation c = fλ; period; frequency is inversely proportional to wavelength", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 光的波动性/反射、折射（斯涅尔定律）、衍射、干涉、偏振": {"name": "Reflection, refraction (Snell's law), diffraction, interference, polarisation", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 光的波动性/衍射：波长 ≥ 孔径时显著；波长不变": {"name": "Diffraction: significant when wavelength ≥ aperture size; wavelength unchanged", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 光的波动性/干涉：相长与相消、光程差 path difference、相位": {"name": "Interference: constructive and destructive, path difference, phase", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 光的波动性/杨氏双缝实验：明暗条纹；粒子说预言与实际不符，成为光的波动性的证据": {"name": "Young's double-slit experiment: bright and dark fringes; the particle model's prediction disagrees with observation, providing evidence for the wave nature of light", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 光的波动性/应用：光的折射性质实验、用衍射理论测激光波长": {"name": "Applications: experiments on the refractive properties of light, measuring laser wavelength using diffraction theory", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 光的粒子性": {"name": "U4 · The Particle Nature of Light", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 光的粒子性/牛顿微粒说 vs 惠更斯波动说的历史争论": {"name": "The historical debate between Newton's particle theory and Huygens' wave theory", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 光的粒子性/光电效应实验装置（阴极/阳极、石英窗、光电子、电流计、真空管）": {"name": "Photoelectric effect apparatus (cathode/anode, quartz window, photoelectrons, galvanometer, vacuum tube)", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 光的粒子性/波动模型的三大预言与实际结果的矛盾：亮度↑只增电子数不增能量、存在截止频率、发射是瞬时的": {"name": "Three contradictions between the wave model's predictions and the actual results: increasing brightness only increases the number of electrons, not their energy; a threshold frequency exists; emission is instantaneous", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 光的粒子性/光子：E = hf = hc/λ；h = 6.63×10⁻³⁴ Js；一个光子对应一个电子、完全吸收": {"name": "Photons: E = hf = hc/λ; h = 6.63×10⁻³⁴ Js; one photon corresponds to one electron, complete absorption", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 光的粒子性/逸出功 W = hf₀ 与截止频率；不同金属的逸出功数值": {"name": "Work function W = hf₀ and threshold frequency; work function values for different metals", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 光的粒子性/光电方程 KE_max = hf − W；遏止电压 stopping potential": {"name": "Photoelectric equation KE_max = hf − W; stopping potential", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 光的粒子性/波粒二象性 wave–particle duality": {"name": "Wave–particle duality", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 黑体辐射与光谱": {"name": "U4 · Blackbody Radiation and Spectra", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 黑体辐射与光谱/黑体辐射：光谱形状及其随温度的依赖；经典波动模型无法解释": {"name": "Blackbody radiation: the shape of the spectrum and its dependence on temperature; the classical wave model cannot explain it", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 黑体辐射与光谱/德布罗意物质波 λ = h/p = h/mv": {"name": "de Broglie matter waves λ = h/p = h/mv", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 黑体辐射与光谱/宏观物体/人/电子三案例对比：宏观波长过小不可观测，电子可检测": {"name": "Comparison of three cases — macroscopic object / person / electron: macroscopic wavelengths are too small to observe, electron wavelengths are detectable", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 黑体辐射与光谱/戴维孙-革末实验：电子衍射证实物质波": {"name": "Davisson–Germer experiment: electron diffraction confirms matter waves", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 黑体辐射与光谱/双缝实验重做：电子逐个通过也会累积出干涉图样": {"name": "Repeating the double-slit experiment: electrons passing through one at a time still build up an interference pattern", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 黑体辐射与光谱/应用：电子显微镜（TEM/SEM/STEM，分辨率约 10⁻¹⁰ m）、中子衍射、X 射线衍射": {"name": "Applications: electron microscopes (TEM/SEM/STEM, resolution about 10⁻¹⁰ m), neutron diffraction, X-ray diffraction", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 黑体辐射与光谱/四类光谱：线状发射光谱、带状光谱、连续光谱、吸收光谱": {"name": "Four types of spectra: line emission spectra, band spectra, continuous spectra, absorption spectra", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 黑体辐射与光谱/光谱分析：元素的特征谱线": {"name": "Spectral analysis: characteristic spectral lines of the elements", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 玻尔原子模型": {"name": "U4 · The Bohr Model of the Atom", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 玻尔原子模型/玻尔假设：电子只能在特定轨道上具有固定能量；基态与激发态": {"name": "Bohr's postulates: electrons can only have fixed energies in specific orbits; ground state and excited states", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 玻尔原子模型/氢原子能级图（−13.60、−3.40、−1.51、−0.85、−0.54 eV，电离为 0.00）": {"name": "Hydrogen atom energy level diagram (−13.60, −3.40, −1.51, −0.85, −0.54 eV, ionisation at 0.00)", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 玻尔原子模型/跃迁规则：吸收或释放的能量必须恰好等于两能级之差": {"name": "Transition rule: the energy absorbed or released must equal exactly the difference between the two energy levels", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 玻尔原子模型/激发态寿命约 10⁻⁸ s；退激可一步或多步，每次跃迁释放一个光子": {"name": "Excited state lifetime about 10⁻⁸ s; de-excitation may occur in one or several steps, each transition releasing one photon", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 玻尔原子模型/电离 Ionisation：电离能；超过阈值的多余能量成为电子的动能": {"name": "Ionisation: ionisation energy; excess energy above the threshold becomes the kinetic energy of the electron", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 玻尔原子模型/用 ΔE = hf = hc/λ 解释发射光谱与吸收光谱": {"name": "Using ΔE = hf = hc/λ to explain emission and absorption spectra", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 玻尔原子模型/氢光谱系列：Lyman（紫外）、Balmer（可见光）、Paschen（红外）": {"name": "Hydrogen spectral series: Lyman (ultraviolet), Balmer (visible light), Paschen (infrared)", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 玻尔原子模型/能级计算 E = −13.6 Z²/n²": {"name": "Energy level calculation E = −13.6 Z²/n²", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 玻尔原子模型/应用：荧光与磷光、X 射线产生、激光、光伏电池、LED、荧光标记": {"name": "Applications: fluorescence and phosphorescence, X-ray production, lasers, photovoltaic cells, LEDs, fluorescent markers", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 宇宙学": {"name": "U4 · Cosmology", "note": "Cosmology — the Big Bang theory and evidence"}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 宇宙学/天文距离单位：AU（1.50×10¹¹ m）、光年、秒差距 parsec（3.1×10¹⁶ m）、Mpc": {"name": "Astronomical distance units: AU (1.50×10¹¹ m), light-year, parsec (3.1×10¹⁶ m), Mpc", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 宇宙学/稳恒态理论 Steady State（各向同性 + 均匀 + 静态）及其被否定": {"name": "Steady State theory (isotropic + homogeneous + static) and its rejection", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 宇宙学/多普勒效应；红移与蓝移（波长变长/变短）": {"name": "Doppler effect; redshift and blueshift (wavelength increases/decreases)", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 宇宙学/红移参数 z = (λ_观测 − λ_静止)/λ_静止 ≈ v/c": {"name": "Redshift parameter z = (λ_observed − λ_rest)/λ_rest ≈ v/c", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 宇宙学/哈勃定律 v = H₀d；H₀ = 70.0 km·s⁻¹·Mpc⁻¹；图像斜率即哈勃常数": {"name": "Hubble's law v = H₀d; H₀ = 70.0 km·s⁻¹·Mpc⁻¹; the gradient of the graph is the Hubble constant", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 宇宙学/距离测量：亮度与光度；造父变星 Cepheid 作为标准烛光": {"name": "Distance measurement: brightness and luminosity; Cepheid variables as standard candles", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 宇宙学/宇宙膨胀的含义：空间本身在膨胀（星系与地球内部由引力/电磁力维系）": {"name": "What cosmic expansion means: space itself is expanding (galaxies and the Earth are held together by gravitational/electromagnetic forces)", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 宇宙学/宇宙年龄估算 t = 1/H₀ ≈ 137 亿年": {"name": "Estimating the age of the universe t = 1/H₀ ≈ 13.7 billion years", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 宇宙学/大爆炸时间线：暴胀→夸克汤→冷却形成质子中子→核合成（H、He、Li，约 3 分钟）": {"name": "Big Bang timeline: inflation → quark soup → cooling to form protons and neutrons → nucleosynthesis (H, He, Li, about 3 minutes)", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 宇宙学/四大证据：哈勃定律、宇宙微波背景辐射 CMBR（2.7 K）、轻元素丰度、星系光谱红移": {"name": "Four main pieces of evidence: Hubble's law, cosmic microwave background radiation (CMBR, 2.7 K), light element abundances, redshift of galaxy spectra", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 宇宙学/宇宙的未来：闭合、平坦、开放三种模型；临界密度约 9×10⁻²⁷ kg·m⁻³": {"name": "The future of the universe: closed, flat and open models; critical density about 9×10⁻²⁷ kg·m⁻³", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/U4 · 宇宙学/宇宙学原理：各向同性 + 均匀性": {"name": "Cosmological principle: isotropy + homogeneity", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/实验与实践": {"name": "Experiments and Practical Work", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/实验与实践/科学探究技能：提出问题、假设、设计实验、安全操作、收集有效数据": {"name": "Scientific inquiry skills: posing questions, hypothesising, designing experiments, safe practice, collecting valid data", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/实验与实践/SI 单位与有效数字表达；识别趋势、规律与关系": {"name": "SI units and expression of significant figures; identifying trends, patterns and relationships", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/实验与实践/不确定度的陈述、计算与合成；异常数据识别与 % difference": {"name": "Stating, calculating and combining uncertainties; identifying anomalous data and % difference", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/实验与实践/用证据得出结论、评价过程、构建科学论证、量纲分析": {"name": "Drawing conclusions from evidence, evaluating procedures, constructing scientific arguments, dimensional analysis", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/实验与实践/抛体运动实验（测水平初速度并与能量守恒对比）；单摆测重力加速度 g": {"name": "Projectile motion experiment (measuring horizontal initial velocity and comparing with conservation of energy); measuring g with a simple pendulum", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/实验与实践/锥形摆测向心力；力桌实验验证矢量合成": {"name": "Measuring centripetal force with a conical pendulum; force table experiment verifying vector addition", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/实验与实践/磁学实验：条形磁铁力-距离关系、载流导体受力、长直导线磁场强度": {"name": "Magnetism experiments: force–distance relationship for a bar magnet, force on a current-carrying conductor, magnetic field strength of a long straight wire", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/实验与实践/光学实验：折射性质探究、衍射法测激光波长、可见光谱与原子发射光谱": {"name": "Optics experiments: investigating refractive properties, measuring laser wavelength by diffraction, visible spectra and atomic emission spectra", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/实验与实践/普朗克常数测定；电阻串并联": {"name": "Determination of Planck's constant; resistors in series and parallel", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/实验与实践/演示实验：电动机与交流发电机、光电效应模拟、范德格拉夫起电机、玻尔模型、狭义相对论": {"name": "Demonstration experiments: electric motors and AC generators, photoelectric effect simulation, Van de Graaff generator, Bohr model, special relativity", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/实验与实践/实验报告范例：胡克定律测弹簧劲度系数（静态 F−x 与动态 T²−m 双法）、密度与不确定度": {"name": "Sample practical report: measuring the spring constant using Hooke's law (both the static F−x and dynamic T²−m methods), density and uncertainty", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/考核与配套资源": {"name": "Assessment and Supporting Resources", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/考核与配套资源/校本任务：TT1（14%）、EA 评估与分析（12%）、EE 评估考试（20%）、Lab Assessment（10%）、TT2（14%）、FE（30%）": {"name": "School-based tasks: TT1 (14%), EA assessment and analysis (12%), EE assessment exam (20%), Lab Assessment (10%), TT2 (14%), FE (30%)", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/考核与配套资源/TT1 范围：重力、水平/竖直圆周运动、静平衡与质心；EE 范围：静平衡与质心、相对论、电磁学": {"name": "TT1 scope: gravity, horizontal/vertical circular motion, static equilibrium and centre of mass; EE scope: static equilibrium and centre of mass, relativity, electromagnetism", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/考核与配套资源/TT2 范围：电磁学、波粒二象性与量子理论；FE 覆盖 Unit 3 + Unit 4 全部": {"name": "TT2 scope: electromagnetism, wave–particle duality and quantum theory; FE covers all of Unit 3 + Unit 4", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/考核与配套资源/WACE 外部考试（180 分 / 3 小时）：Section 1 短答 30% + Section 2 长答 50% + Section 3 阅读理解与数据分析 20%": {"name": "WACE external examination (180 marks / 3 hours): Section 1 short answer 30% + Section 2 extended answer 50% + Section 3 comprehension and data analysis 20%", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/考核与配套资源/考试规则：最终答案 3 位有效数字、估算最多 2 位、必须带单位、须写全过程、使用公式与数据册": {"name": "Examination rules: final answers to 3 significant figures, estimates to at most 2, units must be included, full working must be shown, formula and data booklet permitted", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/考核与配套资源/VAULT OF ATPHY（79 页）：课程总览、评估大纲、科学探究技能、公式册、实验手册与报告范例": {"name": "VAULT OF ATPHY (79 pages): course overview, assessment outline, science inquiry skills, formula booklet, practical manual and report exemplars", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/考核与配套资源/各 Topic 讲义：向量、力与斜面、功与能、动量、直线运动、抛体、重力与卫星、力矩、相对论、电磁学、量子、宇宙学": {"name": "Topic handouts: vectors, forces and inclined planes, work and energy, momentum, linear motion, projectiles, gravity and satellites, torque, relativity, electromagnetism, quantum, cosmology", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/考核与配套资源/REVISION 复习卷：TT1 / EA / FE 复习（含 WACE 2019–2024 真题汇编与完整解答）": {"name": "REVISION papers: TT1 / EA / FE revision (including a WACE 2019–2024 past-paper compilation with full solutions)", "note": ""}, "AUSMAT May 2026 学习资料/PHY 物理/考核与配套资源/实时物理 Real World Physics 拓展 + DIGITAL LIBRARY 数字资源索引": {"name": "Real World Physics extension + DIGITAL LIBRARY digital resource index", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语": {"name": "English (EALD)", "note": "English as an Additional Language or Dialect (EAL/D) ATAR Year 12, for students whose first language is not English.\nUnit 3 = Australia as a Cultural Community; Unit 4 = Language and Empowerment.\nAlso includes the OLNA literacy and numeracy tests required for WACE graduation. The external written exam accounts for 50%."}, "AUSMAT May 2026 学习资料/ELD 英语/U3 · 澳大利亚作为文化共同体": {"name": "U3 · Australia as a Cultural Community", "note": "Australia as a Cultural Community — analysing how language choices achieve purposes and effects in different contexts"}, "AUSMAT May 2026 学习资料/ELD 英语/U3 · 澳大利亚作为文化共同体/核心概念：cultural schemas 文化图式、cultural constructs 文化建构": {"name": "Core concepts: cultural schemas, cultural constructs", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/U3 · 澳大利亚作为文化共同体/多元社会与个人自由；commonality and difference 共通性与差异": {"name": "Pluralistic society and individual freedom; commonality and difference", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/U3 · 澳大利亚作为文化共同体/意义是协商而来而非既定（meaning is negotiated, not given）": {"name": "Meaning is negotiated, not given", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/U3 · 澳大利亚作为文化共同体/文本：Growing Up Aboriginal / Asian / African in Australia 三部文集": {"name": "Texts: the three Growing Up Aboriginal / Asian / African in Australia anthologies", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/U3 · 澳大利亚作为文化共同体/文本：Sticks and Stones and Such-like、The relative advantages of relearning my language、Cronulla to Papunya": {"name": "Texts: Sticks and Stones and Such-like, The relative advantages of relearning my language, Cronulla to Papunya", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/U3 · 澳大利亚作为文化共同体/NRW 2020 材料：27 May Referendum、Mabo decision、Native Title": {"name": "NRW 2020 materials: 27 May Referendum, Mabo decision, Native Title", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/U3 · 澳大利亚作为文化共同体/《Life in Australia — Australian Values and Principles》": {"name": "Life in Australia — Australian Values and Principles", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/U3 · 澳大利亚作为文化共同体/澳洲国旗（米字旗/南十字星/联邦星）与国歌 Advance Australia Fair 解析": {"name": "Analysis of the Australian flag (Union Jack / Southern Cross / Commonwealth Star) and the national anthem Advance Australia Fair", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/U4 · 语言与赋权": {"name": "U4 · Language and Empowerment", "note": "Language and Empowerment — analysing, evaluating and using language to represent and respond to issues, ideas and attitudes"}, "AUSMAT May 2026 学习资料/ELD 英语/U4 · 语言与赋权/核心概念：power of language 语言的力量": {"name": "Core concepts: power of language", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/U4 · 语言与赋权/语言如何赋权或边缘化个体、群体与意识形态": {"name": "How language empowers or marginalises individuals, groups and ideologies", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/U4 · 语言与赋权/文化概念化如何嵌入语言": {"name": "How cultural conceptualisation is embedded in language", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/U4 · 语言与赋权/修辞与劝服装置如何制造权力关系": {"name": "How rhetorical and persuasive devices create power relationships", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/U4 · 语言与赋权/文本：《Speeches that Changed the World》（含音频）": {"name": "Text: Speeches that Changed the World (with audio)", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/语言能力表 Language Table": {"name": "Language Table", "note": "Must be mastered by the end of Unit 4; it is the underlying skills checklist for all listening, speaking, reading, viewing and writing tasks"}, "AUSMAT May 2026 学习资料/ELD 英语/语言能力表 Language Table/语音特征：发音、重音、节奏、语调、音高；音素与词素": {"name": "Phonological features: pronunciation, stress, rhythm, intonation, pitch; phonemes and morphemes", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/语言能力表 Language Table/非语言特征：文化合宜的手势与行为": {"name": "Non-verbal features: culturally appropriate gestures and behaviour", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/语言能力表 Language Table/正字法：标点系统、学科词汇拼写、缩写符号、印刷体/草书": {"name": "Orthography: punctuation systems, spelling of subject vocabulary, abbreviations and symbols, print/cursive", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/语言能力表 Language Table/词汇能力：metalanguage、discourse markers、搭配 collocation、习语、口语化表达、同反义词、词汇链": {"name": "Lexical competence: metalanguage, discourse markers, collocation, idioms, colloquial expressions, synonyms and antonyms, lexical chains", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/语言能力表 Language Table/语法能力：从句与句子结构、词类、动词时态、情态、语态（主动/被动）": {"name": "Grammatical competence: clauses and sentence structure, parts of speech, verb tenses, modality, voice (active/passive)", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/语言能力表 Language Table/语法能力：四种从句类型（陈述/疑问/祈使/感叹）、名词化 nominalisation": {"name": "Grammatical competence: four clause types (declarative/interrogative/imperative/exclamative), nominalisation", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/语言能力表 Language Table/语法能力：四类连词（增补/比较/时间/因果）、主谓一致、直接与间接引语、指代衔接": {"name": "Grammatical competence: four conjunction types (additive/comparative/temporal/causal), subject–verb agreement, direct and indirect speech, cohesive reference", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/语言能力表 Language Table/语义能力：听主旨/论点/细节、语义场、言外之意、歧义、appraisal 评价理论、事实与观点": {"name": "Semantic competence: listening for gist/argument/detail, semantic fields, implied meaning, ambiguity, appraisal theory, fact and opinion", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/语言能力表 Language Table/社会语言学：澄清提问、意义协商、劝服语言、语域 register 实验、话轮起承转合": {"name": "Sociolinguistics: asking for clarification, negotiating meaning, persuasive language, register experimentation, turn-taking and transitions", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/语言能力表 Language Table/社会文化：语域变异（熟悉/半正式/正式）、文化指涉、反讽与幽默、礼貌规范、眼神与体距": {"name": "Sociocultural: register variation (familiar/semi-formal/formal), cultural references, irony and humour, politeness conventions, eye contact and proxemics", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/学术写作与文本分析": {"name": "Academic writing and textual analysis", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/学术写作与文本分析/Discursive Essay 结构：引言 = 背景与语境 + 含 3 个分论点的论点句（漏斗式）": {"name": "Discursive essay structure: introduction = background and context + thesis statement containing 3 sub-arguments (funnel style)", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/学术写作与文本分析/正文 3 段：Point/Topic sentence → Explanation（3 句，不放证据）→ Evidence/Example → Link（≥3 句分析 + Tieback）": {"name": "3 body paragraphs: Point/Topic sentence → Explanation (3 sentences, no evidence) → Evidence/Example → Link (≥3 sentences of analysis + Tieback)", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/学术写作与文本分析/结论：重述论点 + 收尾，不引入新观点": {"name": "Conclusion: restate the thesis + closing, no new points introduced", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/学术写作与文本分析/3-Whys Technique（5W1H 追问链）提升批判性思考深度": {"name": "3-Whys Technique (5W1H questioning chain) to deepen critical thinking", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/学术写作与文本分析/语言控制：正式衔接词（Anyway→Nevertheless）、高级词汇（Get→Obtain）": {"name": "Language control: formal connectives (Anyway→Nevertheless), sophisticated vocabulary (Get→Obtain)", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/学术写作与文本分析/tentative / hedging 模糊限定语（It could be argued that…）以避免偏向": {"name": "tentative / hedging language (It could be argued that…) to avoid bias", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/学术写作与文本分析/Speech Writing 演讲稿：演讲惯例、语言技巧与听众诉求、register 一致、修辞手法": {"name": "Speech writing: speech conventions, language techniques and audience appeals, consistent register, rhetorical devices", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/学术写作与文本分析/文本分析：persuasive techniques、figurative language、反讽与幽默、叙事视角、多模态版面": {"name": "Textual analysis: persuasive techniques, figurative language, irony and humour, narrative perspective, multimodal layout", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/学术写作与文本分析/研究与引用：研究问题框架、来源相关性/可靠性/有效性、改写 paraphrase、文内引用与文末参考文献": {"name": "Research and referencing: framing research questions, source relevance/reliability/validity, paraphrasing, in-text citations and end-of-text references", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/学术写作与文本分析/文本类型：analytical / imaginative / interpretive / persuasive 四类": {"name": "Text types: the four kinds analytical / imaginative / interpretive / persuasive", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/OLNA 读写与算术测试": {"name": "OLNA literacy and numeracy tests", "note": "Online Literacy and Numeracy Assessment — a requirement for the WACE Certificate of Completion. All three components must reach Level 3 (equivalent to Year 9 level); any component not passed must be retaken"}, "AUSMAT May 2026 学习资料/ELD 英语/OLNA 读写与算术测试/Numeracy 算术：45 题多项选择，50 分钟": {"name": "Numeracy: 45 multiple-choice questions, 50 minutes", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/OLNA 读写与算术测试/Reading 阅读：45 题多项选择，50 分钟": {"name": "Reading: 45 multiple-choice questions, 50 minutes", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/OLNA 读写与算术测试/Writing 写作：1 题打字作答，不超过 600 词，60 分钟": {"name": "Writing: 1 typed response, no more than 600 words, 60 minutes", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/OLNA 读写与算术测试/阅读内容：段落理解、推断、作者目的、结论类型、词汇题（同反义词、语境猜词）": {"name": "Reading content: paragraph comprehension, inference, author's purpose, types of conclusion, vocabulary questions (synonyms and antonyms, guessing words from context)", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/OLNA 读写与算术测试/写作 7 项评分标准：读者导向、结构组织、词汇、衔接、句子结构、标点、拼写": {"name": "7 writing marking criteria: audience awareness, structure and organisation, vocabulary, cohesion, sentence structure, punctuation, spelling", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/OLNA 读写与算术测试/写作训练文本类型：书评、书信、专题特写、新闻报道、个人叙事、劝服与论证、多视角议论、事件报告": {"name": "Writing practice text types: book review, letter, feature article, news report, personal narrative, persuasion and argument, multi-perspective discussion, incident report", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/OLNA 读写与算术测试/语法覆盖：时态（现在/过去/将来）、情态动词、条件句、语态、分词、句子类型、标点": {"name": "Grammar coverage: tenses (present/past/future), modal verbs, conditionals, voice, participles, sentence types, punctuation", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/OLNA 读写与算术测试/词汇覆盖：同义词、搭配 collocation、词形变化、副词位置": {"name": "Vocabulary coverage: synonyms, collocation, word forms, adverb position", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/OLNA 读写与算术测试/练习平台：assess2.scsa.wa.edu.au 的 example test 与 practice test": {"name": "Practice platform: the example test and practice test on assess2.scsa.wa.edu.au", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/OLNA 读写与算术测试/学术诚信：签订学生协议，SCSA 用相似度检测查重，抄袭立即不及格": {"name": "Academic integrity: sign a student agreement; SCSA checks for plagiarism with similarity detection; plagiarism means immediate failure", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/考核任务": {"name": "Assessment tasks", "note": "8 school-based tasks totalling 100 marks (50% of the final grade) + WACE external written exam 50%"}, "AUSMAT May 2026 学习资料/ELD 英语/考核任务/Task 1 课内多视角议论文：就 unseen question 写作并引用所学澳洲文本（10%）": {"name": "Task 1 In-class multi-perspective essay: write on an unseen question and refer to the Australian texts studied (10%)", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/考核任务/Task 2A 口头研究提案：2–3 人组，含问题陈述、目标、背景、参考文献（5%）": {"name": "Task 2A Oral research proposal: groups of 2–3, including problem statement, aims, background, references (5%)", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/考核任务/Task 3 COAT 口语统考：官方统一任务，5 分钟准备 + 10 分钟访谈，录音录像送 SCSA（10%）": {"name": "Task 3 COAT oral common assessment: official common task, 5 minutes' preparation + 10-minute interview, audio and video recorded and sent to SCSA (10%)", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/考核任务/COAT 四类问题各一：字面理解、推断、分析、评价；题材来自 Unit 3": {"name": "COAT: one question of each of the four types — literal comprehension, inference, analysis, evaluation; content drawn from Unit 3", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/考核任务/Task 4 听力理解：两篇口语文本（7%）": {"name": "Task 4 Listening comprehension: two spoken texts (7%)", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/考核任务/Task 5 阅读与视觉理解：两篇书面 + 一篇视觉文本，短答 + 综合写作 synthesis（8%）": {"name": "Task 5 Reading and visual comprehension: two written texts + one visual text, short answers + synthesis writing (8%)", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/考核任务/Task 6 课内说服性演讲：就 unseen 话题呼吁同伴行动（10%）": {"name": "Task 6 In-class persuasive speech: call peers to action on an unseen topic (10%)", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/考核任务/Task 7 口头说服演讲：围绕 language and empowerment 发表观点（10%）": {"name": "Task 7 Oral persuasive speech: present a point of view on language and empowerment (10%)", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/考核任务/Task 2B 研究报告：Unit 3 议题，2 人 1000 词 / 3 人 1500 词（10%）": {"name": "Task 2B Research report: Unit 3 issue, 1000 words for 2 people / 1500 words for 3 (10%)", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/考核任务/Task 8 期末考试（30%）": {"name": "Task 8 Final examination (30%)", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/考核任务/WACE 外部笔试：听力 25% + 阅读与视觉 25% + 演讲稿写作 20% + 议论文写作 30%，共 3 小时": {"name": "WACE external written exam: listening 25% + reading and viewing 25% + speech writing 20% + essay writing 30%, 3 hours in total", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/配套资源": {"name": "Supporting resources", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/配套资源/Course Information（syllabus 全文）、Course Outline 周次表、Assessment Outline、ATELD Roadmap": {"name": "Course Information (full syllabus), Course Outline weekly schedule, Assessment Outline, ATELD Roadmap", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/配套资源/Unit 3 Material（245 页）：核心文本、讲义与课堂材料": {"name": "Unit 3 Material (245 pages): core texts, handouts and classroom materials", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/配套资源/Eligibility（30 页）：学生资格在线申报五步流程指南": {"name": "Eligibility (30 pages): guide to the five-step online student eligibility declaration process", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/配套资源/OLNA（218 页）+ 个人 OLNA 练习（48 页）：阅读、语法、词汇、写作全套练习与答案": {"name": "OLNA (218 pages) + personal OLNA practice (48 pages): complete sets of reading, grammar, vocabulary and writing practice with answers", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/配套资源/Tasks（112 页）：8 项任务的详细说明、评分标准与样卷": {"name": "Tasks (112 pages): detailed descriptions of the 8 tasks, marking keys and sample papers", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/配套资源/评分标准：COAT Marking Key、Task 2A Marking Key、议论文/演讲 25 分制、Synthesis Writing 评分细则": {"name": "Marking keys: COAT Marking Key, Task 2A Marking Key, 25-mark scale for essays/speeches, Synthesis Writing marking rubric", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/配套资源/写作指南：Discursive Writing Structure 与 Language、《2024 Good Answer Guide》、EALD Revision Manual": {"name": "Writing guides: Discursive Writing Structure and Language, the 2024 Good Answer Guide, EALD Revision Manual", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/配套资源/个人栏目：1_Notetaking、3_Unit 3 Handouts、6_Oral Tasks、7_OLNA": {"name": "Personal sections: 1_Notetaking, 3_Unit 3 Handouts, 6_Oral Tasks, 7_OLNA", "note": ""}, "AUSMAT May 2026 学习资料/ELD 英语/配套资源/协作空间：[FA1] Discursive Group Essay 多视角小组议论文": {"name": "Collaborative space: [FA1] Discursive Group Essay multi-perspective group essay", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学": {"name": "CSC Computer Science", "note": "Computer Science ATAR Year 12; the language of instruction and the language specified for the ATAR exam is Python.\nUnit 3 = Topic 1 Programming + Topic 2 Network communications; Unit 4 = Topic 3 Cyber security + Topic 4 Data management.\nThe four-stage technology process Investigate→Design→Develop→Evaluate runs throughout, and every content point has two layers: Knowledge (theory) and Skills (practical)."}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 1 · 编程 Programming": {"name": "Topic 1 · Programming", "note": "The first part of Unit 3, and the largest of the four Topics"}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 1 · 编程 Programming/控制结构：顺序 sequence、选择 selection、迭代 iteration（定次数/后测/前测循环）": {"name": "Control structures: sequence, selection, iteration (count-controlled / post-test / pre-test loops)", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 1 · 编程 Programming/数据类型：整数、浮点、字符串、布尔": {"name": "Data types: integer, floating point, string, Boolean", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 1 · 编程 Programming/运算符：算术（+ − * /、DIV、MOD）、关系、逻辑（AND/OR/NOT）与优先级": {"name": "Operators: arithmetic (+ − * /, DIV, MOD), relational, logical (AND/OR/NOT) and precedence", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 1 · 编程 Programming/模块化编码：函数、参数 parameters 与实参 arguments": {"name": "Modular coding: functions, parameters and arguments", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 1 · 编程 Programming/变量作用域：全局 global 与局部 local": {"name": "Variable scope: global and local", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 1 · 编程 Programming/参数传递：值传递 value 与引用传递 reference": {"name": "Parameter passing: pass by value and pass by reference", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 1 · 编程 Programming/数据结构：一维数组、二维数组、字典 dictionary": {"name": "Data structures: one-dimensional arrays, two-dimensional arrays, dictionaries", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 1 · 编程 Programming/伪代码规范：关键字大写、缩进、IF…END IF、= 赋值与 == 比较、CONST 常量": {"name": "Pseudocode conventions: keywords in capitals, indentation, IF…END IF, = for assignment vs == for comparison, CONST for constants", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 1 · 编程 Programming/开发框架四阶段：investigate（问题描述、定义需求、甘特图进度表）": {"name": "Four-stage development framework: investigate (problem description, defining requirements, Gantt chart schedule)", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 1 · 编程 Programming/design 设计数据结构与算法；develop 编码调试与单元测试；evaluate 用户验收测试与复盘": {"name": "design data structures and algorithms; develop coding, debugging and unit testing; evaluate user acceptance testing and review", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 1 · 编程 Programming/开发方法论对比：线性 vs 迭代（Waterfall / Agile / SDLC）": {"name": "Development methodology comparison: linear vs iterative (Waterfall / Agile / SDLC)", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 1 · 编程 Programming/12 项良好编程实践：验证输入、清晰简洁的主线、每个子程序单一逻辑任务、桩模块 stubs": {"name": "12 good programming practices: validate input, clear and concise mainline, a single logical task per subroutine, stub modules", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 1 · 编程 Programming/12 项良好编程实践：便于后续维护、版本控制、定期备份、识别社会伦理问题、异常处理、函数只返回单一数据结构": {"name": "12 good programming practices: ease of later maintenance, version control, regular backups, identifying social and ethical issues, exception handling, functions returning only a single data structure", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 1 · 编程 Programming/结构化算法与 Big O 记法（识别查找与排序算法的复杂度）": {"name": "Structured algorithms and Big O notation (identifying the complexity of searching and sorting algorithms)", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 1 · 编程 Programming/查找算法：线性查找、二分查找（要求已排序）": {"name": "Search algorithms: linear search, binary search (requires sorted data)", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 1 · 编程 Programming/排序算法：冒泡排序、插入排序、选择排序": {"name": "Sorting algorithms: bubble sort, insertion sort, selection sort", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 1 · 编程 Programming/测试：验收测试、实时测试数据、负载测试 load testing、单元测试": {"name": "Testing: acceptance testing, live test data, load testing, unit testing", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 1 · 编程 Programming/错误检测与调试：语法错误、逻辑错误、运行时错误（除零、数组越界）": {"name": "Error detection and debugging: syntax errors, logic errors, runtime errors (division by zero, array index out of bounds)", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 1 · 编程 Programming/调试技术：断点、打印语句、手工检查与追踪表 desk checking": {"name": "Debugging techniques: breakpoints, print statements, manual checking and desk checking", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 1 · 编程 Programming/面向对象编程 OOP：类、对象、属性、方法、抽象、多态、实例化、继承、封装": {"name": "Object-oriented programming OOP: classes, objects, attributes, methods, abstraction, polymorphism, instantiation, inheritance, encapsulation", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 1 · 编程 Programming/OOP 技能：建类与对象、用继承扩展类、在对象内使用变量与控制结构": {"name": "OOP skills: creating classes and objects, extending classes with inheritance, using variables and control structures within objects", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 1 · 编程 Programming/开发者伦理与法律：承认他人知识产权、遵守行为准则、不生成恶意软件": {"name": "Developer ethics and law: acknowledging others' intellectual property, following codes of conduct, not producing malware", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 1 · 编程 Programming/软件的社会影响：恶意软件、对软件的依赖、社交网络、网络安全、网络虚假信息": {"name": "Social impacts of software: malware, dependence on software, social networking, cyber security, online misinformation", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 2 · 网络通信": {"name": "Topic 2 · Network Communication", "note": "Unit 3, Part 2"}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 2 · 网络通信/OSI 七层模型：各层角色、MAC 地址与第 2 层交换、IP 地址与第 3 层路由": {"name": "OSI seven-layer model: role of each layer, MAC addresses and Layer 2 switching, IP addresses and Layer 3 routing", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 2 · 网络通信/DoD TCP/IP 四层模型：application / transport / internet / network": {"name": "DoD TCP/IP four-layer model: application / transport / internet / network", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 2 · 网络通信/OSI 与 DoD TCP/IP 模型的对比": {"name": "Comparison of the OSI and DoD TCP/IP models", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 2 · 网络通信/应用层协议：SMTP、FTP、HTTP、HTTPS、DHCP、DNS、PING": {"name": "Application layer protocols: SMTP, FTP, HTTP, HTTPS, DHCP, DNS, PING", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 2 · 网络通信/传输层协议：TCP、UDP、TLS": {"name": "Transport layer protocols: TCP, UDP, TLS", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 2 · 网络通信/互联网层协议：IPv4、IPv6、ARP；网络层：Ethernet (802.3)、Wi-Fi (802.11)": {"name": "Internet layer protocols: IPv4, IPv6, ARP; network layer: Ethernet (802.3), Wi-Fi (802.11)", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 2 · 网络通信/TCP 与 UDP 的差异及数据包结构对比": {"name": "Differences between TCP and UDP and comparison of packet structures", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 2 · 网络通信/IP 编址：私有 vs 公网、子网掩码、CIDR 记法、默认网关、DNS、端口 ports": {"name": "IP addressing: private vs public, subnet masks, CIDR notation, default gateway, DNS, ports", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 2 · 网络通信/IPv4 类别 A/B/C 与默认子网掩码（10.0.0.0/8、172.16.0.0/12、192.168.0.0/16）": {"name": "IPv4 classes A/B/C and default subnet masks (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16)", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 2 · 网络通信/子网划分 subnetting：切分子网、广播域与分段 segmentation": {"name": "Subnetting: dividing subnets, broadcast domains and segmentation", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 2 · 网络通信/数据包架构：data → segment → packet → frame → bits": {"name": "Data encapsulation: data → segment → packet → frame → bits", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 2 · 网络通信/网络组件：传输介质、调制解调器、路由器、网关、交换机、无线接入点、防火墙": {"name": "Network components: transmission media, modems, routers, gateways, switches, wireless access points, firewalls", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 2 · 网络通信/客户端-服务器 vs 对等网络 peer-to-peer；LAN vs WAN；网络拓扑；VLAN 与冲突域": {"name": "Client-server vs peer-to-peer; LAN vs WAN; network topologies; VLANs and collision domains", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 2 · 网络通信/网络性能：带宽 bandwidth、安全与性能导向的拓扑设计": {"name": "Network performance: bandwidth, topology design for security and performance", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 2 · 网络通信/故障排查工具：ping、traceroute": {"name": "Troubleshooting tools: ping, traceroute", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 2 · 网络通信/用 CISCO 规范绘制与解读网络拓扑图（含中间设备与终端设备）": {"name": "Drawing and interpreting network topology diagrams using CISCO conventions (including intermediate devices and end devices)", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 3 · 网络安全 Cyber security": {"name": "Topic 3 · Cyber Security", "note": "Unit 4, Part 1"}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 3 · 网络安全 Cyber security/伦理与法律：《Privacy Act 1988》与澳大利亚隐私原则 APP 11": {"name": "Ethics and law: the Privacy Act 1988 and Australian Privacy Principle APP 11", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 3 · 网络安全 Cyber security/《Privacy Amendment (Notifiable Data Breaches) Act 2017》数据泄露强制通报": {"name": "Privacy Amendment (Notifiable Data Breaches) Act 2017 mandatory data breach notification", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 3 · 网络安全 Cyber security/外部威胁：社会工程/钓鱼、DoS 与 DDoS、后门 back door、IP 欺骗": {"name": "External threats: social engineering/phishing, DoS and DDoS, back doors, IP spoofing", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 3 · 网络安全 Cyber security/外部威胁：SQL 注入、中间人 man-in-the-middle、跨站脚本 XSS": {"name": "External threats: SQL injection, man-in-the-middle, cross-site scripting XSS", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 3 · 网络安全 Cyber security/恶意软件类型：病毒、蠕虫、木马、间谍软件、广告软件、勒索软件": {"name": "Types of malware: viruses, worms, trojans, spyware, adware, ransomware", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 3 · 网络安全 Cyber security/物理网络威胁与零日漏洞 zero day vulnerabilities": {"name": "Physical network threats and zero day vulnerabilities", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 3 · 网络安全 Cyber security/内部威胁：设备丢失被盗、凭证泄露、员工滥用": {"name": "Internal threats: lost and stolen devices, credential leaks, employee misuse", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 3 · 网络安全 Cyber security/安全解决方案：日志分析、反恶意软件、防火墙过滤、访问控制列表 ACL": {"name": "Security solutions: log analysis, anti-malware, firewall filtering, access control lists ACL", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 3 · 网络安全 Cyber security/安全解决方案：入侵防御系统 IPS、虚拟专用网 VPN、用户培训、ICT 行为准则、物理安全": {"name": "Security solutions: intrusion prevention systems IPS, virtual private networks VPN, user training, ICT codes of conduct, physical security", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 3 · 网络安全 Cyber security/安全框架 CIA 三元组：机密性 confidentiality、完整性 integrity、可用性 availability": {"name": "Security framework CIA triad: confidentiality, integrity, availability", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 3 · 网络安全 Cyber security/安全框架 AAA：认证 authentication、授权 authorisation、计费/审计 accounting": {"name": "Security framework AAA: authentication, authorisation, accounting", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 3 · 网络安全 Cyber security/密码学：对称加密 vs 非对称加密（公钥/私钥）；证书 certificate 的用途": {"name": "Cryptography: symmetric vs asymmetric encryption (public key/private key); uses of certificates", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 3 · 网络安全 Cyber security/加密方法演变：替换密码、维吉尼亚密码、Enigma、DES（56 位密钥）": {"name": "Evolution of encryption methods: substitution ciphers, Vigenère cipher, Enigma, DES (56-bit key)", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 3 · 网络安全 Cyber security/现代最佳实践：AES（128/192/256 位）、RSA（2048–4096 位）、ECC、密钥管理与 NIST 指南": {"name": "Modern best practices: AES (128/192/256-bit), RSA (2048–4096-bit), ECC, key management and NIST guidelines", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 3 · 网络安全 Cyber security/互联网安全通信：用非对称加密建立连接 + 用对称加密交换数据": {"name": "Secure internet communication: establishing a connection with asymmetric encryption + exchanging data with symmetric encryption", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 3 · 网络安全 Cyber security/道德黑客与渗透测试：蓝队 blue team vs 红队 red team；法律与伦理责任": {"name": "Ethical hacking and penetration testing: blue team vs red team; legal and ethical responsibilities", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 4 · 数据管理 Data Management": {"name": "Topic 4 · Data Management", "note": "Unit 4, Part 2; the core is relational database design and SQL"}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 4 · 数据管理 Data Management/关系数据库组织：实体 entities、属性 attributes、关系（1:1 / 1:M / M:N）": {"name": "Relational database organisation: entities, attributes, relationships (1:1 / 1:M / M:N)", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 4 · 数据管理 Data Management/表作为实体的实现：字段 fields 与记录 records": {"name": "Tables as the implementation of entities: fields and records", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 4 · 数据管理 Data Management/数据类型：integer / float / Boolean / text / date": {"name": "Data types: integer / float / Boolean / text / date", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 4 · 数据管理 Data Management/主键 primary key、外键 foreign key、复合键 composite key": {"name": "Primary key, foreign key, composite key", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 4 · 数据管理 Data Management/数据异常 data anomalies：插入、更新、删除异常": {"name": "Data anomalies: insertion, update and deletion anomalies", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 4 · 数据管理 Data Management/数据库与其他系统交互：ODBC；事务 ACID（原子性/一致性/隔离性/持久性）": {"name": "Database interaction with other systems: ODBC; ACID transactions (atomicity/consistency/isolation/durability)", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 4 · 数据管理 Data Management/数据字典 data dictionary：元素名、数据类型、长度、描述、约束": {"name": "Data dictionary: element name, data type, length, description, constraints", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 4 · 数据管理 Data Management/ER 图（鸦爪记法 crow's foot）：分析 3–10 张表的 ER 图、创建 3–8 张表": {"name": "ER diagrams (crow's foot notation): analysing ER diagrams of 3–10 tables, creating 3–8 tables", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 4 · 数据管理 Data Management/关系记法 relational notation；解析 M:N 关系（引入连接实体）": {"name": "Relational notation; resolving M:N relationships (introducing a linking entity)", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 4 · 数据管理 Data Management/数据完整性：参照完整性、域完整性、实体完整性": {"name": "Data integrity: referential integrity, domain integrity, entity integrity", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 4 · 数据管理 Data Management/数据质量因素：时效性 currency、真实性 authenticity、相关性 relevance、准确性 accuracy、离群值剔除": {"name": "Data quality factors: currency, authenticity, relevance, accuracy, removal of outliers", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 4 · 数据管理 Data Management/规范化 Normalisation：1NF 原子值且无重复属性": {"name": "Normalisation: 1NF with atomic values and no repeating attributes", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 4 · 数据管理 Data Management/2NF 无部分依赖 partial dependency；3NF 无传递依赖 transitive dependency": {"name": "2NF with no partial dependency; 3NF with no transitive dependency", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 4 · 数据管理 Data Management/SQL 建表与修改：CREATE / MODIFY / DROP，用约束保证数据有效性": {"name": "SQL table creation and modification: CREATE / MODIFY / DROP, using constraints to ensure data validity", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 4 · 数据管理 Data Management/SQL 数据操作：SELECT / INSERT / UPDATE / DELETE（含级联删除 cascading deletes）": {"name": "SQL data manipulation: SELECT / INSERT / UPDATE / DELETE (including cascading deletes)", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 4 · 数据管理 Data Management/SQL 聚合：COUNT / SUM / AVG / MAX / MIN": {"name": "SQL aggregates: COUNT / SUM / AVG / MAX / MIN", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 4 · 数据管理 Data Management/SQL 分组与排序：ORDER BY、GROUP BY、HAVING、DISTINCT": {"name": "SQL grouping and sorting: ORDER BY, GROUP BY, HAVING, DISTINCT", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 4 · 数据管理 Data Management/SQL 多表内连接 inner join（最多 4 张表）、计算字段、拼接字段、别名 aliases": {"name": "SQL multi-table inner joins (up to 4 tables), calculated fields, concatenated fields, aliases", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 4 · 数据管理 Data Management/SQL 运算符：AND、OR、NOT、ANY、BETWEEN、EXISTS、IN、LIKE（通配符 % 与 _）": {"name": "SQL operators: AND, OR, NOT, ANY, BETWEEN, EXISTS, IN, LIKE (wildcards % and _)", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 4 · 数据管理 Data Management/开发中的伦理问题：个人数据收集、隐私顾虑、数据来源可靠性、来源标注、数据挖掘": {"name": "Ethical issues in development: collection of personal data, privacy concerns, reliability of data sources, source attribution, data mining", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/Topic 4 · 数据管理 Data Management/开发中的安全与法律问题：数据保密与备份、访问限制、数据所有权、澳大利亚隐私原则 APP 5/8/10/11/12": {"name": "Security and legal issues in development: data confidentiality and backup, access restrictions, data ownership, Australian Privacy Principles APP 5/8/10/11/12", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/语言、工具与考核资源": {"name": "Languages, Tools and Assessment Resources", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/语言、工具与考核资源/编程语言 Python（课程指定，ATAR 考试用）；算法用 SCSA 规范伪代码表达": {"name": "Programming language Python (specified by the course, used in the ATAR exam); algorithms expressed in SCSA standard pseudocode", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/语言、工具与考核资源/数据库：推荐 SQLite，另附 MySQL with VSCode 指南；建模用鸦爪 ER 记法与关系记法": {"name": "Databases: SQLite recommended, plus a MySQL with VSCode guide; modelling uses crow's foot ER notation and relational notation", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/语言、工具与考核资源/网络制图用 CISCO 拓扑图标规范；排障工具 ping、traceroute": {"name": "Network diagrams use CISCO topology icon conventions; troubleshooting tools ping, traceroute", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/语言、工具与考核资源/明确不要求开发图形用户界面 GUI（程序与数据库均不要求）": {"name": "Development of a graphical user interface GUI is explicitly not required (required for neither programs nor databases)", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/语言、工具与考核资源/校本考核四类：Project 项目、Theory test 理论测试、Practical test 实操测试、Examination 考试": {"name": "Four types of school-based assessment: Project, Theory test, Practical test, Examination", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/语言、工具与考核资源/WACE 外部考试：3 小时 + 10 分钟阅读；Section 1 简答 40% + Section 2 扩展回答 60%，考场提供 Source Booklet 刺激材料册": {"name": "WACE external exam: 3 hours + 10 minutes reading time; Section 1 short answer 40% + Section 2 extended response 60%, a Source Booklet of stimulus material is provided in the exam room", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/语言、工具与考核资源/Topic 讲义 PPT：编程 235 页、网络通信 55 页、网络安全 72 页、数据管理 163 页": {"name": "Topic lecture PPTs: Programming 235 pages, Network Communication 55 pages, Cyber Security 72 pages, Data Management 163 pages", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/语言、工具与考核资源/Past ATAR Course Exam（452 页）：2016–2025 全套 WACE 试卷 + Source Booklet": {"name": "Past ATAR Course Exam (452 pages): complete set of 2016–2025 WACE papers + Source Booklets", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/语言、工具与考核资源/Reading Materials（159 页）：Introduction to Scientific Programming with Python 及网络安全专题阅读": {"name": "Reading Materials (159 pages): Introduction to Scientific Programming with Python and cyber security topic readings", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/语言、工具与考核资源/Mentor Worksheet 9 份（W1–W9）：从算术运算、循环、伪代码追踪表，到网络、数据库规范化、网络安全": {"name": "9 Mentor Worksheets (W1–W9): from arithmetic operations, loops and pseudocode trace tables, to networks, database normalisation and cyber security", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/语言、工具与考核资源/Lab Practice（50 页）与 Homework：良好编程实践汇报、网络组件信息图、WACE 真题练习": {"name": "Lab Practice (50 pages) and Homework: presentation on good programming practice, network components infographic, WACE past-paper practice", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/语言、工具与考核资源/Course Introduction（100 页）：SCSA syllabus 全文、Additional Syllabus Support Booklet（伪代码/算法/协议表/CISCO 图例/ER 图/SQL 速查）": {"name": "Course Introduction (100 pages): full SCSA syllabus, Additional Syllabus Support Booklet (pseudocode/algorithms/protocol tables/CISCO legends/ER diagrams/SQL quick reference)", "note": ""}, "AUSMAT May 2026 学习资料/CSC 计算机科学/语言、工具与考核资源/个人栏目：Class Notes、Handouts（含全部作业答案）、Homework、Quizzes": {"name": "Personal section: Class Notes, Handouts (including all assignment answers), Homework, Quizzes", "note": ""}};
+
+// 记住当前语言
+let LANG = "zh";
+try { const s = localStorage.getItem("mm-lang"); if (s) LANG = s; } catch(e) {}
+
+// 只重算文字与尺寸，不动 _open（normalize 会把展开状态重置成 d<2，不能用）
+function refreshDims(n, d, color){
+  n._depth = d;
+  if (n.color) n._color = n.color;
+  n._lines = wrapText(n.name, d, MAX_W);
+  n._w = Math.max(46, Math.max.apply(null, n._lines.map(l => textW(l, d))) + PAD_X*2 + (n.children && n.children.length ? 16 : 0));
+  n._h = n._lines.length > 1 ? NODE_H + (n._lines.length-1)*15 : NODE_H;
+  if (n.children) n.children.forEach(c => refreshDims(c, d+1, n._color));
+}
+
+// 按路径把 name/note 换成目标语言；源语言存在 _zh 里，便于来回切
+function swapLang(n, lang, path, zhData){
+  const p = path ? path + "/" + (n._zh ? n._zh.name : n.name) : n.name;
+  if (!n._zh){ n._zh = { name: n.name, note: n.note || "" }; }
+  const tr = I18N[p] || I18N[path];
+  if (lang === "en" && tr && tr.name){
+    n.name = tr.name;
+    if (tr.note) n.note = tr.note;
+  } else {
+    n.name = n._zh.name;
+    n.note = n._zh.note;
+  }
+  if (n.children) n.children.forEach(c => swapLang(c, lang, p, zhData));
+}
+
+function applyLang(lang, rerender){
+  LANG = lang;
+  try { localStorage.setItem("mm-lang", lang); } catch(e) {}
+  swapLang(DATA, lang, "", null);
+  refreshDims(DATA, 0, "#2f6fed");
+  DATA._open = true;
+
+  if (rerender){
+    document.querySelectorAll("[data-i18n]").forEach(function(el){
+      const k = el.getAttribute("data-i18n");
+      if (lang === "en" && UI_EN[k]) el.textContent = UI_EN[k];
+      else el.textContent = k;
+    });
+    const si = document.getElementById("search");
+    if (si) si.placeholder = lang === "en" ? UI_EN["搜索知识点…"] : "搜索知识点…";
+    document.documentElement.lang = lang === "en" ? "en" : "zh-CN";
+    // 顶栏标题是 <h1>文字<small id="stat"></small></h1>，直接改 textContent
+    // 会把小字（节点计数）一起抹掉，所以只替换文本节点。
+    const h1 = document.querySelector("header h1");
+    if (h1) {
+      for (const n of Array.from(h1.childNodes)) {
+        if (n.nodeType === 3) h1.removeChild(n);
+      }
+      h1.insertBefore(document.createTextNode(
+        lang === "en" ? "AUSMAT Study Notes — Mind Map" : "AUSMAT 学习资料思维导图"), h1.firstChild);
+    }
+    const btn = document.getElementById("btnLang");
+    if (btn) btn.textContent = lang === "en" ? "中文" : "EN";
+    const st = document.getElementById("sideTitle");
+    const sb = document.getElementById("sideBody");
+    if (st) st.textContent = lang === "en" ? "Click a node to see its details" : "点击导图中的节点查看说明";
+    if (sb) sb.textContent = lang === "en" ? "Details of the selected topic appear here." : "这里会显示该知识点的具体内容。";
+    // 图例标题是 buildLegend() 在 JS 字符串里拼的，不能用 data-i18n 注，
+    // 只能在这里跟着语言重写。
+    const lh = document.querySelector("#legend h2");
+    if (lh) lh.textContent = lang === "en" ? UI_EN["科目（点击展开整科）"] : "科目（点击展开整科）";
+    buildLegend();
+    const lh2 = document.querySelector("#legend h2");
+    if (lh2) lh2.textContent = lang === "en" ? UI_EN["科目（点击展开整科）"] : "科目（点击展开整科）";
+  }
+  render();
+  if (rerender) fit(0.5);
+}
+
+(function init(){
+  normalize(DATA, 0, "#2f6fed");
+  DATA._open = true;
+  buildLegend(); buildTimeline(); render(); initialView();
+})();
+
+// 启动完成后按记忆的语言再应用一次。
+// 不能放进上面的 IIFE：那时 var UI_EN / var I18N 还未赋值。
+if (LANG === 'en') applyLang('en', true);
+</script>
+</body>
+</html>
