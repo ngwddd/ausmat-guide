@@ -1,0 +1,41 @@
+name: Deploy to GitHub Pages
+
+# 本站是纯静态站点（无构建步骤），所以流程就是「上传整个目录 → 发布」。
+# 用 Actions 而不是 branch 部署，好处是部署记录、回滚、状态都可见。
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # 站点在仓库根目录；node_modules 与验证脚本已被 .gitignore 排除
+          path: .
+
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
