@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="AUSMAT 学习资料思维导图">AUSMAT 学习资料思维导图</title>
+<title>知识导图 · AUSMAT 学习资料</title>
 <style>
   :root{--bg:#f4f6f9;--panel:#fff;--ink:#1f2733;--muted:#6b7684;--line:#dfe4ea;--accent:#2f6fed;}
   *{box-sizing:border-box;}
@@ -57,7 +57,7 @@
 <div id="app">
   <header>
     <a href="../index.html" class="siteback" style="text-decoration:none;color:#2b6cb0;font-weight:600;font-size:14px;white-space:nowrap;padding:4px 10px;border:1px solid #cfd8e3;border-radius:6px;">← 返回站点</a>
-    <h1>AUSMAT 学习资料思维导图<small id="stat"></small></h1>
+    <h1 data-i18n="AUSMAT 学习资料思维导图">AUSMAT 学习资料思维导图<small id="stat"></small></h1>
     <div class="spacer"></div>
     <input id="search" placeholder="搜索知识点…">
     <button id="btnExpand" data-i18n="全部展开">全部展开</button>
@@ -1054,15 +1054,18 @@ function applyLang(lang, rerender){
     const si = document.getElementById("search");
     if (si) si.placeholder = lang === "en" ? UI_EN["搜索知识点…"] : "搜索知识点…";
     document.documentElement.lang = lang === "en" ? "en" : "zh-CN";
-    // 顶栏标题是 <h1>文字<small id="stat"></small></h1>，直接改 textContent
-    // 会把小字（节点计数）一起抹掉，所以只替换文本节点。
+    // 顶栏标题结构是 <h1>文字<small id="stat">计数</small></h1>。
+    // 之前逐节点删除文本节点的写法把 <small> 也弄丢了（stat 变 null，render 报错），
+    // 改为整体重建 h1，并把 small 一起重建，最稳。
     const h1 = document.querySelector("header h1");
     if (h1) {
-      for (const n of Array.from(h1.childNodes)) {
-        if (n.nodeType === 3) h1.removeChild(n);
-      }
-      h1.insertBefore(document.createTextNode(
-        lang === "en" ? "AUSMAT Study Notes — Mind Map" : "AUSMAT 学习资料思维导图"), h1.firstChild);
+      const old = document.getElementById("stat");
+      const cnt = old ? old.textContent : "";
+      h1.textContent = lang === "en" ? "AUSMAT Study Notes — Mind Map" : "AUSMAT 学习资料思维导图";
+      const sm = document.createElement("small");
+      sm.id = "stat";
+      sm.textContent = cnt;
+      h1.appendChild(sm);
     }
     const btn = document.getElementById("btnLang");
     if (btn) btn.textContent = lang === "en" ? "中文" : "EN";
