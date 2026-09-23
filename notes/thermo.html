@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>麦克斯韦-玻尔兹曼分布 · 课程笔记</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="stylesheet" href="../vendor/katex/katex.min.css">
+</head>
+<body>
+
+  <header class="site">
+    <div class="wrap">
+      <a class="brand" href="../index.html">课程<span>笔记</span></a>
+      <nav>
+        <a href="../index.html">首页</a>
+        <a href="#" class="on">热力学</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="wrap">
+
+      <div class="note-head">
+        <a class="back" href="../index.html">← 返回首页</a>
+        <h1>麦克斯韦-玻尔兹曼速率分布</h1>
+        <div class="meta">热力学与统计物理 · 第 3 讲</div>
+      </div>
+
+      <p>理想气体处于热平衡时，分子速率并不相同，而是服从一个确定的概率分布。
+         本页整理这个分布的推导要点和三个特征速率。</p>
+
+      <h2>1. 分布函数</h2>
+
+      <p>设分子质量为 $m$，温度为 $T$，$k$ 为玻尔兹曼常数。速率 $v$ 的概率密度为：</p>
+
+      <div class="box">
+        $$ f(v) = 4\pi \left( \frac{m}{2\pi k T} \right)^{3/2} v^{2} \exp\!\left( -\frac{m v^{2}}{2kT} \right) $$
+      </div>
+
+      <div class="callout">
+        <p>注意 <strong>$v^2$ 因子</strong>和 <strong>指数衰减因子</strong>的竞争关系——正是它让曲线出现峰值，而不是单调下降。</p>
+      </div>
+
+      <p>归一化条件（分布必须积分到 1，这是概率密度的要求）：</p>
+
+      <p>$$ \int_{0}^{\infty} f(v)\, dv = 1 $$</p>
+
+      <h2>2. 三个特征速率</h2>
+
+      <p>由分布可以导出三个常用速率。它们的定义方式不同，数值也不同：</p>
+
+      <table>
+        <thead>
+          <tr><th>名称</th><th>定义方式</th><th>结果</th><th>数值关系</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>最概然速率 $v_p$</td>
+            <td>$f'(v) = 0$ 的极大值点</td>
+            <td>$\sqrt{2kT/m}$</td>
+            <td>$1.00$</td>
+          </tr>
+          <tr>
+            <td>平均速率 $\bar{v}$</td>
+            <td>$\int_0^\infty v f(v)\,dv$</td>
+            <td>$\sqrt{8kT/\pi m}$</td>
+            <td>$1.13$</td>
+          </tr>
+          <tr>
+            <td>方均根速率 $v_{\mathrm{rms}}$</td>
+            <td>$\sqrt{\int_0^\infty v^2 f(v)\,dv}$</td>
+            <td>$\sqrt{3kT/m}$</td>
+            <td>$1.22$</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p>三者之比恒为</p>
+
+      <p>$$ v_p : \bar{v} : v_{\mathrm{rms}} = 1 : \frac{2}{\sqrt{\pi}} : \sqrt{\frac{3}{2}} \approx 1 : 1.128 : 1.225 $$</p>
+
+      <h2>3. 为什么方均根速率对应动能</h2>
+
+      <p>平均平动动能为</p>
+
+      <p>$$ \langle E_k \rangle = \frac{1}{2}m\langle v^2 \rangle = \frac{1}{2}m v_{\mathrm{rms}}^2 $$</p>
+
+      <p>代入 $v_{\mathrm{rms}} = \sqrt{3kT/m}$ 得</p>
+
+      <p>$$ \langle E_k \rangle = \frac{3}{2}kT $$</p>
+
+      <p>这正是能量均分定理的三维结果——每个平动自由度贡献 $\frac{1}{2}kT$。</p>
+
+      <h2>4. 数值例子（氮气 N₂）</h2>
+
+      <p>取摩尔质量 $M = 28\ \mathrm{g/mol}$，则分子质量 $m = M/N_A$。代入不同温度：</p>
+
+      <table>
+        <thead><tr><th>温度</th><th>$v_p$</th><th>$\bar{v}$</th><th>$v_{\mathrm{rms}}$</th></tr></thead>
+        <tbody>
+          <tr><td>100 K</td><td>244 m/s</td><td>275 m/s</td><td>299 m/s</td></tr>
+          <tr><td>300 K</td><td>422 m/s</td><td>476 m/s</td><td>517 m/s</td></tr>
+          <tr><td>800 K</td><td>689 m/s</td><td>778 m/s</td><td>845 m/s</td></tr>
+          <tr><td>1500 K</td><td>944 m/s</td><td>1065 m/s</td><td>1157 m/s</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout">
+        <p>这些数字不是抄的——是用 <strong>sympy 符号推导</strong>出公式后代入算的。</p>
+      </div>
+
+      <h2>5. 这一页怎么扩展</h2>
+
+      <p>要给别的课加内容，复制这个文件、改文字即可。
+         公式直接写 <code>$...$</code>（行内）或 <code>$$...$$</code>（独立成行），KaTeX 自动渲染。</p>
+
+    </div>
+  </main>
+
+  <footer class="site">
+    <div class="wrap">课程笔记 · 公式由 KaTeX 本地渲染</div>
+  </footer>
+
+  <!-- KaTeX：全本地文件，不依赖外网 -->
+  <script src="../vendor/katex/katex.min.js"></script>
+  <script>
+  (function () {
+    if (typeof katex === 'undefined') {
+      console.error('KaTeX 未加载，检查 ../vendor/katex/katex.min.js');
+      return;
+    }
+
+    // 只遍历纯文本节点，逐段替换数学公式。
+    // 不用 innerHTML + 正则：那会误伤标签属性里的 $ ，也会破坏结构。
+    var SKIP = { SCRIPT: 1, STYLE: 1, CODE: 1, PRE: 1 };
+    var RE = /\$\$([\s\S]+?)\$\$|\$([^$\n]+?)\$/g;
+
+    function renderTextNode(node) {
+      var text = node.nodeValue;
+      if (text.indexOf('$') === -1) return;
+
+      var frag = document.createDocumentFragment();
+      var last = 0, m;
+
+      RE.lastIndex = 0;
+      while ((m = RE.exec(text)) !== null) {
+        if (m.index > last) {
+          frag.appendChild(document.createTextNode(text.slice(last, m.index)));
+        }
+        var display = m[1] !== undefined;
+        var tex = display ? m[1] : m[2];
+        var span = document.createElement('span');
+        try {
+          span.innerHTML = katex.renderToString(tex.trim(), {
+            displayMode: display,
+            throwOnError: false
+          });
+        } catch (e) {
+          span.textContent = m[0];   // 渲染失败就原样显示，不让整页崩掉
+        }
+        frag.appendChild(span);
+        last = m.index + m[0].length;
+      }
+
+      if (last === 0) return;                    // 没有匹配
+      if (last < text.length) {
+        frag.appendChild(document.createTextNode(text.slice(last)));
+      }
+      node.parentNode.replaceChild(frag, node);
+    }
+
+    function walk(root) {
+      var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+        acceptNode: function (n) {
+          if (SKIP[n.parentNode.nodeName]) return NodeFilter.FILTER_REJECT;
+          return n.nodeValue.indexOf('$') === -1
+            ? NodeFilter.FILTER_REJECT
+            : NodeFilter.FILTER_ACCEPT;
+        }
+      });
+      var nodes = [], n;
+      while ((n = walker.nextNode())) nodes.push(n);
+      nodes.forEach(renderTextNode);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', function () { walk(document.body); });
+    } else {
+      walk(document.body);
+    }
+  })();
+  </script>
+
+</body>
+</html>

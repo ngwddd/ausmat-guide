@@ -1,0 +1,153 @@
+/* ─────────────────────────────────────────────────────────────
+   my-site 主样式
+   设计原则：单文件、无框架、无构建步骤。
+   改配色只动 :root 里的变量即可。
+   ───────────────────────────────────────────────────────────── */
+
+:root {
+  --bg:        #ffffff;
+  --bg-soft:   #f7f8fa;
+  --bg-code:   #f2f4f7;
+  --text:      #1a202c;
+  --text-soft: #5a6474;
+  --line:      #e3e7ee;
+  --accent:    #2b6cb0;
+  --accent-bg: #eef4fb;
+  --radius:    10px;
+  --maxw:      760px;
+}
+
+/* 跟随系统的深色模式 */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:        #16181d;
+    --bg-soft:   #1e2128;
+    --bg-code:   #23272f;
+    --text:      #e6e8ec;
+    --text-soft: #9aa3b2;
+    --line:      #2e333d;
+    --accent:    #7cb3e8;
+    --accent-bg: #1d2836;
+  }
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Microsoft YaHei", "Noto Sans SC", -apple-system, "Segoe UI", sans-serif;
+  font-size: 16px;
+  line-height: 1.8;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── 布局 ───────────────────────────────────────────────── */
+
+.wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 22px; }
+
+header.site {
+  border-bottom: 1px solid var(--line);
+  background: var(--bg-soft);
+  padding: 18px 0;
+}
+header.site .wrap { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+header.site .brand {
+  font-weight: 700; font-size: 1.05rem; color: var(--text);
+  text-decoration: none; letter-spacing: .02em;
+}
+header.site .brand span { color: var(--accent); }
+header.site nav { margin-left: auto; display: flex; gap: 18px; }
+header.site nav a {
+  color: var(--text-soft); text-decoration: none; font-size: .92rem;
+  padding-bottom: 2px; border-bottom: 2px solid transparent;
+}
+header.site nav a:hover, header.site nav a.on {
+  color: var(--accent); border-bottom-color: var(--accent);
+}
+
+main { padding: 40px 0 64px; }
+
+footer.site {
+  border-top: 1px solid var(--line);
+  padding: 22px 0 40px;
+  color: var(--text-soft);
+  font-size: .86rem;
+}
+
+/* ── 首页 ───────────────────────────────────────────────── */
+
+.hero { margin-bottom: 42px; }
+.hero h1 { font-size: 1.85rem; margin: 0 0 10px; letter-spacing: -.01em; }
+.hero p  { color: var(--text-soft); margin: 0; }
+
+.sec-title {
+  font-size: .8rem; font-weight: 700; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--text-soft);
+  margin: 40px 0 16px; padding-bottom: 8px; border-bottom: 1px solid var(--line);
+}
+
+ul.cards { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+ul.cards li a {
+  display: block; padding: 16px 18px;
+  border: 1px solid var(--line); border-radius: var(--radius);
+  text-decoration: none; color: inherit;
+  transition: border-color .15s, background .15s, transform .15s;
+}
+ul.cards li a:hover {
+  border-color: var(--accent); background: var(--accent-bg); transform: translateX(3px);
+}
+ul.cards .t { font-weight: 600; display: block; margin-bottom: 3px; }
+ul.cards .d { color: var(--text-soft); font-size: .9rem; }
+
+/* ── 笔记页 ─────────────────────────────────────────────── */
+
+.note-head { margin-bottom: 34px; }
+.note-head .back { font-size: .88rem; color: var(--text-soft); text-decoration: none; }
+.note-head .back:hover { color: var(--accent); }
+.note-head h1 { font-size: 1.7rem; margin: 12px 0 6px; }
+.note-head .meta { color: var(--text-soft); font-size: .88rem; }
+
+h2 { font-size: 1.25rem; margin: 40px 0 14px; padding-top: 6px; }
+h3 { font-size: 1.05rem; margin: 28px 0 10px; }
+
+.callout {
+  border-left: 3px solid var(--accent);
+  background: var(--accent-bg);
+  padding: 14px 18px; margin: 20px 0; border-radius: 0 var(--radius) var(--radius) 0;
+}
+.callout p:first-child { margin-top: 0; }
+.callout p:last-child  { margin-bottom: 0; }
+
+.box {
+  border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 4px 18px; margin: 20px 0; background: var(--bg-soft);
+}
+
+code {
+  background: var(--bg-code); padding: 2px 6px; border-radius: 4px;
+  font-family: Consolas, "Cascadia Mono", monospace; font-size: .88em;
+}
+pre {
+  background: var(--bg-code); padding: 14px 16px; border-radius: var(--radius);
+  overflow-x: auto; border: 1px solid var(--line);
+}
+pre code { background: none; padding: 0; }
+
+table { border-collapse: collapse; width: 100%; margin: 20px 0; font-size: .93rem; }
+th, td { border: 1px solid var(--line); padding: 9px 12px; text-align: left; }
+th { background: var(--bg-soft); font-weight: 600; }
+
+.katex { font-size: 1.05em; }
+.katex-display { overflow-x: auto; overflow-y: hidden; padding: 4px 0; }
+
+/* ── 打印（交作业时直接打印成 PDF）─────────────────────── */
+@media print {
+  header.site nav, footer.site, .note-head .back { display: none; }
+  body { background: #fff; color: #000; font-size: 11pt; }
+  a { color: #000; text-decoration: none; }
+  .callout, .box { break-inside: avoid; }
+}

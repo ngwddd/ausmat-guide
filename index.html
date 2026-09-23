@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>课程笔记</title>
+  <meta name="description" content="我的课程笔记与习题整理">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+  <header class="site">
+    <div class="wrap">
+      <a class="brand" href="index.html">课程<span>笔记</span></a>
+      <nav>
+        <a href="index.html" class="on">首页</a>
+        <a href="#courses">课程</a>
+        <a href="#about">关于</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="wrap">
+
+      <div class="hero">
+        <h1>我的课程笔记</h1>
+        <p>把课堂内容、公式推导和习题整理在这里。公式用 LaTeX 写，可打印。</p>
+      </div>
+
+      <div class="sec-title" id="courses">本学期课程</div>
+
+      <ul class="cards">
+        <li>
+          <a href="notes/thermo.html">
+            <span class="t">热力学与统计物理</span>
+            <span class="d">麦克斯韦-玻尔兹曼分布 · 理想气体 · 熵与第二定律</span>
+          </a>
+        </li>
+        <li>
+          <a href="#">
+            <span class="t">数学物理方法</span>
+            <span class="d">（占位：点进来还没内容，等你给我素材）</span>
+          </a>
+        </li>
+        <li>
+          <a href="#">
+            <span class="t">量子力学</span>
+            <span class="d">（占位）</span>
+          </a>
+        </li>
+      </ul>
+
+      <div class="sec-title" id="about">这个站是怎么做的</div>
+
+      <div class="box">
+        <p>纯静态站点，<strong>没有框架、没有构建步骤</strong>——就是 HTML + CSS。</p>
+        <ul>
+          <li>公式由 <strong>KaTeX</strong> 渲染，字体和脚本都在本站 <code>vendor/</code> 里，<strong>不依赖任何外部 CDN</strong>，断网也能正常显示</li>
+          <li>配色跟随系统深色模式，手机上自适应</li>
+          <li>按 <code>Ctrl+P</code> 可以直接打印成 PDF 交作业（打印时会自动去掉导航栏）</li>
+        </ul>
+      </div>
+
+      <div class="callout">
+        <p><strong>这就是第 2 课的实物。</strong>你现在看到的每个元素——卡片、提示框、表格、深色模式——都对应 CSS 里的一小段规则，改一个变量就能换整站配色。</p>
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="site">
+    <div class="wrap">本地运行 · 尚未上线</div>
+  </footer>
+
+</body>
+</html>

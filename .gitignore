@@ -1,0 +1,19 @@
+# 依赖：体积大、可由 pnpm install 还原，不进版本库
+node_modules/
+
+# 验证截图：构建产物，随时可由 `node verify.mjs` 重新生成
+shots/
+
+# 编辑器 / 系统杂项
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log
+
+# 敏感文件：万一以后加了密钥，别推上去
+.env
+.env.local
+*.key
+*.pem
