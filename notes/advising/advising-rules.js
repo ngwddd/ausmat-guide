@@ -97,27 +97,27 @@ window.ADVISING = (function () {
    * ------------------------------------------------------------------------*/
   const capabilities = {
     mathematics: {
-      label: 'Mathematics',
+      label: 'Mathematics', zhLabel: '数学',
       subjects: ['Mathematics', 'Mathematics Methods', 'Mathematics Specialist', 'Add Maths', 'Additional Mathematics'],
     },
     physicalScience: {
-      label: 'a physical science',
+      label: 'a physical science', zhLabel: '物理或化学',
       subjects: ['Physics', 'Chemistry'],
     },
     chemistry: {
-      label: 'Chemistry',
+      label: 'Chemistry', zhLabel: '化学',
       subjects: ['Chemistry'],
     },
     biology: {
-      label: 'Biology',
+      label: 'Biology', zhLabel: '生物',
       subjects: ['Biology', 'Human Biology'],
     },
     english: {
-      label: 'English',
+      label: 'English', zhLabel: '英语',
       subjects: ['English', 'English as First Language', 'English as Second Language', 'English Literature'],
     },
     computing: {
-      label: 'Computing',
+      label: 'Computing', zhLabel: '计算机',
       subjects: ['Computer Science', 'Computing', 'Information Technology'],
     },
   }
@@ -137,6 +137,7 @@ window.ADVISING = (function () {
    * ------------------------------------------------------------------------*/
   const courseExpectations = {
     Engineering: {
+      zhLabel: '工程',
       expects: ['mathematics', 'physicalScience'],
       optional: ['chemistry'],
       namedAtar: null,
@@ -144,6 +145,7 @@ window.ADVISING = (function () {
       verified: null,
     },
     'Computer Science': {
+      zhLabel: '计算机科学',
       expects: ['mathematics'],
       optional: ['computing', 'physicalScience'],
       namedAtar: null,
@@ -151,6 +153,7 @@ window.ADVISING = (function () {
       verified: null,
     },
     Medicine: {
+      zhLabel: '医学',
       expects: ['chemistry', 'english'],
       optional: ['biology', 'mathematics'],
       namedAtar: null,
@@ -158,6 +161,7 @@ window.ADVISING = (function () {
       verified: null,
     },
     Dentistry: {
+      zhLabel: '牙医',
       expects: ['chemistry'],
       optional: ['biology', 'mathematics'],
       namedAtar: null,
@@ -165,6 +169,7 @@ window.ADVISING = (function () {
       verified: null,
     },
     Nursing: {
+      zhLabel: '护理',
       expects: ['english'],
       optional: ['biology', 'mathematics'],
       namedAtar: null,
@@ -172,6 +177,7 @@ window.ADVISING = (function () {
       verified: null,
     },
     Sciences: {
+      zhLabel: '理科',
       expects: ['mathematics'],
       optional: ['chemistry', 'physicalScience', 'biology'],
       namedAtar: null,
@@ -179,6 +185,7 @@ window.ADVISING = (function () {
       verified: null,
     },
     Psychology: {
+      zhLabel: '心理学',
       expects: ['english'],
       optional: ['mathematics', 'biology'],
       namedAtar: null,
@@ -186,6 +193,7 @@ window.ADVISING = (function () {
       verified: null,
     },
     Business: {
+      zhLabel: '商科',
       expects: [],
       optional: ['mathematics'],
       namedAtar: null,
@@ -193,6 +201,7 @@ window.ADVISING = (function () {
       verified: null,
     },
     Law: {
+      zhLabel: '法律',
       expects: [],
       optional: ['english'],
       namedAtar: null,
@@ -200,6 +209,7 @@ window.ADVISING = (function () {
       verified: null,
     },
     Architecture: {
+      zhLabel: '建筑',
       expects: ['mathematics'],
       optional: ['physicalScience'],
       namedAtar: null,
@@ -207,6 +217,7 @@ window.ADVISING = (function () {
       verified: null,
     },
     Education: {
+      zhLabel: '教育',
       expects: ['english'],
       optional: ['mathematics'],
       namedAtar: null,
@@ -214,6 +225,7 @@ window.ADVISING = (function () {
       verified: null,
     },
     Humanities: {
+      zhLabel: '人文',
       expects: ['english'],
       optional: [],
       namedAtar: null,
@@ -221,6 +233,7 @@ window.ADVISING = (function () {
       verified: null,
     },
     Undecided: {
+      zhLabel: '尚未确定',
       expects: [],
       optional: [],
       namedAtar: null,
@@ -523,13 +536,18 @@ window.ADVISING = (function () {
       id: 'course-prereq-gap',
       domain: 'course',
       title: 'A stated prerequisite is not among the recorded subjects',
+      zhTitle: '已记录科目中缺少某个方向通常要求的准备',
       when: 'anyInterestExpectationGap("i.field", record.subjects)',
-      advice: 'At least one of your chosen fields normally expects preparation you ' +
-        'have not recorded. Requirements differ between institutions and ' +
-        'between programmes inside one institution, so confirm the exact ' +
-        'prerequisite for each course you are considering before assuming the ' +
-        'gap is fatal — some accept a bridging unit instead.',
-      zh: '你选的至少一个方向，通常要求你尚未记录的科目准备。各院校之间、甚至同一所院校的不同专业之间要求都不同，所以先逐个确认具体课程的先修要求，不要预设这个缺口无法弥补——有些学校接受衔接课程。',
+      advice:
+        'At least one of your chosen fields normally expects preparation you have ' +
+        'not recorded. Specifically: ' +
+        '{{gapFields}}. Requirements differ between institutions and between ' +
+        'programmes inside one institution, so confirm the exact prerequisite for ' +
+        'each course before assuming the gap is fatal — some accept a bridging unit.',
+      zh:
+        '你选的以下方向通常要求你尚未记录的科目准备：{{gapFields}}。' +
+        '各院校之间、甚至同一所院校的不同专业之间要求都不同，所以先逐个确认具体课程的' +
+        '先修要求，不要预设这个缺口无法弥补——有些学校接受衔接课程。',
       modes: ['student', 'guest'],
       source: 'Confirm the prerequisite for each specific programme',
       verified: null,
@@ -537,15 +555,18 @@ window.ADVISING = (function () {
     {
       id: 'course-prereq-optional-available',
       domain: 'course',
-      title: 'An optional subject would strengthen the application',
+      title: 'A recommended subject is missing',
+      zhTitle: '缺少一门常被建议修的科目',
       when: 'anyInterestOptionalGap("i.field", record.subjects)',
-      advice: 'For at least one of your fields, a subject that is not required but is ' +
-        'commonly recommended is missing from your list. Recommended subjects ' +
-        'rarely decide an offer on their own, but they reduce the chance of ' +
-        'needing catch-up units in first year.',
-      zh: '至少有一个方向缺一门并非必修、但常被建议修的科目。建议科目很少单独决定录取，但能减少大一需要补修学分的可能。',
+      advice:
+        'Not required, but commonly recommended, and missing from your list: ' +
+        '{{optionalFields}}. Recommended subjects rarely decide an offer on their ' +
+        'own, but they reduce the chance of needing catch-up units in first year.',
+      zh:
+        '以下科目并非必修、但常被建议修，而你的清单里没有：{{optionalFields}}。' +
+        '建议科目很少单独决定录取，但能减少大一需要补修学分的可能。',
       modes: ['student', 'guest'],
-      source: 'Confirm whether the recommendation applies at your target institutions',
+      source: 'Confirm the prerequisite for each specific programme',
       verified: null,
     },
     {

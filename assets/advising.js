@@ -306,8 +306,16 @@
   R.rules.forEach(function (rule) {
     try {
       var ast = parseExpression(rule.when)
-      compiled[rule.id] = function (record, helpers) {
-        return evaluateAst(ast, Object.assign({ record: record, T: R.thresholds }, helpers))
+      compiled[rule.id] = function (record, helpers, ruleScope) {
+        var scope = Object.assign({ record: record, T: R.thresholds }, helpers)
+        scope.__gapFields = null
+        scope.__optionalFields = null
+        var result = evaluateAst(ast, scope)
+        if (ruleScope) {
+          if (scope.__gapFields) ruleScope.gapFields = scope.__gapFields
+          if (scope.__optionalFields) ruleScope.optionalFields = scope.__optionalFields
+        }
+        return result
       }
     } catch (error) {
       compileErrors[rule.id] = error.message
@@ -341,6 +349,30 @@
       return cap.subjects.indexOf(s.subject) !== -1
     })
   }
+
+  // The label a reader recognises, in their language. Both halves of a
+  // gap phrase go through here, or the advice reads "Engineering / 物理或化学"
+  // with the two languages spliced together.
+  function capabilityLabel(key) {
+    var cap = R.capabilities && R.capabilities[key]
+    if (!cap) return key
+    return (LANG === 'zh' && cap.zhLabel) ? cap.zhLabel : cap.label
+  }
+  // A capability nobody defined is skipped, never treated as missing:
+  // hasCapability answers false for an unknown key, so a typo in an
+  // expectation would otherwise report every subject as a gap.
+  function capabilityKnown(key) {
+    var cap = R.capabilities && R.capabilities[key]
+    return !!(cap && cap.subjects && cap.subjects.length)
+  }
+  function fieldLabel(key) {
+    var exp = expectationFor(key)
+    if (exp && LANG === 'zh' && exp.zhLabel) return exp.zhLabel
+    var zh = (R.fieldLabelsZh && R.fieldLabelsZh[key])
+    if (LANG === 'zh' && zh) return zh
+    return key
+  }
+  function fieldLabelsZh() { return R.fieldLabelsZh || {} }
 
   function expectationFor(field) {
     return (R.courseExpectations && R.courseExpectations[field]) || null
@@ -377,34 +409,51 @@
       },
       // fieldPath -> a capability field the stated course expectation requires.
       anyInterestExpectationGap: function (currentScope, args) {
+        var __gaps = []
         if (args.length < 2) {
           throw new Error('anyInterestExpectationGap needs a field path and the subjects, e.g. anyInterestExpectationGap("i.field", record.subjects)')
         }
         var path = evaluateAst(args[0], currentScope)
         var subjects = evaluateAst(args[1], currentScope)
-        return record.interests.some(function (interest) {
+        record.interests.forEach(function (interest) {
           var field = resolvePath({ i: interest, item: interest }, path)
           var expectation = expectationFor(field)
-          if (!expectation) return false
-          return expectation.expects.some(function (key) { return !hasCapability(subjects, key) })
+          if (!expectation) return
+          expectation.expects.forEach(function (key) {
+            if (capabilityKnown(key) && !hasCapability(subjects, key))
+              __gaps.push(fieldLabel(field) + ' / ' + capabilityLabel(key))
+          })
         })
+        if (__gaps.length) currentScope.__gapFields = __gaps.join(LANG === 'zh' ? '、' : '; ')
+        return __gaps.length > 0
       },
       // fieldPath -> an optional capability that would strengthen the case. Only
       // reported once the required set is covered, so it never competes with the
       // prerequisite-gap message for the same field.
       anyInterestOptionalGap: function (currentScope, args) {
+        var __opts = []
         if (args.length < 2) {
           throw new Error('anyInterestOptionalGap needs a field path and the subjects, e.g. anyInterestOptionalGap("i.field", record.subjects)')
         }
         var path = evaluateAst(args[0], currentScope)
         var subjects = evaluateAst(args[1], currentScope)
-        return record.interests.some(function (interest) {
+        record.interests.forEach(function (interest) {
           var field = resolvePath({ i: interest, item: interest }, path)
           var expectation = expectationFor(field)
-          if (!expectation || !expectation.optional.length) return false
-          if (expectation.expects.some(function (key) { return !hasCapability(subjects, key) })) return false
-          return expectation.optional.some(function (key) { return !hasCapability(subjects, key) })
+          if (!expectation || !expectation.optional.length) return
+          // Silent while a required capability is still missing: the gap
+          // message is the one that matters, two hints read as noise.
+          if (expectation.expects.some(function (key) { return !hasCapability(subjects, key) })) return
+          expectation.optional.forEach(function (key) {
+            // A capability nobody defined is skipped, never reported as a
+            // gap: hasCapability answers false for an unknown key, so a
+            // typo would otherwise name every subject as missing.
+            if (capabilityKnown(key) && !hasCapability(subjects, key))
+              __opts.push(fieldLabel(field) + ' / ' + capabilityLabel(key))
+          })
         })
+        if (__opts.length) currentScope.__optionalFields = __opts.join(LANG === 'zh' ? '、' : '; ')
+        return __opts.length > 0
       },
       // atarPath, standing, margin -> true when standing is within `margin` BELOW
       // a stated minimum. Blowing past the minimum is a different message, and a
@@ -461,8 +510,10 @@
    * "below 60" in the prose and `anyScoreBelow(T.weakMark)` in the condition
    * from drifting apart.
    * -------------------------------------------------------------------*/
-  function interpolate(text, record) {
+  function interpolate(text, record, extra) {
+    var scope = extra || {}
     return String(text).replace(/\{\{(\w+)\}\}/g, function (whole, key) {
+      if (Object.prototype.hasOwnProperty.call(scope, key)) return String(scope[key])
       if (key === 'subjectCount') return String(record.subjects.length)
       if (Object.prototype.hasOwnProperty.call(R.thresholds, key)) return String(R.thresholds[key])
       var value = record[key]
@@ -659,7 +710,9 @@
       if (rule.enabled === false) { outcome.reason = pick('disabled in catalog', '规则库中已停用'); return outcome }
       if (compileErrors[rule.id]) { outcome.reason = pick('compile error: ', '编译错误：') + compileErrors[rule.id]; return outcome }
       try {
-        outcome.fired = !!compiled[rule.id](rec, helpers)
+        var ruleScope = {}
+        outcome.fired = !!compiled[rule.id](rec, helpers, ruleScope)
+        outcome.scope = ruleScope
       } catch (error) {
         outcome.reason = pick('threw: ', '求值出错：') + error.message
       }
@@ -723,8 +776,10 @@
         currentDomain = label
       }
       lines.push('')
-      lines.push(interpolate(pick(item.rule.advice, item.rule.zh), rec))
-      lines.push('   [rule: ' + item.rule.id + ' · source: ' + item.rule.source + ']')
+      lines.push(stripEmphasis(interpolate(pick(item.rule.advice, item.rule.zh), rec, item.scope)))
+      lines.push(LANG === 'zh'
+        ? ('   [规则：' + item.rule.id + ' · 依据：' + sourceLabel(item.rule.source) + ']')
+        : ('   [rule: ' + item.rule.id + ' · source: ' + item.rule.source + ']'))
     })
 
     if (fired.length === 0) lines.push(pick('No rule conditions were met. The record may be too sparse to advise on.', '没有命中任何规则，可能是记录信息太少，不足以给出建议。'))
@@ -768,10 +823,13 @@
       var d = R.domains.filter(function (x) { return x.id === item.rule.domain })[0]
       $('reportBody').appendChild(el('p', { 'class': 'advice', html:
         '<span class="badge">' + escapeHtml(d ? domainLabel(d) : item.rule.domain) + '</span>' +
-        escapeHtml(interpolate(pick(item.rule.advice, item.rule.zh), rec)) }))
-      $('reportBody').appendChild(el('span', { 'class': 'src',
-        text: 'rule: ' + item.rule.id + ' · source: ' + item.rule.source +
-              (item.rule.verified ? ' · verified ' + item.rule.verified : ' · NOT VERIFIED') }))
+        emphasise(escapeHtml(interpolate(pick(item.rule.advice, item.rule.zh), rec, item.scope))) }))
+        var srcLine = LANG === 'zh'
+          ? ('规则：' + item.rule.id + ' · 依据：' + sourceLabel(item.rule.source) +
+             (item.rule.verified ? ' · 核实于 ' + item.rule.verified : ' · 待核实'))
+          : ('rule: ' + item.rule.id + ' · source: ' + item.rule.source +
+             (item.rule.verified ? ' · verified ' + item.rule.verified : ' · NOT VERIFIED'))
+        $('reportBody').appendChild(el('span', { 'class': 'src', text: srcLine }))
     })
     $('reportStamp').textContent = '(' + report.fired.length + ' of ' + ACTIVE_RULES.length + ' rules fired)'
 
@@ -810,6 +868,21 @@
       : ''
 
     showTab('report')
+  }
+
+  function emphasise(escaped) {
+    return String(escaped).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+  }
+  function stripEmphasis(text) {
+    return String(text).replace(/\*\*([^*]+)\*\*/g, '$1')
+  }
+
+  // Some sources are internal markers; the rest are instructions telling a
+  // human where to look, so they stay as written. Translating those would
+  // hide the only actionable part of the line.
+  function sourceLabel(src) {
+    if (src === 'internal') return LANG === 'zh' ? '站内判断' : 'internal'
+    return src
   }
 
   function localiseReason(reason) {
