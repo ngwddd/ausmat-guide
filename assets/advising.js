@@ -22,10 +22,6 @@
     var v = document.documentElement.dataset.lang || 'en'
     return (v === 'zh' || v === 'zh-CN') ? 'zh' : 'en'
   })()
-  var MODE = (function () {
-    var v = document.documentElement.dataset.mode || 'student'
-    return v === 'guest' ? 'guest' : 'student'
-  })()
   var U = R.uiStrings[LANG] || R.uiStrings.en
   function pick(en, zh) { return LANG === 'zh' && zh ? zh : en }
   // The calibration's own sentences, in the reader's language.
@@ -260,12 +256,9 @@
   function courseLabel(c) {
     return c.university + ' ' + c.course + ' (' + c.atar + ')'
   }
-  // A rule with no `modes` applies everywhere; one that declares modes applies
-  // only there. The catalog is filtered once, so every later pass — evaluation,
-  // the report, the coverage view — sees the same set.
-  var ACTIVE_RULES = R.rules.filter(function (r) {
-    return !r.modes || r.modes.indexOf(MODE) !== -1
-  })
+  // Every pass reads the catalog directly. A rule that is switched off stays in
+  // the set on purpose: `evaluate` returns it with a reason instead of firing it,
+  // which is what puts it in the coverage view as deliberately silent.
 
   /* ---------------------------------------------------------------------
    * A small, self-contained expression evaluator — no new Function, no eval.
@@ -956,26 +949,16 @@
       }
     })
     return {
-      fullName: $('fullName').value.trim(),
-      englishFirstLanguage: boolOrNull($('englishFirstLanguage').value),
       targetAtar: numOrNull($('targetAtar').value),
       estimatedAtar: numOrNull($('estimatedAtar').value),
-      stillDeciding: $('stillDeciding').value === 'true',
-      fundingSecured: boolOrNull($('fundingSecured').value),
       interests: interests,
       subjects: subjects,
-      notes: $('notes') ? $('notes').value : '',
     }
   }
 
   function writeRecord(rec) {
-    if ($('notes')) $('notes').value = rec.notes || ''
-    $('fullName').value = rec.fullName || ''
-    $('englishFirstLanguage').value = rec.englishFirstLanguage === null || rec.englishFirstLanguage === undefined ? '' : String(rec.englishFirstLanguage)
     $('targetAtar').value = rec.targetAtar === null || rec.targetAtar === undefined ? '' : rec.targetAtar
     $('estimatedAtar').value = rec.estimatedAtar === null || rec.estimatedAtar === undefined ? '' : rec.estimatedAtar
-    $('stillDeciding').value = rec.stillDeciding ? 'true' : 'false'
-    $('fundingSecured').value = rec.fundingSecured === null || rec.fundingSecured === undefined ? '' : String(rec.fundingSecured)
 
     $('interestRows').innerHTML = ''
     ;(rec.interests && rec.interests.length ? rec.interests : [{}]).forEach(addInterestRow)
@@ -1030,7 +1013,6 @@
   function validate(rec) {
     var errors = []
     var warnings = []
-    if (!rec.fullName) errors.push(pick('Full name is required — the report is addressed to the student.', '请填写姓名——报告是出具给这位学生的。'))
     if (rec.subjects.length === 0) errors.push(pick('At least one subject is required.', '至少需要填写一门科目。'))
     rec.subjects.forEach(function (s, i) {
       if (!s.level) errors.push('Subject ' + (i + 1) + pick(': level not selected.', '：未选择班次。'))
@@ -1063,7 +1045,7 @@
   function evaluate(rec) {
     var scope = { record: rec }
     var helpers = buildHelpers(rec, scope)
-    return ACTIVE_RULES.map(function (rule) {
+    return R.rules.map(function (rule) {
       var outcome = { rule: rule, fired: false, reason: '' }
       if (rule.enabled === false) { outcome.reason = pick('disabled in catalog', '规则库中已停用'); return outcome }
       if (compileErrors[rule.id]) { outcome.reason = pick('compile error: ', '编译错误：') + compileErrors[rule.id]; return outcome }
@@ -1209,7 +1191,6 @@
       : null
     var atar = agg === null ? null : aggregateToAtar(agg)
     return {
-      name: rec.fullName || '',
       country: interest.country || '',
       field: interest.field || '',
       university: interest.university || '',
@@ -1221,13 +1202,12 @@
       subjects: (rec.subjects || []).map(function (s) {
         return s.subject + ':' + (typeof s.mark === 'number' ? s.mark : '')
       }).join(' '),
-      notes: rec.notes || '',
     }
   }
 
-  var CSV_HEADERS = ['name', 'country', 'field', 'university', 'targetAtar',
+  var CSV_HEADERS = ['country', 'field', 'university', 'targetAtar',
                      'estimatedAtar', 'subjectCount', 'aggregate', 'convertedAtar',
-                     'subjects', 'notes']
+                     'subjects']
 
   /* RFC 4180 quoting: wrap when the value contains a comma, quote, CR or LF, and
    * double any inner quote. A name with a comma in it silently shifting every
@@ -1261,8 +1241,7 @@
 
     var lines = []
     lines.push(LANG === 'zh' ? '升学自检报告' : R.meta.title.toUpperCase())
-    lines.push((LANG === 'zh' ? '学生：' : 'Advising report for ') + (rec.fullName || (LANG === 'zh' ? '（未填姓名）' : '(unnamed)')))
-    if (rec.studentId) lines.push('Student ID: ' + rec.studentId)
+    lines.push(LANG === 'zh' ? '升学自检报告' : 'Advising self-check report')
     lines.push((LANG === 'zh' ? '生成时间：' : 'Generated: ') + new Date().toLocaleString())
     lines.push('')
 
@@ -1372,10 +1351,35 @@
              (item.rule.verified ? ' · verified ' + item.rule.verified : ' · NOT VERIFIED'))
         $('reportBody').appendChild(el('span', { 'class': 'src', text: srcLine }))
     })
-    $('reportStamp').textContent = '(' + report.fired.length + ' of ' + ACTIVE_RULES.length + ' rules fired)'
+    $('reportStamp').textContent = '(' + report.fired.length + ' of ' + R.rules.length + ' rules fired)'
 
     // Coverage tab
+    renderCoverage(results)
+
+    var draftWarning = LANG === 'zh'
+      ? ('这份报告基于一份有 ' + check.errors.length + ' 处校验错误的记录生成，请当作草稿。')
+      : ('This report was generated from a record with ' + check.errors.length + ' validation error(s). Treat it as a draft.')
+    $('reportWarnings').innerHTML = check.errors.length
+      ? '<div class="note err">' + draftWarning + '</div>'
+      : ''
+
+    showTab('report')
+  }
+
+  /* The coverage view is a catalogue listing, not part of the report: it shows
+   * every rule in the file, whether the record in front of the reader trips it,
+   * and whether a human has confirmed its claim. It used to be built inside
+   * renderReport only, so opening the tab before pressing the button showed an
+   * empty table and a blank summary — which reads as a broken page rather than
+   * as "nothing generated yet". It is now rendered on arrival and again whenever
+   * the tab is opened, from the form as it currently stands.
+   *
+   * `firedCount` is derived from `results` rather than taken from a report, so
+   * the view does not depend on a report having been generated at all. */
+  function renderCoverage(results) {
     var rows = $('coverageRows')
+    if (!rows) return
+    var firedCount = results.filter(function (r) { return r.fired }).length
     rows.innerHTML = ''
     results.forEach(function (item) {
       var tr = el('tr')
@@ -1393,25 +1397,17 @@
       rows.appendChild(tr)
     })
 
-    var unverified = ACTIVE_RULES.filter(function (r) { return !r.verified }).length
-    var disabled = ACTIVE_RULES.filter(function (r) { return r.enabled === false }).length
+    var unverified = R.rules.filter(function (r) { return !r.verified }).length
+    var disabled = R.rules.filter(function (r) { return r.enabled === false }).length
     var summaryLine = LANG === 'zh'
-      ? ('规则库共 ' + ACTIVE_RULES.length + ' 条 · ' + report.fired.length + ' 条命中 · ' + unverified + ' 条待核实 · ' + disabled + ' 条已停用。')
-      : (ACTIVE_RULES.length + ' rules in catalog · ' + report.fired.length + ' fired · ' + unverified + ' awaiting verification · ' + disabled + ' disabled.')
+      ? ('规则库共 ' + R.rules.length + ' 条 · ' + firedCount + ' 条命中 · ' + unverified + ' 条待核实 · ' + disabled + ' 条已停用。')
+      : (R.rules.length + ' rules in catalog · ' + firedCount + ' fired · ' + unverified + ' awaiting verification · ' + disabled + ' disabled.')
     var verifyNote = LANG === 'zh'
       ? '标记为「待核实」的规则含有尚未对照当前来源确认的事实性表述。'
       : ' Rules marked <em>verify</em> make a factual claim that a human has not yet confirmed against a current source.'
     $('coverageSummary').innerHTML =
       '<div class="note' + (unverified ? '' : ' ok') + '"><strong>' + summaryLine + '</strong>' +
       (unverified ? verifyNote : '') + '</div>'
-    var draftWarning = LANG === 'zh'
-      ? ('这份报告基于一份有 ' + check.errors.length + ' 处校验错误的记录生成，请当作草稿。')
-      : ('This report was generated from a record with ' + check.errors.length + ' validation error(s). Treat it as a draft.')
-    $('reportWarnings').innerHTML = check.errors.length
-      ? '<div class="note err">' + draftWarning + '</div>'
-      : ''
-
-    showTab('report')
   }
 
   function emphasise(escaped) {
@@ -1441,91 +1437,6 @@
     return String(s).replace(/[&<>"]/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]
     })
-  }
-
-  /* -------------------------- assessment tracker ---------------------- */
-  function importanceFor(weight) {
-    if (typeof weight !== 'number') return null
-    for (var i = 0; i < R.importanceBands.length; i++) {
-      if (weight < R.importanceBands[i].max) return R.importanceBands[i]
-    }
-    return R.importanceBands[R.importanceBands.length - 1]
-  }
-
-  function addAssessRow(preset) {
-    preset = preset || {}
-    var tr = el('tr')
-    var name = el('input', { type: 'text', 'class': 'a-name', placeholder: 'e.g. Topic test 2' })
-    name.value = preset.name || ''
-    var weight = el('input', { type: 'number', 'class': 'a-weight', min: '0', max: '100' })
-    weight.value = preset.weight === undefined ? '' : preset.weight
-    var due = el('input', { type: 'date', 'class': 'a-due' })
-    due.value = preset.due || ''
-    var imp = el('td', { 'class': 'muted', text: '—' })
-    var urg = el('select', { 'class': 'a-urg' }, [])
-    urg.appendChild(options(['1', '2', '3', '4', '5'], String(preset.urgency || '3'), undefined))
-    var done = el('input', { type: 'checkbox', 'class': 'a-done' })
-    done.checked = !!preset.done
-    var action = el('td', { 'class': 'muted', text: '—' })
-    var bin = el('button', { 'class': 'ghost mini', text: '×' })
-
-    function refresh() {
-      var w = numOrNull(weight.value)
-      var band = importanceFor(w)
-      imp.textContent = band ? bandLabel(band) : '—'
-      var level = band ? band.level : null
-      var u = Number(urg.value)
-      if (done.checked) {
-        action.textContent = LANG === 'zh' ? '已完成。' : 'Completed.'
-        action.className = 'muted'
-      } else if (level) {
-        var urgencyRow = R.matrix[u] || R.matrix[3]
-        action.textContent = (LANG === 'zh' && R.zhMatrix[u] && R.zhMatrix[u][level]) || urgencyRow[level]
-        action.className = ''
-      } else {
-        action.textContent = LANG === 'zh' ? '填入权重后会给出建议动作。' : 'Enter a weight to get an action.'
-        action.className = 'muted'
-      }
-      summariseAssessments()
-    }
-    ;[weight, urg, done].forEach(function (node) { node.addEventListener('input', refresh) })
-    bin.addEventListener('click', function () { tr.remove(); summariseAssessments() })
-
-    tr.appendChild(el('td', {}, [name]))
-    tr.appendChild(el('td', {}, [weight]))
-    tr.appendChild(el('td', {}, [due]))
-    tr.appendChild(imp)
-    tr.appendChild(el('td', {}, [urg]))
-    tr.appendChild(el('td', {}, [done]))
-    tr.appendChild(action)
-    tr.appendChild(el('td', {}, [bin]))
-    $('assessRows').appendChild(tr)
-    refresh()
-  }
-
-  function summariseAssessments() {
-    var rows = $('assessRows').querySelectorAll('tr')
-    var outstanding = 0
-    var critical = 0
-    var now = Date.now()
-    Array.prototype.forEach.call(rows, function (tr) {
-      if (tr.querySelector('.a-done').checked) return
-      var w = numOrNull(tr.querySelector('.a-weight').value)
-      var band = importanceFor(w)
-      if (!band) return
-      outstanding++
-      if (band.level >= 4 && Number(tr.querySelector('.a-urg').value) >= 4) critical++
-      else if (band.level >= 4) critical++
-      var due = tr.querySelector('.a-due').value
-      if (due && new Date(due).getTime() < now) tr.style.background = 'var(--bad-soft)'
-      else tr.style.background = ''
-    })
-    if (!$('trackerSummary')) return
-    $('trackerSummary').textContent = outstanding === 0
-      ? (LANG === 'zh' ? '没有未完成的考核。' : 'No outstanding assessments recorded.')
-      : (LANG === 'zh'
-          ? (outstanding + ' 项未完成 · ' + critical + ' 项为重要及以上。已过日期的行会加底色。')
-          : (outstanding + ' outstanding · ' + critical + ' at major-or-critical weight. Rows past their due date are shaded.'))
   }
 
   /* -------------------------- tabs, storage, export ------------------- */
@@ -1726,7 +1637,7 @@
   // written list of tab names is exactly the kind of thing that rots
   // quietly. The hiding loop below reads THIS list rather than carrying
   // its own copy, which is how the omission lasted.
-  var TAB_PANELS = ['student', 'report', 'tracker', 'courses', 'coverage']
+  var TAB_PANELS = ['student', 'report', 'courses', 'coverage']
   // Panels that fill themselves when first shown. The course table is 54
   // rows most visits never open, so rendering it on load would be waste;
   // but naming it here rather than in an on-click handler is what keeps the
@@ -1750,17 +1661,12 @@
     })
   }
 
-  var STORAGE_KEY = 'advising-workbook-record-v1-' + LANG + '-' + MODE
+  var STORAGE_KEY = 'advising-workbook-record-v2-' + LANG
 
   function sample() {
     return {
-      fullName: 'Sample Student',
-      englishFirstLanguage: false,
-      previousIntake: 'September intake',
       targetAtar: 88,
       estimatedAtar: 79.5,
-      stillDeciding: false,
-      fundingSecured: false,
       interests: [
         { country: 'Australia', field: 'Engineering', university: 'Curtin University' },
         { country: 'United Kingdom', field: 'Engineering', university: 'University of Manchester' },
@@ -1778,7 +1684,6 @@
   /* -------------------------- wiring ---------------------------------- */
   on('addInterest', 'click', function () { addInterestRow() })
   on('addSubject', 'click', function () { addSubjectRow() })
-  on('addAssess', 'click', function () { addAssessRow() })
   on('btnGenerate', 'click', renderReport)
   on('btnSample', 'click', function () { writeRecord(sample()); renderReport() })
   on('btnClear', 'click', function () { writeRecord({ interests: [], subjects: [] }); $('validationBox').innerHTML = '' })
@@ -1822,12 +1727,21 @@
     document.body.appendChild(a); a.click(); a.remove()
   })
   Array.prototype.forEach.call(document.querySelectorAll('nav.tabs button'), function (b) {
-    b.addEventListener('click', function () { showTab(b.dataset.tab) })
+    b.addEventListener('click', function () {
+      showTab(b.dataset.tab)
+      // Opened fresh, the coverage tab must describe the form as it now stands.
+      // Rendering it only at load would list rules against a record the reader
+      // has since edited, which is worse than an empty table.
+      if (b.dataset.tab === 'coverage') renderCoverage(evaluate(readRecord()))
+    })
   })
 
   if ($('appTitle')) $('appTitle').textContent = R.meta.title
   if ($('appSub')) $('appSub').textContent = R.meta.subtitle + ' · v' + R.meta.version + ' · ' + R.meta.contentPolicy
 
   writeRecord({ interests: [], subjects: [] })
-  if ($('assessRows')) addAssessRow({ name: 'Sample assessment', weight: 15, urgency: 4, due: '' })
+  // The coverage tab is a catalogue, not a report, so it can be filled on
+  // arrival: the reader sees the full rule list, what the current (empty) form
+  // trips, and which claims are still unverified, without pressing anything.
+  renderCoverage(evaluate(readRecord()))
 })()

@@ -593,11 +593,18 @@ window.ADVISING = (function () {
       id: 'form-incomplete',
       domain: 'completeness',
       title: 'Required fields outstanding',
-      when: "!record.fullName || record.subjects.length === 0",
+      // Off, not removed. The coverage view still lists it, so the decision is on
+      // the record rather than invisible. Both fields it was written against —
+      // the student's name and their Year 11 school — were removed from the form
+      // when the identity block went, and the one clause that survived, an empty
+      // subject list, is already a hard validation error: a report cannot be
+      // generated while it is true. Leaving it enabled would have printed "this
+      // report is provisional" on every report, including complete ones.
+      enabled: false,
+      when: 'record.subjects.length === 0',
       advice: 'This report is provisional because required fields are still blank. ' +
         'Advisor guidance is only as good as the information behind it.',
       zh: '必填项还没填完，所以这份报告只是暂定的。建议的质量取决于你填进去的信息。',
-      modes: ['student', 'guest'],
       source: 'internal',
       verified: '2026-01-01',
     },
@@ -610,7 +617,6 @@ window.ADVISING = (function () {
         'aggregates are calculated from four or more, so confirm which subjects ' +
         'will count toward your aggregate.',
       zh: '你只记录了 {{subjectCount}} 门 ATAR 科目。多数大学的合成分按四门及以上计算，先确认你所在体系里哪几门会计入合成分。',
-      modes: ['student', 'guest'],
       source: 'Confirm the aggregate rules for your qualification',
       verified: null,
     },
@@ -623,7 +629,6 @@ window.ADVISING = (function () {
       advice: 'No destination country has been recorded. Without one, visa timelines, ' +
         'language requirements and application deadlines cannot be assessed.',
       zh: '还没有填写任何目标国家。缺了这个，签证时间线、语言要求和申请截止日期都无从评估。',
-      modes: ['student', 'guest'],
       source: 'internal',
       verified: '2026-01-01',
     },
@@ -638,7 +643,6 @@ window.ADVISING = (function () {
         'application covers several choices. Confirm the current cycle deadlines ' +
         'with your advisor before you start writing.',
       zh: '申请英国要通过统一的招生系统，而不是分别投递到各校。需要准备学术推荐信和个人陈述，一份申请可以包含多个志愿。动笔前先向顾问确认当轮的确切截止日期。',
-      modes: ['student', 'guest'],
       source: 'Check the current admissions-service cycle deadlines',
       verified: '2026-09-25',
     },
@@ -651,7 +655,6 @@ window.ADVISING = (function () {
         'essays, and references requested months in advance. Each university ' +
         'has its own form, so plan for several parallel applications.',
       zh: '申请美国通常需要标准化考试、文书，以及提前数月联系的推荐人。每所大学各有自己的申请系统，要按并行多份申请来规划。',
-      modes: ['student', 'guest'],
       source: 'Check each university’s admissions requirements',
       verified: '2026-09-25',
     },
@@ -664,7 +667,6 @@ window.ADVISING = (function () {
         'a state admissions centre. Offer rounds are scheduled, so the timing of ' +
         'your results release matters as much as the marks themselves.',
       zh: '申请澳洲一般按院校分别递交，或通过所在州的招生中心。录取是分轮次放榜的，所以成绩公布的时间点和分数本身一样重要。',
-      modes: ['student', 'guest'],
       source: 'Check the relevant state admissions centre schedule',
       verified: '2026-09-25',
     },
@@ -679,7 +681,6 @@ window.ADVISING = (function () {
         'Registration windows for those tests close well before the application ' +
         'deadline, so this is the earliest item on your timeline.',
       zh: '医学与牙医专业通常在学业成绩之外还要加考能力测试，部分院校还有面试。这类考试的报名窗口远早于申请截止日，是你整条时间线上最早的一项。',
-      modes: ['student', 'guest'],
       source: 'Confirm test requirements and registration windows per university',
       verified: null,
     },
@@ -692,7 +693,6 @@ window.ADVISING = (function () {
         'jurisdictions require an additional admissions test. Confirm whether ' +
         'the universities you are considering require one.',
       zh: '法律专业通常没有固定的先修科目，但部分地区要求额外的入学考试。先确认你考虑的那些院校是否需要。',
-      modes: ['student', 'guest'],
       source: 'Confirm per-university admissions test requirements',
       verified: null,
     },
@@ -705,7 +705,6 @@ window.ADVISING = (function () {
         'and several expect physics as well. Check the assumed-knowledge ' +
         'statement for each programme rather than relying on the entry score alone.',
       zh: '工程学位一般以扎实的数学为基础，不少还要求物理。请逐个查阅课程的「假定知识」说明，不要只看录取分数线。',
-      modes: ['student', 'guest'],
       source: 'Check each programme’s assumed knowledge statement',
       verified: '2026-09-25',
     },
@@ -713,14 +712,16 @@ window.ADVISING = (function () {
       id: 'course-undecided',
       domain: 'course',
       title: 'Field of study still undecided',
-      when: 'record.interests.length === 0 || anyInterest("i.field", "Undecided") || record.stillDeciding === true',
+      // The "still deciding" checkbox went with the identity block. The two
+      // conditions that remain are both read from the interests table itself: no
+      // rows at all, or a row that names Undecided as the field.
+      when: 'record.interests.length === 0 || anyInterest("i.field", "Undecided")',
       advice: 'Being undecided at this stage is normal and workable. The useful move ' +
         'is to narrow by constraint rather than by preference: which subjects you ' +
         'are strongest in, which countries you can fund, and which prerequisite ' +
         'subjects you would need to keep open. Narrowing those three usually ' +
         'removes most of the field.',
       zh: '这个阶段还没定方向很正常，也完全可以处理。更有效的做法是**按约束条件缩小范围**，而不是按喜好：你哪几门最强、能负担哪些国家、哪些先修科目需要继续保留。把这三条列出来，通常就能排除掉大部分选项。',
-      modes: ['student', 'guest'],
       source: 'internal',
       verified: '2026-01-01',
     },
@@ -734,7 +735,6 @@ window.ADVISING = (function () {
         'Programmes taught in another language normally require a proficiency ' +
         'certificate in that language, which takes time to obtain.',
       zh: '你填的目标国家以非英语国家为主。用其他语言授课的项目通常要求该语言的等级证书，而考取证书需要时间。',
-      modes: ['student', 'guest'],
       source: 'Confirm the language of instruction and required certificate',
       verified: null,
     },
@@ -742,13 +742,20 @@ window.ADVISING = (function () {
       id: 'lang-english-test',
       domain: 'language',
       title: 'English proficiency evidence may be required',
-      when: 'anyInterest("i.country", ["Australia","United Kingdom","United States","Canada","Ireland","New Zealand"]) && record.englishFirstLanguage !== true',
-      advice: 'Where English is not your first language, many institutions require a ' +
-        'standardised English test, though some accept a qualifying result in an ' +
-        'English subject instead. Requirements differ by institution and by ' +
-        'course — clinical courses are usually the strictest.',
-      zh: '如果英语不是你的母语，不少院校会要求标准化英语考试，也有院校接受英语科目成绩替代。要求因院校和课程而异——临床类专业通常最严。',
-      modes: ['student', 'guest'],
+      // The old condition also tested `record.englishFirstLanguage !== true`,
+      // which made it permanently true once that field was removed. The
+      // destination list is the real trigger: these countries teach in English,
+      // so their institutions ask most applicants for proficiency evidence
+      // regardless of what was typed elsewhere. The advice no longer claims
+      // anything about the reader's first language, which the form no longer
+      // records and this tool must not assume.
+      when: 'anyInterest("i.country", ["Australia","United Kingdom","United States","Canada","Ireland","New Zealand"])',
+      advice: 'These destinations teach in English, and most institutions there ask ' +
+        'for evidence of English proficiency. A qualifying result in an English ' +
+        'subject is sometimes accepted in place of a standardised test. ' +
+        'Requirements differ by institution and by course — clinical courses are ' +
+        'usually the strictest.',
+      zh: '这些目的地以英语授课，当地多数院校会要求提供英语能力证明；有些院校接受英语科目成绩替代标准化考试。要求因院校和课程而异——临床类专业通常最严。',
       source: 'Confirm per-institution English requirements',
       verified: null,
     },
@@ -757,12 +764,18 @@ window.ADVISING = (function () {
       id: 'funding-not-recorded',
       domain: 'funding',
       title: 'Funding not recorded',
+      // Off, not removed. The form no longer collects any funding information, so
+      // `record.fundingSecured` is always undefined and this condition is now
+      // permanently true. An enabled rule that fires on every record and says
+      // "no funding arrangement has been recorded" is not advice, it is a
+      // constant — and it would sit in every report. The coverage view shows it
+      // as deliberately silent instead.
+      enabled: false,
       when: 'record.fundingSecured !== true',
       advice: 'No funding arrangement has been recorded. Scholarship deadlines usually ' +
         'fall earlier than admission deadlines, so funding deserves its own ' +
         'timeline rather than being left until an offer arrives.',
       zh: '还没有记录任何学费来源安排。奖学金的截止日期通常早于录取截止日期，所以费用该有独立的时间线，而不是等拿到 offer 再说。',
-      modes: ['student', 'guest'],
       source: 'internal',
       verified: '2026-01-01',
     },
@@ -782,7 +795,6 @@ window.ADVISING = (function () {
         '你记录的志愿里出现了西澳的院校：{{waUniversities}}。' +
         '该州有专门面向本州高中毕业国际生的奖学金与助学金项目。' +
         '金额、名额与资格每轮都会变，听到的任何数字都当作未确认，以当前项目页面为准。',
-      modes: ['student', 'guest'],
       source: 'Read the current state scholarship programme page',
       verified: '2026-09-25',
     },
@@ -798,7 +810,6 @@ window.ADVISING = (function () {
         'weight for the target to remain reachable — if they do not, adjusting ' +
         'the target now is better than discovering it at results release.',
       zh: '按目前水平，你低于自己设定的目标 {{targetAtar}}。这是需要规划的差距，不是结论。关键问题是：剩下的考核权重够不够把目标拉回来。如果不够，现在调整目标，比成绩公布时才发现要好。',
-      modes: ['student', 'guest'],
       source: 'internal',
       verified: '2026-01-01',
     },
@@ -812,7 +823,6 @@ window.ADVISING = (function () {
         'technique, or time management — each needs a different fix. Reviewing ' +
         'marked scripts usually answers this faster than more revision does.',
       zh: '至少有一门低于 {{weakMark}}。在全面增加学习时间之前，先分清问题出在知识本身、应试技巧，还是时间安排——三者的解法完全不同。看一遍批改过的卷子，通常比多刷题更快找到答案。',
-      modes: ['student', 'guest'],
       source: 'internal',
       verified: '2026-01-01',
     },
@@ -826,7 +836,6 @@ window.ADVISING = (function () {
         'only materialises if the marks hold up across all of them. Watch for ' +
         'one subject degrading to protect the others.',
       zh: '你记录的全部 {{subjectCount}} 门都是最高难度科目。这是很重的负担，而合成分的优势只有在各门都稳得住时才成立。留意有没有哪一门在拖累其他几门。',
-      modes: ['student', 'guest'],
       source: 'internal',
       verified: '2026-01-01',
     },
@@ -847,7 +856,6 @@ window.ADVISING = (function () {
         '你选的以下方向通常要求你尚未记录的科目准备：{{gapFields}}。' +
         '各院校之间、甚至同一所院校的不同专业之间要求都不同，所以先逐个确认具体课程的' +
         '先修要求，不要预设这个缺口无法弥补——有些学校接受衔接课程。',
-      modes: ['student', 'guest'],
       source: 'Confirm the prerequisite for each specific programme',
       verified: null,
     },
@@ -864,7 +872,6 @@ window.ADVISING = (function () {
       zh:
         '以下科目并非必修、但常被建议修，而你的清单里没有：{{optionalFields}}。' +
         '建议科目很少单独决定录取，但能减少大一需要补修学分的可能。',
-      modes: ['student', 'guest'],
       source: 'Confirm the prerequisite for each specific programme',
       verified: null,
     },
@@ -878,7 +885,6 @@ window.ADVISING = (function () {
         'the zone where a single assessment moves the outcome, so treat the ' +
         'next one as decisive rather than as practice.',
       zh: '按目前水平，你距离自己记录的某个最低分只差 {{atarMarginPoints}} 分以内。这么薄的余量，一次考核就能改变结果，所以把下一场当作决定性的，而不是练手。',
-      modes: ['student', 'guest'],
       source: 'internal',
       verified: '2026-01-01',
     },
@@ -892,7 +898,6 @@ window.ADVISING = (function () {
         'this tool will not supply a figure — read the current course page and ' +
         'record it, and the comparison becomes meaningful.',
       zh: '至少有一个志愿没有记录最低 ATAR。最低分会随录取轮次变动，校区之间也不同，所以本工具不会替你给一个数字——去查当前课程页面并填上，比较才有意义。',
-      modes: ['student', 'guest'],
       source: 'internal',
       verified: '2026-01-01',
     },
@@ -914,7 +919,6 @@ window.ADVISING = (function () {
         'general expectation, so it is worth confirming on the course page before ' +
         'you change anything.',
       zh: '你所填方向里已记录的课程中，有几门**明确点名了先修科目**，而你的选课里没有：{{namedPrereqGaps}}这是院校自己写的措辞，不是本工具的通用推测，所以改选课之前值得先去课程页确认一遍。',
-      modes: ['student', 'guest'],
       source: 'The requirement line on each institution course page',
       verified: '2026-09-25',
     },
@@ -933,7 +937,6 @@ window.ADVISING = (function () {
         'Beyond marks, these are what distinguish applicants: {{roadmapActivities}} ' +
         'Skills worth building deliberately: {{roadmapSkills}} {{roadmapWhy}}',
       zh: '{{roadmapField}}——这份工作实际在做什么：{{roadmapCareers}}分数之外，区分申请人的是这些：{{roadmapActivities}}值得刻意培养的能力：{{roadmapSkills}}{{roadmapWhy}}',
-      modes: ['student', 'guest'],
       source: 'internal',
       verified: '2026-01-01',
     },
@@ -948,7 +951,6 @@ window.ADVISING = (function () {
         'reachable this year may not be next. Name one adjacent field you would ' +
         'also accept, and check that your subjects keep it open.',
       zh: '你只记录了一个专业方向。这本身没问题，但单一而窄的目标恰恰是最需要备选方案的：录取由你看不见的那一届人决定，今年够得上的课程，明年不一定。再写一个你同样能接受的相邻方向，并确认你的选课没有把它关掉。',
-      modes: ['student', 'guest'],
       source: 'internal',
       verified: '2026-01-01',
     },
@@ -962,7 +964,6 @@ window.ADVISING = (function () {
         'their own deadlines, and several of them start earlier than the degree ' +
         'application does.',
       zh: '直接读学位是一条路，不是唯一一条。{{optionsList}}建议现在就看而不是等到八月：这些路径有自己的截止日期，其中几条比学位申请开始得更早。',
-      modes: ['student', 'guest'],
       source: 'Verify each service page; links are entry points, not deadlines',
       verified: null,
     },
@@ -975,7 +976,6 @@ window.ADVISING = (function () {
         'shape of the year rather than the dates: the point is that the work ' +
         'starts well before the application does.',
       zh: '{{timelineList}}截止日期每轮都会变，所以把这些当成一年的形状而不是具体日子：要紧的是这份工作远早于申请本身开始。',
-      modes: ['student', 'guest'],
       source: 'Verify dates on the official service each cycle',
       verified: null,
     },
@@ -995,7 +995,6 @@ window.ADVISING = (function () {
         '在你填写方向的已记录课程里，你当前 {{standing}} 的水平够得上 {{reachableCourse}}。' +
         '{{#if nearestCourse}}最近的一门在你之上的是 {{nearestCourse}}，差 {{atarGap}} 分。{{/if}}' +
         '这些最低分是快照，每轮都会变，只作起点参考。',
-      modes: ['student', 'guest'],
       source: 'Verify the current minimum on the institution course page',
       verified: null,
     },
@@ -1014,7 +1013,6 @@ window.ADVISING = (function () {
         '你当前 {{standing}} 的水平，与你所填方向已记录的 {{courseCount}} 门课程最低分都还差一点。' +
         '最近的是 {{nearestCourse}}，高出 {{atarGap}} 分。' +
         '现在知道比成绩出来后再知道要好——无论是调整目标还是调整复习计划，都还来得及。',
-      modes: ['student', 'guest'],
       source: 'Verify the current minimum on the institution course page',
       verified: null,
     },
@@ -1029,7 +1027,6 @@ window.ADVISING = (function () {
         'and practice under timed conditions rather than re-reading notes. ' +
         'Neither requires more hours than you are already spending.',
       zh: '有两件事能稳定地把成绩守住：一份**写明日期的计划**而不是「打算」，以及在**限时条件下做题**而不是反复看笔记。两者都不需要比现在多花时间。',
-      modes: ['student', 'guest'],
       source: 'internal',
       verified: '2026-01-01',
     },
@@ -1043,7 +1040,6 @@ window.ADVISING = (function () {
         'declining accuracy in familiar material. Build recovery into the plan ' +
         'on purpose.',
       zh: '你记录了 {{subjectCount}} 门科目。这种负担下常见的失败方式不是懒，而是累积疲劳——表现为熟悉的内容也开始出错。请主动把恢复时间排进计划。',
-      modes: ['student', 'guest'],
       source: 'internal',
       verified: '2026-01-01',
     },
@@ -1272,7 +1268,7 @@ window.ADVISING = (function () {
   /* --------------------------------------------------------------------------
    * 6. Public surface. The engine consumes only what is exported here.
    * ------------------------------------------------------------------------*/
-  const uiStrings = {"zh": {"app_sub": "规则驱动 · 建议是数据，不是代码 · 全部内容在 advising-rules.js", "tab_student": "1 · 学生情况", "tab_report": "2 · 建议报告", "tab_tracker": "3 · 考核追踪", "tab_coverage": "4 · 规则总览", "sec_identity": "身份与学业状况", "sec_interests": "升学意向", "sec_subjects": "选课与成绩", "label_name": "姓名", "label_sid": "学号", "label_school": "Year 11 就读学校", "label_efl": "英语为母语", "label_intake": "曾就读的预科班次", "label_target": "目标 ATAR", "label_est": "当前预估 ATAR", "label_deciding": "仍在犹豫选什么专业", "label_funding": "学费来源已落实", "opt_unstated": "— 未填写 —", "opt_none": "— 无 —", "opt_yes": "是", "opt_no": "否", "col_country": "国家/地区", "col_field": "专业方向", "col_uni": "目标大学", "col_level": "班次", "col_subject": "科目", "col_mark": "成绩 (%)", "col_assessed": "已考权重 (%)", "btn_add_interest": "+ 增加一行", "btn_add_subject": "+ 增加一门", "sec_atar": "ATAR 估算", "atar_intro": "按你上面填的成绩算：取最高的四门合计成合成分，再换算成 ATAR。换算式来自源工作簿，是某一所院校某一个招生轮次的换算，不是官方 ATAR 成绩单——只当估算，并以你自己的招生中心为准。", "btn_atar": "算一下", "atar_need": "目标 {target} 需要合成分 {agg}（四门平均 {per}）。", "atar_above": "比你现在高 {gap}。", "atar_below": "你已经比这个目标需要的水平高 {gap}。", "atar_no_target": "填一个目标 ATAR，就能算出还差多少。", "atar_out_of_range": "合成分 {agg} 超出这套换算能回答的区间（{lo}–{hi}）。这里不给数字——给一个会显得权威，而且是错的。", "atar_insufficient": "至少要 {n} 门有成绩的科目才能算合成分。", "atar_unavailable": "换算式自检没通过，所以不输出数字。", "atar_row_agg": "合成分（最高 {n} 门合计）", "atar_row_atar": "换算 ATAR", "atar_row_target": "目标 ATAR", "atar_row_needed": "目标所需合成分", "atar_method": "方法：最高的 {n} 门成绩相加得合成分，代入源工作簿标定的曲线。曲线在合成分约 373 以上会掉头向下，所以超出区间时本工具拒绝给数。自检：合成分 {ref} 应对应 ATAR 80，实测 {got}。", "sec_history": "往届参考", "btn_history": "看往届分布", "sec_notes": "备注（给你的顾问或自己）", "notes_intro": "写在这里的内容会随记录一起保存和导出，打印时会印在报告末尾。常用的说法可以存在这里重复使用。", "notes_heading": "备注", "history_intro": "下面是工作簿里记录的往届学生结果，用来参照你估算出来的位置。", "history_range": "共 {count} 名学生，ATAR 落在 {lo} 到 {hi} 之间。", "history_bands": "这组人内部的位置：", "history_examples": "几位往届学生的成绩与结果：", "history_col_atar": "记录的 ATAR", "history_col_top4": "最高四门合计", "history_col_marks": "各科成绩", "history_omitted": "这里不列往届样例：源表没有任何一列标记某位学生的行到哪里结束，所以单独的某一行无法可靠还原。上面的分布不受这个缺陷影响。", "btn_generate": "生成报告 →", "btn_save": "保存到本浏览器", "btn_load": "读取已保存", "btn_clear": "全部清空", "btn_sample": "载入示例学生", "btn_print": "打印 / 存为 PDF", "btn_copy": "复制为文本", "btn_download": "下载 .md", "btn_csv": "下载记录表 (.csv)", "report_title": "建议报告", "col_assessment": "考核项目", "col_weight": "权重 (%)", "col_due": "日期", "col_importance": "重要度", "col_urgency": "紧急度", "col_done": "完成", "col_action": "建议动作", "btn_add_assess": "+ 增加一项考核", "coverage_title": "规则总览", "col_domain": "类别", "tab_courses": "课程参考", "courses_title": "课程最低分参考", "col_uni_name": "院校", "col_course": "专业", "col_min_atar": "最低分", "col_req": "除分数外的要求", "col_source": "来源", "col_rule": "规则", "col_fired": "命中", "col_verified": "核实状态", "label_y11": "Year 11 成绩（每行一条：科目: 分数）", "label_prior": "往期班次成绩（每行一条：科目: 分数）"}, "en": {"app_sub": "rules-driven · advice is data, not code · all copy lives in advising-rules.js", "tab_student": "1 · Student record", "tab_report": "2 · Advising report", "tab_tracker": "3 · Assessment tracker", "tab_coverage": "4 · Rule coverage", "sec_identity": "Identity & standing", "sec_interests": "Destinations & academic interests", "sec_subjects": "Subjects & results", "label_name": "Full name", "label_sid": "Student ID", "label_school": "Year 11 school", "label_efl": "English is first language", "label_intake": "Previous intake attended", "label_target": "Target ATAR", "label_est": "Current estimated ATAR", "label_deciding": "Still deciding on a course", "label_funding": "Funding arrangement confirmed", "opt_unstated": "— not stated —", "opt_none": "— none —", "opt_yes": "Yes", "opt_no": "No", "col_country": "Country", "col_field": "Field", "col_uni": "Target university", "col_level": "Level", "col_subject": "Subject", "col_mark": "Mark (%)", "col_assessed": "Assessed (%)", "btn_add_interest": "+ Add row", "btn_add_subject": "+ Add subject", "sec_atar": "ATAR estimate", "atar_intro": "Computed from the marks above: the best four are summed into an aggregate, and the aggregate is converted to an ATAR. The conversion comes from the source workbook and is the curve of one institution for one intake — not an official ATAR statement. Treat it as an estimate and confirm against your own admissions centre.", "btn_atar": "Calculate", "atar_need": "Target {target} needs an aggregate of {agg} ({per} per subject across four).", "atar_above": "That is {gap} above where you are.", "atar_below": "You are already {gap} above what that target needs.", "atar_no_target": "Enter a target ATAR to see how far off it is.", "atar_out_of_range": "Aggregate {agg} is outside the span this conversion can answer for ({lo}–{hi}). No number is given here — a number would look authoritative and be wrong.", "atar_insufficient": "At least {n} subjects with marks are needed for an aggregate.", "atar_unavailable": "The conversion failed its own load-time check, so no number is produced.", "atar_row_agg": "Aggregate (best {n} summed)", "atar_row_atar": "Converted ATAR", "atar_row_target": "Target ATAR", "atar_row_needed": "Aggregate the target needs", "atar_method": "Method: the best {n} marks are summed, then put through the curve the source workbook is calibrated to. That curve turns over above an aggregate of about 373, so outside the span the tool refuses to answer. Check: an aggregate of {ref} should read ATAR 80; it reads {got}.", "sec_history": "Prior cohorts", "btn_history": "Show prior outcomes", "sec_notes": "Notes (for your adviser, or yourself)", "notes_intro": "Whatever you write here is saved and exported with the record, and printed at the end of the report. Reusable wording can be kept here.", "notes_heading": "Notes", "history_intro": "Recorded outcomes of the students in the source workbook, for reference against your own estimate.", "history_range": "{count} students in total, with ATARs from {lo} to {hi}.", "history_bands": "Positions within this group:", "history_examples": "A few prior students, their marks and their result:", "history_col_atar": "Recorded ATAR", "history_col_top4": "Best four summed", "history_col_marks": "Subject marks", "history_omitted": "No example students are listed: the source sheet has no column marking where one student rows end, so individual rows cannot be reconstructed reliably. The distribution above is unaffected.", "btn_generate": "Generate report →", "btn_save": "Save to this browser", "btn_load": "Restore saved", "btn_clear": "Clear all", "btn_sample": "Load sample student", "btn_print": "Print / save as PDF", "btn_copy": "Copy as text", "btn_download": "Download as .md", "btn_csv": "Download record (.csv)", "report_title": "Advising report", "col_assessment": "Assessment", "col_weight": "Weight (%)", "col_due": "Due", "col_importance": "Importance", "col_urgency": "Urgency", "col_done": "Done", "col_action": "Action", "btn_add_assess": "+ Add assessment", "coverage_title": "Rule coverage", "col_domain": "Domain", "tab_courses": "Course reference", "courses_title": "Recorded minimums", "col_uni_name": "Institution", "col_course": "Course", "col_min_atar": "Min.", "col_req": "Requirements beyond the score", "col_source": "Source", "col_rule": "Rule", "col_fired": "Fired", "col_verified": "Verification", "label_y11": "Year 11 results (one per line: Subject: mark)", "label_prior": "Prior intake results (one per line: Subject: mark)"}}
+  const uiStrings = {"zh": {"app_sub": "规则驱动 · 建议是数据，不是代码 · 全部内容在 advising-rules.js", "tab_student": "1 · 学生情况", "tab_report": "2 · 建议报告", "tab_tracker": "3 · 考核追踪", "tab_coverage": "4 · 规则总览", "sec_identity": "身份与学业状况", "sec_interests": "升学意向", "interests_intro": "只想算 ATAR 的话这一块可以留空；填了才会有目的国、专业、先修科目、语言和费用这几类建议。", "sec_subjects": "选课与成绩", "label_name": "姓名", "label_sid": "学号", "label_school": "Year 11 就读学校", "label_efl": "英语为母语", "label_intake": "曾就读的预科班次", "label_target": "目标 ATAR", "label_est": "当前预估 ATAR", "label_deciding": "仍在犹豫选什么专业", "label_funding": "学费来源已落实", "opt_unstated": "— 未填写 —", "opt_none": "— 无 —", "opt_yes": "是", "opt_no": "否", "col_country": "国家/地区", "col_field": "专业方向", "col_uni": "目标大学", "col_level": "班次", "col_subject": "科目", "col_mark": "成绩 (%)", "col_assessed": "已考权重 (%)", "btn_add_interest": "+ 增加一行", "btn_add_subject": "+ 增加一门", "sec_atar": "ATAR 估算", "atar_intro": "按你上面填的成绩算：取最高的四门合计成合成分，再换算成 ATAR。换算式来自源工作簿，是某一所院校某一个招生轮次的换算，不是官方 ATAR 成绩单——只当估算，并以你自己的招生中心为准。", "btn_atar": "算一下", "atar_need": "目标 {target} 需要合成分 {agg}（四门平均 {per}）。", "atar_above": "比你现在高 {gap}。", "atar_below": "你已经比这个目标需要的水平高 {gap}。", "atar_no_target": "填一个目标 ATAR，就能算出还差多少。", "atar_out_of_range": "合成分 {agg} 超出这套换算能回答的区间（{lo}–{hi}）。这里不给数字——给一个会显得权威，而且是错的。", "atar_insufficient": "至少要 {n} 门有成绩的科目才能算合成分。", "atar_unavailable": "换算式自检没通过，所以不输出数字。", "atar_row_agg": "合成分（最高 {n} 门合计）", "atar_row_atar": "换算 ATAR", "atar_row_target": "目标 ATAR", "atar_row_needed": "目标所需合成分", "atar_method": "方法：最高的 {n} 门成绩相加得合成分，代入源工作簿标定的曲线。曲线在合成分约 373 以上会掉头向下，所以超出区间时本工具拒绝给数。自检：合成分 {ref} 应对应 ATAR 80，实测 {got}。", "sec_history": "往届参考", "btn_history": "看往届分布", "sec_notes": "备注（给你的顾问或自己）", "notes_intro": "写在这里的内容会随记录一起保存和导出，打印时会印在报告末尾。常用的说法可以存在这里重复使用。", "notes_heading": "备注", "history_intro": "下面是工作簿里记录的往届学生结果，用来参照你估算出来的位置。", "history_range": "共 {count} 名学生，ATAR 落在 {lo} 到 {hi} 之间。", "history_bands": "这组人内部的位置：", "history_examples": "几位往届学生的成绩与结果：", "history_col_atar": "记录的 ATAR", "history_col_top4": "最高四门合计", "history_col_marks": "各科成绩", "history_omitted": "这里不列往届样例：源表没有任何一列标记某位学生的行到哪里结束，所以单独的某一行无法可靠还原。上面的分布不受这个缺陷影响。", "btn_generate": "生成报告 →", "btn_save": "保存到本浏览器", "btn_load": "读取已保存", "btn_clear": "全部清空", "btn_sample": "载入示例学生", "btn_print": "打印 / 存为 PDF", "btn_copy": "复制为文本", "btn_download": "下载 .md", "btn_csv": "下载记录表 (.csv)", "report_title": "建议报告", "col_assessment": "考核项目", "col_weight": "权重 (%)", "col_due": "日期", "col_importance": "重要度", "col_urgency": "紧急度", "col_done": "完成", "col_action": "建议动作", "btn_add_assess": "+ 增加一项考核", "coverage_title": "规则总览", "col_domain": "类别", "tab_courses": "课程参考", "courses_title": "课程最低分参考", "col_uni_name": "院校", "col_course": "专业", "col_min_atar": "最低分", "col_req": "除分数外的要求", "col_source": "来源", "col_rule": "规则", "col_fired": "命中", "col_verified": "核实状态", "label_y11": "Year 11 成绩（每行一条：科目: 分数）", "label_prior": "往期班次成绩（每行一条：科目: 分数）"}, "en": {"app_sub": "rules-driven · advice is data, not code · all copy lives in advising-rules.js", "tab_student": "1 · Student record", "tab_report": "2 · Advising report", "tab_tracker": "3 · Assessment tracker", "tab_coverage": "4 · Rule coverage", "sec_identity": "Identity & standing", "sec_interests": "Destinations & academic interests", "interests_intro": "Leave this blank if all you want is the ATAR. Filling it in is what unlocks the destination, course, prerequisite, language and funding advice.", "sec_subjects": "Subjects & results", "label_name": "Full name", "label_sid": "Student ID", "label_school": "Year 11 school", "label_efl": "English is first language", "label_intake": "Previous intake attended", "label_target": "Target ATAR", "label_est": "Current estimated ATAR", "label_deciding": "Still deciding on a course", "label_funding": "Funding arrangement confirmed", "opt_unstated": "— not stated —", "opt_none": "— none —", "opt_yes": "Yes", "opt_no": "No", "col_country": "Country", "col_field": "Field", "col_uni": "Target university", "col_level": "Level", "col_subject": "Subject", "col_mark": "Mark (%)", "col_assessed": "Assessed (%)", "btn_add_interest": "+ Add row", "btn_add_subject": "+ Add subject", "sec_atar": "ATAR estimate", "atar_intro": "Computed from the marks above: the best four are summed into an aggregate, and the aggregate is converted to an ATAR. The conversion comes from the source workbook and is the curve of one institution for one intake — not an official ATAR statement. Treat it as an estimate and confirm against your own admissions centre.", "btn_atar": "Calculate", "atar_need": "Target {target} needs an aggregate of {agg} ({per} per subject across four).", "atar_above": "That is {gap} above where you are.", "atar_below": "You are already {gap} above what that target needs.", "atar_no_target": "Enter a target ATAR to see how far off it is.", "atar_out_of_range": "Aggregate {agg} is outside the span this conversion can answer for ({lo}–{hi}). No number is given here — a number would look authoritative and be wrong.", "atar_insufficient": "At least {n} subjects with marks are needed for an aggregate.", "atar_unavailable": "The conversion failed its own load-time check, so no number is produced.", "atar_row_agg": "Aggregate (best {n} summed)", "atar_row_atar": "Converted ATAR", "atar_row_target": "Target ATAR", "atar_row_needed": "Aggregate the target needs", "atar_method": "Method: the best {n} marks are summed, then put through the curve the source workbook is calibrated to. That curve turns over above an aggregate of about 373, so outside the span the tool refuses to answer. Check: an aggregate of {ref} should read ATAR 80; it reads {got}.", "sec_history": "Prior cohorts", "btn_history": "Show prior outcomes", "sec_notes": "Notes (for your adviser, or yourself)", "notes_intro": "Whatever you write here is saved and exported with the record, and printed at the end of the report. Reusable wording can be kept here.", "notes_heading": "Notes", "history_intro": "Recorded outcomes of the students in the source workbook, for reference against your own estimate.", "history_range": "{count} students in total, with ATARs from {lo} to {hi}.", "history_bands": "Positions within this group:", "history_examples": "A few prior students, their marks and their result:", "history_col_atar": "Recorded ATAR", "history_col_top4": "Best four summed", "history_col_marks": "Subject marks", "history_omitted": "No example students are listed: the source sheet has no column marking where one student rows end, so individual rows cannot be reconstructed reliably. The distribution above is unaffected.", "btn_generate": "Generate report →", "btn_save": "Save to this browser", "btn_load": "Restore saved", "btn_clear": "Clear all", "btn_sample": "Load sample student", "btn_print": "Print / save as PDF", "btn_copy": "Copy as text", "btn_download": "Download as .md", "btn_csv": "Download record (.csv)", "report_title": "Advising report", "col_assessment": "Assessment", "col_weight": "Weight (%)", "col_due": "Due", "col_importance": "Importance", "col_urgency": "Urgency", "col_done": "Done", "col_action": "Action", "btn_add_assess": "+ Add assessment", "coverage_title": "Rule coverage", "col_domain": "Domain", "tab_courses": "Course reference", "courses_title": "Recorded minimums", "col_uni_name": "Institution", "col_course": "Course", "col_min_atar": "Min.", "col_req": "Requirements beyond the score", "col_source": "Source", "col_rule": "Rule", "col_fired": "Fired", "col_verified": "Verification", "label_y11": "Year 11 results (one per line: Subject: mark)", "label_prior": "Prior intake results (one per line: Subject: mark)"}}
 
   return {
     uiStrings,
