@@ -286,10 +286,11 @@ window.ADVISING = (function () {
       id: 'form-incomplete',
       domain: 'completeness',
       title: 'Required fields outstanding',
-      when: "!record.fullName || !record.year11School || record.subjects.length === 0",
+      when: "!record.fullName || record.subjects.length === 0",
       advice: 'This report is provisional because required fields are still blank. ' +
         'Advisor guidance is only as good as the information behind it.',
       zh: '必填项还没填完，所以这份报告只是暂定的。建议的质量取决于你填进去的信息。',
+      modes: ['student', 'guest'],
       source: 'internal',
       verified: '2026-01-01',
     },
@@ -302,6 +303,7 @@ window.ADVISING = (function () {
         'aggregates are calculated from four or more, so confirm which subjects ' +
         'will count toward your aggregate.',
       zh: '你只记录了 {{subjectCount}} 门 ATAR 科目。多数大学的合成分按四门及以上计算，先确认你所在体系里哪几门会计入合成分。',
+      modes: ['student', 'guest'],
       source: 'Confirm the aggregate rules for your qualification',
       verified: null,
     },
@@ -314,6 +316,7 @@ window.ADVISING = (function () {
       advice: 'No destination country has been recorded. Without one, visa timelines, ' +
         'language requirements and application deadlines cannot be assessed.',
       zh: '还没有填写任何目标国家。缺了这个，签证时间线、语言要求和申请截止日期都无从评估。',
+      modes: ['student', 'guest'],
       source: 'internal',
       verified: '2026-01-01',
     },
@@ -328,6 +331,7 @@ window.ADVISING = (function () {
         'application covers several choices. Confirm the current cycle deadlines ' +
         'with your advisor before you start writing.',
       zh: '申请英国要通过统一的招生系统，而不是分别投递到各校。需要准备学术推荐信和个人陈述，一份申请可以包含多个志愿。动笔前先向顾问确认当轮的确切截止日期。',
+      modes: ['student', 'guest'],
       source: 'Check the current admissions-service cycle deadlines',
       verified: null,
     },
@@ -340,6 +344,7 @@ window.ADVISING = (function () {
         'essays, and references requested months in advance. Each university ' +
         'has its own form, so plan for several parallel applications.',
       zh: '申请美国通常需要标准化考试、文书，以及提前数月联系的推荐人。每所大学各有自己的申请系统，要按并行多份申请来规划。',
+      modes: ['student', 'guest'],
       source: 'Check each university’s admissions requirements',
       verified: null,
     },
@@ -352,6 +357,7 @@ window.ADVISING = (function () {
         'a state admissions centre. Offer rounds are scheduled, so the timing of ' +
         'your results release matters as much as the marks themselves.',
       zh: '申请澳洲一般按院校分别递交，或通过所在州的招生中心。录取是分轮次放榜的，所以成绩公布的时间点和分数本身一样重要。',
+      modes: ['student', 'guest'],
       source: 'Check the relevant state admissions centre schedule',
       verified: null,
     },
@@ -366,6 +372,7 @@ window.ADVISING = (function () {
         'Registration windows for those tests close well before the application ' +
         'deadline, so this is the earliest item on your timeline.',
       zh: '医学与牙医专业通常在学业成绩之外还要加考能力测试，部分院校还有面试。这类考试的报名窗口远早于申请截止日，是你整条时间线上最早的一项。',
+      modes: ['student', 'guest'],
       source: 'Confirm test requirements and registration windows per university',
       verified: null,
     },
@@ -378,6 +385,7 @@ window.ADVISING = (function () {
         'jurisdictions require an additional admissions test. Confirm whether ' +
         'the universities you are considering require one.',
       zh: '法律专业通常没有固定的先修科目，但部分地区要求额外的入学考试。先确认你考虑的那些院校是否需要。',
+      modes: ['student', 'guest'],
       source: 'Confirm per-university admissions test requirements',
       verified: null,
     },
@@ -390,6 +398,7 @@ window.ADVISING = (function () {
         'and several expect physics as well. Check the assumed-knowledge ' +
         'statement for each programme rather than relying on the entry score alone.',
       zh: '工程学位一般以扎实的数学为基础，不少还要求物理。请逐个查阅课程的「假定知识」说明，不要只看录取分数线。',
+      modes: ['student', 'guest'],
       source: 'Check each programme’s assumed knowledge statement',
       verified: null,
     },
@@ -404,6 +413,7 @@ window.ADVISING = (function () {
         'subjects you would need to keep open. Narrowing those three usually ' +
         'removes most of the field.',
       zh: '这个阶段还没定方向很正常，也完全可以处理。更有效的做法是**按约束条件缩小范围**，而不是按喜好：你哪几门最强、能负担哪些国家、哪些先修科目需要继续保留。把这三条列出来，通常就能排除掉大部分选项。',
+      modes: ['student', 'guest'],
       source: 'internal',
       verified: '2026-01-01',
     },
@@ -417,6 +427,7 @@ window.ADVISING = (function () {
         'Programmes taught in another language normally require a proficiency ' +
         'certificate in that language, which takes time to obtain.',
       zh: '你填的目标国家以非英语国家为主。用其他语言授课的项目通常要求该语言的等级证书，而考取证书需要时间。',
+      modes: ['student', 'guest'],
       source: 'Confirm the language of instruction and required certificate',
       verified: null,
     },
@@ -430,6 +441,7 @@ window.ADVISING = (function () {
         'English subject instead. Requirements differ by institution and by ' +
         'course — clinical courses are usually the strictest.',
       zh: '如果英语不是你的母语，不少院校会要求标准化英语考试，也有院校接受英语科目成绩替代。要求因院校和课程而异——临床类专业通常最严。',
+      modes: ['student', 'guest'],
       source: 'Confirm per-institution English requirements',
       verified: null,
     },
@@ -443,6 +455,7 @@ window.ADVISING = (function () {
         'fall earlier than admission deadlines, so funding deserves its own ' +
         'timeline rather than being left until an offer arrives.',
       zh: '还没有记录任何学费来源安排。奖学金的截止日期通常早于录取截止日期，所以费用该有独立的时间线，而不是等拿到 offer 再说。',
+      modes: ['student', 'guest'],
       source: 'internal',
       verified: '2026-01-01',
     },
@@ -457,6 +470,7 @@ window.ADVISING = (function () {
         'and eligibility change between rounds — treat any figure you have heard ' +
         'as unconfirmed until you read the current program page.',
       zh: '你的选择里有几所西澳的大学。该州有针对本州高中毕业国际生的奖学金与助学金项目。金额、名额与资格每轮都会变——听到的任何数字都当作未确认，以当前项目页面为准。',
+      modes: ['student', 'guest'],
       source: 'Read the current state scholarship programme page',
       verified: null,
     },
@@ -472,6 +486,7 @@ window.ADVISING = (function () {
         'weight for the target to remain reachable — if they do not, adjusting ' +
         'the target now is better than discovering it at results release.',
       zh: '按目前水平，你低于自己设定的目标 {{targetAtar}}。这是需要规划的差距，不是结论。关键问题是：剩下的考核权重够不够把目标拉回来。如果不够，现在调整目标，比成绩公布时才发现要好。',
+      modes: ['student', 'guest'],
       source: 'internal',
       verified: '2026-01-01',
     },
@@ -485,19 +500,7 @@ window.ADVISING = (function () {
         'technique, or time management — each needs a different fix. Reviewing ' +
         'marked scripts usually answers this faster than more revision does.',
       zh: '至少有一门低于 {{weakMark}}。在全面增加学习时间之前，先分清问题出在知识本身、应试技巧，还是时间安排——三者的解法完全不同。看一遍批改过的卷子，通常比多刷题更快找到答案。',
-      source: 'internal',
-      verified: '2026-01-01',
-    },
-    {
-      id: 'perf-prior-intake-underperformed',
-      domain: 'performance',
-      title: 'Prior intake result below 55',
-      when: 'record.previousIntake !== null && anyValueBelow(record.priorResults, T.priorIntakeWeakMark)',
-      advice: 'A subject taken in an earlier intake came in below {{priorIntakeWeakMark}}. ' +
-        'Note that an earlier intake usually covers only part of the full syllabus, so the ' +
-        'result is not a projection of your final outcome — but the same subject ' +
-        'in the main intake is the place to apply what that result taught you.',
-      zh: '有一门在往期班次考到 {{priorIntakeWeakMark}} 以下。注意往期班次通常只覆盖完整考纲的一小部分，所以那个分数并不预示最终结果——但这门课在正式班次里，正是把那次教训用上的地方。',
+      modes: ['student', 'guest'],
       source: 'internal',
       verified: '2026-01-01',
     },
@@ -511,6 +514,7 @@ window.ADVISING = (function () {
         'only materialises if the marks hold up across all of them. Watch for ' +
         'one subject degrading to protect the others.',
       zh: '你记录的全部 {{subjectCount}} 门都是最高难度科目。这是很重的负担，而合成分的优势只有在各门都稳得住时才成立。留意有没有哪一门在拖累其他几门。',
+      modes: ['student', 'guest'],
       source: 'internal',
       verified: '2026-01-01',
     },
@@ -526,6 +530,7 @@ window.ADVISING = (function () {
         'prerequisite for each course you are considering before assuming the ' +
         'gap is fatal — some accept a bridging unit instead.',
       zh: '你选的至少一个方向，通常要求你尚未记录的科目准备。各院校之间、甚至同一所院校的不同专业之间要求都不同，所以先逐个确认具体课程的先修要求，不要预设这个缺口无法弥补——有些学校接受衔接课程。',
+      modes: ['student', 'guest'],
       source: 'Confirm the prerequisite for each specific programme',
       verified: null,
     },
@@ -539,6 +544,7 @@ window.ADVISING = (function () {
         'rarely decide an offer on their own, but they reduce the chance of ' +
         'needing catch-up units in first year.',
       zh: '至少有一个方向缺一门并非必修、但常被建议修的科目。建议科目很少单独决定录取，但能减少大一需要补修学分的可能。',
+      modes: ['student', 'guest'],
       source: 'Confirm whether the recommendation applies at your target institutions',
       verified: null,
     },
@@ -552,6 +558,7 @@ window.ADVISING = (function () {
         'the zone where a single assessment moves the outcome, so treat the ' +
         'next one as decisive rather than as practice.',
       zh: '按目前水平，你距离自己记录的某个最低分只差 {{atarMarginPoints}} 分以内。这么薄的余量，一次考核就能改变结果，所以把下一场当作决定性的，而不是练手。',
+      modes: ['student', 'guest'],
       source: 'internal',
       verified: '2026-01-01',
     },
@@ -565,6 +572,7 @@ window.ADVISING = (function () {
         'this tool will not supply a figure — read the current course page and ' +
         'record it, and the comparison becomes meaningful.',
       zh: '至少有一个志愿没有记录最低 ATAR。最低分会随录取轮次变动，校区之间也不同，所以本工具不会替你给一个数字——去查当前课程页面并填上，比较才有意义。',
+      modes: ['student', 'guest'],
       source: 'internal',
       verified: '2026-01-01',
     },
@@ -578,6 +586,7 @@ window.ADVISING = (function () {
         'and practice under timed conditions rather than re-reading notes. ' +
         'Neither requires more hours than you are already spending.',
       zh: '有两件事能稳定地把成绩守住：一份**写明日期的计划**而不是「打算」，以及在**限时条件下做题**而不是反复看笔记。两者都不需要比现在多花时间。',
+      modes: ['student', 'guest'],
       source: 'internal',
       verified: '2026-01-01',
     },
@@ -591,6 +600,7 @@ window.ADVISING = (function () {
         'declining accuracy in familiar material. Build recovery into the plan ' +
         'on purpose.',
       zh: '你记录了 {{subjectCount}} 门科目。这种负担下常见的失败方式不是懒，而是累积疲劳——表现为熟悉的内容也开始出错。请主动把恢复时间排进计划。',
+      modes: ['student', 'guest'],
       source: 'internal',
       verified: '2026-01-01',
     },

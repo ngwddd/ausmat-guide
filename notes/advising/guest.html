@@ -1,11 +1,11 @@
 <!doctype html>
-<html lang="zh-CN" data-lang="zh" data-mode="student">
+<html lang="zh-CN" data-lang="zh" data-mode="guest">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>升学自检 · 学习笔记</title>
-<meta name="description" content="升学自检 · 学习笔记">
-<link rel="alternate" hreflang="en" href="en.html">
+<title>升学自检·非注册学生 · 学习笔记</title>
+<meta name="description" content="升学自检·非注册学生 · 学习笔记">
+<link rel="alternate" hreflang="en" href="en-guest.html">
 <link rel="stylesheet" href="../../assets/style.css">
 <link rel="stylesheet" href="../../assets/advising.css">
 </head>
@@ -21,8 +21,8 @@
       <a href="index.html" class="on">升学自检</a>
       <a href="../../notes/about.html">关于</a></nav>
     <div class="lang-switch">
-      <a class="lang-link" href="guest.html">非注册学生版</a>
-      <a class="lang-link" href="en.html" hreflang="en">EN</a>
+      <a class="lang-link" href="index.html">注册学生版</a>
+      <a class="lang-link" href="en-guest.html" hreflang="en">EN</a>
     </div>
   </div>
 </header>
@@ -30,13 +30,12 @@
 <div class="advising">
 
 <div class="note-head"><a class="back" href="../../index.html">← 返回</a>
-<h1>升学自检</h1>
-<div class="meta">填一份学生情况，工具按规则库自动汇总出适用的升学建议。每条建议都标出它来自哪条规则，规则库本身可以逐条查看。</div></div>
+<h1>升学自检（非注册学生）</h1>
+<div class="meta">自己备考、旁听或已经毕业的申请人：这一版去掉了所有需要学籍才能填的项（往期班次、校内考核日程、学校名称）。留下的是方向、专业要求、先修科目、语言与费用这些不看学籍的建议。</div></div>
 
 <nav class="tabs" role="tablist">
   <button role="tab" aria-selected="true" data-tab="student">1 · 学生情况</button>
   <button role="tab" aria-selected="false" data-tab="report">2 · 建议报告</button>
-  <button role="tab" aria-selected="false" data-tab="tracker">3 · 考核追踪</button>
   <button role="tab" aria-selected="false" data-tab="coverage">4 · 规则总览</button>
 </nav>
 
@@ -47,15 +46,9 @@
       <h2>身份与学业状况</h2>
       <div class="field"><label for="fullName">姓名</label>
         <input type="text" id="fullName"></div>
-      <div class="row2">
-        <div class="field"><label for="englishFirstLanguage">英语为母语</label>
-          <select id="englishFirstLanguage"><option value="">— 未填写 —</option>
-            <option value="true">是</option><option value="false">否</option></select></div>
-        <div class="field"><label for="previousIntake">曾就读的预科班次</label>
-          <select id="previousIntake"><option value="">— 无 —</option>
-            <option>九月班次</option>
-            <option>一月班次</option></select></div>
-      </div>
+      <div class="field"><label for="englishFirstLanguage">英语为母语</label>
+        <select id="englishFirstLanguage"><option value="">— 未填写 —</option>
+          <option value="true">是</option><option value="false">否</option></select></div>
       <div class="row2">
         <div class="field"><label for="targetAtar">目标 ATAR</label>
           <input type="number" id="targetAtar" min="0" max="99.95" step="0.05"></div>
@@ -112,17 +105,7 @@
   </section>
 </div>
 
-<div id="tab-tracker" class="hidden">
-  <section class="card">
-    <table><thead><tr><th>考核项目</th><th style="width:12%">权重 (%)</th>
-      <th>日期</th><th style="width:14%">重要度</th>
-      <th style="width:13%">紧急度</th><th style="width:9%">完成</th>
-      <th style="width:30%">建议动作</th></tr></thead>
-      <tbody id="assessRows"></tbody></table>
-    <button class="ghost mini" id="addAssess">+ 增加一项考核</button>
-    <p class="muted" id="trackerSummary"></p>
-  </section>
-</div>
+
 
 <div id="tab-coverage" class="hidden">
   <div id="coverageSummary"></div>

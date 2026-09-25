@@ -11,19 +11,31 @@
 
   var R = window.ADVISING
 
-  /* ── language ────────────────────────────────────────────────────────
-   * The site pairs pages and switches with a plain link; the engine only has
-   * to read which page it is on. Everything user-visible that the engine
-   * generates resolves through L10N, so no branch below tests the language.
+  /* ── language and mode ───────────────────────────────────────────────
+   * Both come from the page, not from runtime state: the site pairs pages and
+   * switches with a plain link, so there is nothing to keep in sync and no
+   * JavaScript needed to change either one. Everything user-visible that the
+   * engine generates resolves through the helpers below, so no branch further
+   * down tests the language, and no rule tests the mode.
    * ------------------------------------------------------------------*/
   var LANG = (function () {
     var v = document.documentElement.dataset.lang || 'en'
     return (v === 'zh' || v === 'zh-CN') ? 'zh' : 'en'
   })()
+  var MODE = (function () {
+    var v = document.documentElement.dataset.mode || 'student'
+    return v === 'guest' ? 'guest' : 'student'
+  })()
   var U = R.uiStrings[LANG] || R.uiStrings.en
   function pick(en, zh) { return LANG === 'zh' && zh ? zh : en }
   function domainLabel(d) { return (LANG === 'zh' && d.zhLabel) ? d.zhLabel : d.label }
   function bandLabel(b) { return (LANG === 'zh' && b.zhLabel) ? b.zhLabel : b.label }
+  // A rule with no `modes` applies everywhere; one that declares modes applies
+  // only there. The catalog is filtered once, so every later pass — evaluation,
+  // the report, the coverage view — sees the same set.
+  var ACTIVE_RULES = R.rules.filter(function (r) {
+    return !r.modes || r.modes.indexOf(MODE) !== -1
+  })
 
   /* ---------------------------------------------------------------------
    * A small, self-contained expression evaluator — no new Function, no eval.
@@ -532,8 +544,6 @@
     })
     return {
       fullName: $('fullName').value.trim(),
-      studentId: $('studentId').value.trim(),
-      year11School: $('year11School').value.trim(),
       englishFirstLanguage: boolOrNull($('englishFirstLanguage').value),
       previousIntake: $('previousIntake').value || null,
       targetAtar: numOrNull($('targetAtar').value),
@@ -542,23 +552,17 @@
       fundingSecured: boolOrNull($('fundingSecured').value),
       interests: interests,
       subjects: subjects,
-      year11: parsePairs($('year11Results').value),
-      priorResults: parsePairs($('priorResults').value),
     }
   }
 
   function writeRecord(rec) {
     $('fullName').value = rec.fullName || ''
-    $('studentId').value = rec.studentId || ''
-    $('year11School').value = rec.year11School || ''
     $('englishFirstLanguage').value = rec.englishFirstLanguage === null || rec.englishFirstLanguage === undefined ? '' : String(rec.englishFirstLanguage)
     $('previousIntake').value = rec.previousIntake || ''
     $('targetAtar').value = rec.targetAtar === null || rec.targetAtar === undefined ? '' : rec.targetAtar
     $('estimatedAtar').value = rec.estimatedAtar === null || rec.estimatedAtar === undefined ? '' : rec.estimatedAtar
     $('stillDeciding').value = rec.stillDeciding ? 'true' : 'false'
     $('fundingSecured').value = rec.fundingSecured === null || rec.fundingSecured === undefined ? '' : String(rec.fundingSecured)
-    $('year11Results').value = Object.keys(rec.year11 || {}).map(function (k) { return k + ': ' + rec.year11[k] }).join('\n')
-    $('priorResults').value = Object.keys(rec.priorResults || {}).map(function (k) { return k + ': ' + rec.priorResults[k] }).join('\n')
 
     $('interestRows').innerHTML = ''
     ;(rec.interests && rec.interests.length ? rec.interests : [{}]).forEach(addInterestRow)
@@ -646,7 +650,7 @@
   function evaluate(rec) {
     var scope = { record: rec }
     var helpers = buildHelpers(rec, scope)
-    return R.rules.map(function (rule) {
+    return ACTIVE_RULES.map(function (rule) {
       var outcome = { rule: rule, fired: false, reason: '' }
       if (rule.enabled === false) { outcome.reason = pick('disabled in catalog', '规则库中已停用'); return outcome }
       if (compileErrors[rule.id]) { outcome.reason = pick('compile error: ', '编译错误：') + compileErrors[rule.id]; return outcome }
@@ -701,7 +705,6 @@
     var lines = []
     lines.push(LANG === 'zh' ? '升学自检报告' : R.meta.title.toUpperCase())
     lines.push((LANG === 'zh' ? '学生：' : 'Advising report for ') + (rec.fullName || (LANG === 'zh' ? '（未填姓名）' : '(unnamed)')))
-    if (rec.studentId) lines.push((LANG === 'zh' ? '学号：' : 'Student ID: ') + rec.studentId)
     lines.push((LANG === 'zh' ? '生成时间：' : 'Generated: ') + new Date().toLocaleString())
     lines.push('')
 
@@ -765,7 +768,7 @@
         text: 'rule: ' + item.rule.id + ' · source: ' + item.rule.source +
               (item.rule.verified ? ' · verified ' + item.rule.verified : ' · NOT VERIFIED') }))
     })
-    $('reportStamp').textContent = '(' + report.fired.length + ' of ' + R.rules.length + ' rules fired)'
+    $('reportStamp').textContent = '(' + report.fired.length + ' of ' + ACTIVE_RULES.length + ' rules fired)'
 
     // Coverage tab
     var rows = $('coverageRows')
@@ -786,11 +789,11 @@
       rows.appendChild(tr)
     })
 
-    var unverified = R.rules.filter(function (r) { return !r.verified }).length
-    var disabled = R.rules.filter(function (r) { return r.enabled === false }).length
+    var unverified = ACTIVE_RULES.filter(function (r) { return !r.verified }).length
+    var disabled = ACTIVE_RULES.filter(function (r) { return r.enabled === false }).length
     var summaryLine = LANG === 'zh'
-      ? ('规则库共 ' + R.rules.length + ' 条 · ' + report.fired.length + ' 条命中 · ' + unverified + ' 条待核实 · ' + disabled + ' 条已停用。')
-      : (R.rules.length + ' rules in catalog · ' + report.fired.length + ' fired · ' + unverified + ' awaiting verification · ' + disabled + ' disabled.')
+      ? ('规则库共 ' + ACTIVE_RULES.length + ' 条 · ' + report.fired.length + ' 条命中 · ' + unverified + ' 条待核实 · ' + disabled + ' 条已停用。')
+      : (ACTIVE_RULES.length + ' rules in catalog · ' + report.fired.length + ' fired · ' + unverified + ' awaiting verification · ' + disabled + ' disabled.')
     var verifyNote = LANG === 'zh'
       ? '标记为「待核实」的规则含有尚未对照当前来源确认的事实性表述。'
       : ' Rules marked <em>verify</em> make a factual claim that a human has not yet confirmed against a current source.'
@@ -905,20 +908,20 @@
   /* -------------------------- tabs, storage, export ------------------- */
   function showTab(which) {
     ['student', 'report', 'tracker', 'coverage'].forEach(function (t) {
-      $('tab-' + t).classList.toggle('hidden', t !== which)
+      var node = $('tab-' + t)
+      if (!node) return
+      node.classList.toggle('hidden', t !== which)
     })
     Array.prototype.forEach.call(document.querySelectorAll('nav.tabs button'), function (b) {
       b.setAttribute('aria-selected', String(b.dataset.tab === which))
     })
   }
 
-  var STORAGE_KEY = 'advising-workbook-record-v1-' + LANG
+  var STORAGE_KEY = 'advising-workbook-record-v1-' + LANG + '-' + MODE
 
   function sample() {
     return {
       fullName: 'Sample Student',
-      studentId: 'S-000000',
-      year11School: 'Sample Secondary College',
       englishFirstLanguage: false,
       previousIntake: 'September intake',
       targetAtar: 88,
@@ -936,8 +939,6 @@
         { level: 'Year 11', subject: 'English', mark: 71, assessed: 50 },
         { level: 'Year 11', subject: 'Psychology', mark: 66, assessed: 30 },
       ],
-      year11: { English: 71, Mathematics: 82 },
-      priorResults: { Chemistry: 52 },
     }
   }
 
@@ -947,7 +948,7 @@
   $('addAssess').addEventListener('click', function () { addAssessRow() })
   $('btnGenerate').addEventListener('click', renderReport)
   $('btnSample').addEventListener('click', function () { writeRecord(sample()); renderReport() })
-  $('btnClear').addEventListener('click', function () { writeRecord({ interests: [], subjects: [], year11: {}, priorResults: {} }); $('validationBox').innerHTML = '' })
+  $('btnClear').addEventListener('click', function () { writeRecord({ interests: [], subjects: [] }); $('validationBox').innerHTML = '' })
   $('btnSave').addEventListener('click', function () {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(readRecord()))
@@ -977,6 +978,6 @@
 
   // appTitle/appSub are baked into the page shell, not set here.
 
-  writeRecord({ interests: [], subjects: [], year11: {}, priorResults: {} })
+  writeRecord({ interests: [], subjects: [] })
   addAssessRow({ name: 'Sample assessment', weight: 15, urgency: 4, due: '' })
 })()
