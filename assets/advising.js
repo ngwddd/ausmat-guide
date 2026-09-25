@@ -309,10 +309,12 @@
       compiled[rule.id] = function (record, helpers, ruleScope) {
         var scope = Object.assign({ record: record, T: R.thresholds }, helpers)
         scope.__gapFields = null
+        scope.__matched = null
         scope.__optionalFields = null
         var result = evaluateAst(ast, scope)
         if (ruleScope) {
           if (scope.__gapFields) ruleScope.gapFields = scope.__gapFields
+          if (scope.__matched) ruleScope.waUniversities = scope.__matched
           if (scope.__optionalFields) ruleScope.optionalFields = scope.__optionalFields
         }
         return result
@@ -354,6 +356,11 @@
   // gap phrase go through here, or the advice reads "Engineering / 物理或化学"
   // with the two languages spliced together.
   function capabilityLabel(key) {
+    // Standalone noun for the "field / capability" phrase: the English
+    // label 'a physical science' reads as half a sentence there.
+    var standalone = { physicalScience: { en: 'Physics or Chemistry', zh: '物理或化学' } }
+    var fixed = standalone[key]
+    if (fixed) return LANG === 'zh' ? fixed.zh : fixed.en
     var cap = R.capabilities && R.capabilities[key]
     if (!cap) return key
     return (LANG === 'zh' && cap.zhLabel) ? cap.zhLabel : cap.label
@@ -372,7 +379,21 @@
     if (LANG === 'zh' && zh) return zh
     return key
   }
-  function fieldLabelsZh() { return R.fieldLabelsZh || {} }
+  // Gaps are collected as field<NUL>capability so two interests in the
+  // same field collapse to one phrase. Keying on the finished phrase
+  // failed: the phrase carries the field name, so a repeat never looks
+  // like a duplicate of itself.
+  function renderGaps(list) {
+    var seen = {}
+    var parts = []
+    list.forEach(function (entry) {
+      if (seen[entry]) return
+      seen[entry] = true
+      var bits = entry.split('\u0000')
+      parts.push(fieldLabel(bits[0]) + ' / ' + capabilityLabel(bits[1]))
+    })
+    return parts.join(LANG === 'zh' ? '、' : '; ')
+  }
 
   function expectationFor(field) {
     return (R.courseExpectations && R.courseExpectations[field]) || null
@@ -400,6 +421,24 @@
       // NOT mean this: a null second argument is indistinguishable from an
       // omitted one, where the comparison falls back to truthiness. Naming the
       // intent avoids a trap the language cannot express clearly.
+      // Substring match over a field, recording what matched so the
+      // advice can name it instead of alluding to it.
+      anyInterestMatching: function (currentScope, args) {
+        var path = evaluateAst(args[0], currentScope)
+        var needles = evaluateAst(args[1], currentScope)
+        var list = Array.isArray(needles) ? needles : [needles]
+        var hits = []
+        record.interests.forEach(function (interest) {
+          var value = String(resolvePath({ i: interest, item: interest }, path) || '')
+          list.forEach(function (needle) {
+            if (value && value.toLowerCase().indexOf(String(needle).toLowerCase()) !== -1
+                && hits.indexOf(value) === -1) hits.push(value)
+          })
+        })
+        if (hits.length) currentScope.__matched = hits.join(LANG === 'zh' ? '、' : '; ')
+        return hits.length > 0
+      },
+
       anyInterestMissing: function (currentScope, args) {
         var path = evaluateAst(args[0], currentScope)
         return record.interests.some(function (interest) {
@@ -421,10 +460,10 @@
           if (!expectation) return
           expectation.expects.forEach(function (key) {
             if (capabilityKnown(key) && !hasCapability(subjects, key))
-              __gaps.push(fieldLabel(field) + ' / ' + capabilityLabel(key))
+              __gaps.push(field + ' ' + key)
           })
         })
-        if (__gaps.length) currentScope.__gapFields = __gaps.join(LANG === 'zh' ? '、' : '; ')
+        if (__gaps.length) currentScope.__gapFields = renderGaps(__gaps)
         return __gaps.length > 0
       },
       // fieldPath -> an optional capability that would strengthen the case. Only
@@ -449,10 +488,10 @@
             // gap: hasCapability answers false for an unknown key, so a
             // typo would otherwise name every subject as missing.
             if (capabilityKnown(key) && !hasCapability(subjects, key))
-              __opts.push(fieldLabel(field) + ' / ' + capabilityLabel(key))
+              __opts.push(field + ' ' + key)
           })
         })
-        if (__opts.length) currentScope.__optionalFields = __opts.join(LANG === 'zh' ? '、' : '; ')
+        if (__opts.length) currentScope.__optionalFields = renderGaps(__opts)
         return __opts.length > 0
       },
       // atarPath, standing, margin -> true when standing is within `margin` BELOW
@@ -804,13 +843,13 @@
     var box = $('validationBox')
     box.innerHTML = ''
     if (check.errors.length) {
-      box.appendChild(el('div', { 'class': 'note err', html: '<strong>Cannot generate a report:</strong><ul style="margin:6px 0 0 18px">' +
+      box.appendChild(el('div', { 'class': 'note err', html: '<strong>' + pick('Cannot generate a report:', '无法生成报告：') + '</strong><ul style="margin:6px 0 0 18px">' +
         check.errors.map(function (e) { return '<li>' + escapeHtml(e) + '</li>' }).join('') + '</ul>' }))
     } else if (check.warnings.length) {
-      box.appendChild(el('div', { 'class': 'note', html: '<strong>Worth checking:</strong><ul style="margin:6px 0 0 18px">' +
+      box.appendChild(el('div', { 'class': 'note', html: '<strong>' + pick('Worth checking:', '有几处值得核对：') + '</strong><ul style="margin:6px 0 0 18px">' +
         check.warnings.map(function (e) { return '<li>' + escapeHtml(e) + '</li>' }).join('') + '</ul>' }))
     } else {
-      box.appendChild(el('div', { 'class': 'note ok', text: 'Record passes validation.' }))
+      box.appendChild(el('div', { 'class': 'note ok', text: pick('Record passes validation.', '记录通过校验。') }))
     }
 
     var results = evaluate(rec)
@@ -863,8 +902,11 @@
     $('coverageSummary').innerHTML =
       '<div class="note' + (unverified ? '' : ' ok') + '"><strong>' + summaryLine + '</strong>' +
       (unverified ? verifyNote : '') + '</div>'
+    var draftWarning = LANG === 'zh'
+      ? ('这份报告基于一份有 ' + check.errors.length + ' 处校验错误的记录生成，请当作草稿。')
+      : ('This report was generated from a record with ' + check.errors.length + ' validation error(s). Treat it as a draft.')
     $('reportWarnings').innerHTML = check.errors.length
-      ? '<div class="note err">This report was generated from a record with ' + check.errors.length + ' validation error(s). Treat it as a draft.</div>'
+      ? '<div class="note err">' + draftWarning + '</div>'
       : ''
 
     showTab('report')
@@ -1031,14 +1073,14 @@
   on('btnSave', 'click', function () {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(readRecord()))
-      if ($('validationBox')) $('validationBox').innerHTML = '<div class="note ok">Saved to this browser only. Nothing was sent anywhere.</div>'
+      if ($('validationBox')) $('validationBox').innerHTML = '<div class="note ok">' + pick('Saved to this browser only. Nothing was sent anywhere.', '只保存在本浏览器里，没有发送到任何地方。') + '</div>'
     } catch (e) {
-      if ($('validationBox')) $('validationBox').innerHTML = '<div class="note err">Could not save: ' + escapeHtml(e.message) + '</div>'
+      if ($('validationBox')) $('validationBox').innerHTML = '<div class="note err">' + pick('Could not save: ', '保存失败：') + escapeHtml(e.message) + '</div>'
     }
   })
   on('btnLoad', 'click', function () {
     var raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) { $('validationBox').innerHTML = '<div class="note">Nothing saved in this browser yet.</div>'; return }
+    if (!raw) { $('validationBox').innerHTML = '<div class="note">' + pick('Nothing saved in this browser yet.', '本浏览器里还没有保存过记录。') + '</div>'; return }
     writeRecord(JSON.parse(raw))
   })
   on('btnPrint', 'click', function () { window.print() })

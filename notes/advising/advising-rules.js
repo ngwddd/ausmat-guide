@@ -475,14 +475,19 @@ window.ADVISING = (function () {
     {
       id: 'funding-west-au',
       domain: 'funding',
-      title: 'Western Australia institutions selected',
-      when: 'anyInterest("i.country", "Australia")',
-      advice: 'Several Western Australian universities appear in your selections. ' +
-        'That state operates scholarship and bursary programmes aimed at ' +
-        'international graduates of its school qualification. Amounts, quotas ' +
-        'and eligibility change between rounds — treat any figure you have heard ' +
-        'as unconfirmed until you read the current program page.',
-      zh: '你的选择里有几所西澳的大学。该州有针对本州高中毕业国际生的奖学金与助学金项目。金额、名额与资格每轮都会变——听到的任何数字都当作未确认，以当前项目页面为准。',
+      title: 'A Western Australian institution is among the choices',
+      zhTitle: '志愿中有西澳的院校',
+      when: 'anyInterestMatching("i.university", ["Western Australia", "UWA", "Curtin", "Murdoch", "Edith Cowan", "Notre Dame"])',
+      advice:
+        'Western Australia appears among your recorded choices: ' +
+        '{{waUniversities}}. That state runs scholarship and bursary programmes of ' +
+        'its own for international graduates of its school qualification. Amounts, ' +
+        'quotas and eligibility change between rounds, so treat any figure you have ' +
+        'heard as unconfirmed until you read the current programme page.',
+      zh:
+        '你记录的志愿里出现了西澳的院校：{{waUniversities}}。' +
+        '该州有专门面向本州高中毕业国际生的奖学金与助学金项目。' +
+        '金额、名额与资格每轮都会变，听到的任何数字都当作未确认，以当前项目页面为准。',
       modes: ['student', 'guest'],
       source: 'Read the current state scholarship programme page',
       verified: null,
