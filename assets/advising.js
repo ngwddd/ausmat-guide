@@ -38,14 +38,16 @@
   var CAL_ZH = {
     label: '源工作簿曲线 —— 一所院校、一个招生轮次',
     verifiedAgainst:
-      '工作簿写明合成分 239.12838737245087 对应 ATAR 80；本条曲线在该点复现 80.00，' +
-      '并在标定区间内全程单调',
+      '工作簿写明合成分 239.12838737245087 对应 ATAR 80；本条曲线在该点复现 80.00。' +
+      '另用电子表格程序独立重算了原工作簿，各合成分处两边一致；并与工作簿里 272 名' +
+      '有四门以上成绩的学生逐一比对过',
     caveat:
       '这是源工作簿里某所院校某个招生轮次的换算式，不是官方 ATAR 成绩单。' +
       '只当估算，并以你自己的招生中心为准。',
-    overPredictNote:
-      '在 ATAR 约 90 以下，这条曲线只和工作簿里另外几届分数标定方式不同的学生' +
-      '比对过，而对比结果是平均偏高约 10 分。请把这个数字当作上界，而不是估计值。',
+    schoolMarkNote:
+      '这里把你填进去的分数一律当作最终分数来换算。学期中途从学校成绩册上读到的' +
+      '分数并不是最终换算分，所以请把结果读成「照这个水平走完会落在哪」，而不是对' +
+      '你 ATAR 的预测。',
   }
   function calText(key) {
     var c = R.calibration || {}
@@ -1141,7 +1143,15 @@
   }
 
   /* Everything the ATAR panel and the rules both need, computed once. `status`
-   * is the honest word for what happened, so the UI never has to infer it. */
+   * is the honest word for what happened, so the UI never has to infer it.
+   *
+   * The target side is computed BEFORE the range guard, deliberately. Whether
+   * the current aggregate can be converted and whether the target can be
+   * answered are separate questions: `atarToAggregate` depends only on the
+   * target, so a student whose marks sit below the calibrated floor can still be
+   * told exactly what aggregate their goal needs. Returning early there — which
+   * this function used to do — withheld the one number that was computable, and
+   * that is precisely the student who most needs it. */
   function atarPicture(rec) {
     var agg = bestAggregate(rec)
     if (!atarAvailable()) {
@@ -1153,6 +1163,14 @@
         reason: 'need ' + R.calibration.aggregateSize + ' countable subject marks',
       }
     }
+    var target = rec.targetAtar
+    var needed = typeof target === 'number' ? atarToAggregate(target) : null
+    var perSubject = needed === null ? null : needed / R.calibration.aggregateSize
+    var targetSide = {
+      target: target,
+      neededAggregate: needed,
+      neededPerSubject: perSubject,
+    }
     var atar = aggregateToAtar(agg)
     if (atar === null) {
       var range = R.calibration.saneRange
@@ -1160,20 +1178,17 @@
         status: 'out-of-range', aggregate: agg, atar: null,
         reason: 'aggregate ' + agg.toFixed(1) + ' is outside the calibrated span ' +
           range[0] + '-' + range[1],
+        target: targetSide.target,
+        neededAggregate: targetSide.neededAggregate,
+        neededPerSubject: targetSide.neededPerSubject,
+        gapToTarget: needed === null ? null : needed - agg,
       }
     }
-    var target = rec.targetAtar
-    var needed = typeof target === 'number' ? atarToAggregate(target) : null
-    var perSubject = needed === null ? null : needed / R.calibration.aggregateSize
-    return {
-      status: 'ok',
-      aggregate: agg,
-      atar: atar,
-      target: target,
-      neededAggregate: needed,
-      neededPerSubject: perSubject,
-      gapToTarget: needed === null ? null : needed - agg,
-    }
+    targetSide.status = 'ok'
+    targetSide.aggregate = agg
+    targetSide.atar = atar
+    targetSide.gapToTarget = needed === null ? null : needed - agg
+    return targetSide
   }
 
   /* ---------------------------------------------------------------------
@@ -1540,16 +1555,15 @@
     }
     var table = el('table', { 'class': 'atar-table' })
     table.appendChild(atarRow(U.atar_row_agg.replace('{n}', String(n)), p.aggregate.toFixed(1)))
-    if (p.status === 'out-of-range') {
-      box.appendChild(table)
-      var range = R.calibration.saneRange
-      box.appendChild(el('p', { 'class': 'warn', text: U.atar_out_of_range
-        .replace('{agg}', p.aggregate.toFixed(1))
-        .replace('{lo}', String(range[0])).replace('{hi}', String(range[1])) }))
-      atarMethod()
-      return
+    // An unconvertible aggregate suppresses the ATAR row and nothing else.
+    // The target rows are computed from the target alone, so they are still
+    // answered — withholding them was the bug this replaces: the student
+    // who cannot be told where they are is exactly the one who needs to be
+    // told what the goal costs.
+    var outOfRange = p.status === 'out-of-range'
+    if (!outOfRange) {
+      table.appendChild(atarRow(U.atar_row_atar, p.atar.toFixed(2), 'big'))
     }
-    table.appendChild(atarRow(U.atar_row_atar, p.atar.toFixed(2), 'big'))
     if (typeof p.target === 'number') {
       table.appendChild(atarRow(U.atar_row_target, String(p.target)))
       if (p.neededAggregate !== null) {
@@ -1557,6 +1571,12 @@
       }
     }
     box.appendChild(table)
+    if (outOfRange) {
+      var range = R.calibration.saneRange
+      box.appendChild(el('p', { 'class': 'warn', text: U.atar_out_of_range
+        .replace('{agg}', p.aggregate.toFixed(1))
+        .replace('{lo}', String(range[0])).replace('{hi}', String(range[1])) }))
+    }
     var line = el('p')
     if (p.neededAggregate !== null) {
       line.appendChild(el('span', { text: U.atar_need
@@ -1571,17 +1591,13 @@
       line.appendChild(el('span', { 'class': 'muted', text: U.atar_no_target }))
     }
     box.appendChild(line)
-    var caveat = el('p', { 'class': 'muted', text: calText('caveat') })
-    box.appendChild(caveat)
-    // Below the band the curve was actually checked in, the figure runs
-    // high against the other cohorts in the workbook. Printing the number
-    // alone there would read as an estimate; printing the warning beside
-    // it is the difference between an estimate and a flattering guess.
-    var bands = R.calibration.verifiedBands || []
-    var supported = bands.filter(function (b) { return b.verdict === 'supported' })[0]
-    if (supported && p.atar < supported.from) {
-      box.appendChild(el('p', { 'class': 'warn', text: calText('overPredictNote') }))
-    }
+    box.appendChild(el('p', { 'class': 'muted', text: calText('caveat') }))
+    // Printed under every figure rather than only the low ones. The earlier
+    // version warned that the curve ran ten points high below ATAR 90; that
+    // measurement was wrong, and a warning attached to a number that was
+    // right teaches the reader to discount it. What is true of every figure
+    // is the one thing worth saying every time.
+    box.appendChild(el('p', { 'class': 'muted', text: calText('schoolMarkNote') }))
     atarMethod()
   }
   function atarMethod() {

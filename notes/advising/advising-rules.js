@@ -1122,50 +1122,48 @@ window.ADVISING = (function () {
    *             - 1.92463295e-12       * x^6
    *
    *    and its own worked example is an aggregate of 239.12838737245087 giving
-   *    an ATAR of 80. These six numbers are a refit of that same curve through
-   *    the workbook's own reference points, checked at load time against the
-   *    reference value it states. They agree with the workbook's expression to
-   *    the precision shown because it is the same curve — this is a
-   *    re-derivation of the workbook's own calibration, NOT an independent
-   *    calibration, and it is labelled that way rather than dressed up.
+   *    an ATAR of 80. These six numbers are the workbook's own coefficients,
+   *    transcribed digit for digit — not a refit and not an independent
+   *    calibration, and labelled that way rather than dressed up. They are
+   *    checked twice: at load time against the reference the workbook states,
+   *    and out of band by recalculating the workbook itself in a spreadsheet
+   *    engine, which reproduced this evaluator at every aggregate tried.
    *
    *    WHAT WAS ACTUALLY CHECKED. The workbook's Historical data sheet holds 321
-   *    students across three blocks. Testing this curve against all of them
-   *    produced a finding that matters more than the curve itself:
+   *    students across three blocks; 272 of them also carry four or more subject
+   *    marks, so an aggregate can be formed for them at all. Against those:
    *
-   *      AC:AI  61 students, ATAR 90.95–99.65   mean error  +1.40, worst  6.69
-   *      L:R   212 students, ATAR 32.8–90.95    mean error +10.75, worst 37.77
+   *      aggregate 105–200    74 students   mean error  +0.44, worst +12.42
+   *      aggregate 200–373   198 students   mean error  -0.40, worst +13.30
    *
-   *    and inside the L:R block the error is systematic rather than random:
-   *    +34.2 in the 0–40 band, +17.4 at 40–60, +12.1 at 60–75, +5.4 at 75–90,
-   *    +2.5 at 90–100. The curve over-predicts, and it gets worse the lower the
-   *    student sits. Read one way that is a broken conversion. Read more
-   *    carefully it is a conversion that was fitted to ONE cohort's scaling and is
-   *    being asked about students from others: the same "Final Scaled" heading
-   *    holds marks on different scales in different blocks, so the aggregate is
-   *    only comparable inside a block.
+   *    93% of the 272 land within 5 ATAR points of their recorded outcome and 98%
+   *    within 10. The curve is accurate across the range it is used in.
    *
-   *    Either way the practical consequence is the same, so the tool says it
-   *    rather than picking the flattering interpretation:
-   *
-   *      trustedAbove  the band where it agrees with recorded outcomes
-   *      overPredicts  the band where it runs high, and by roughly how much
-   *
-   *    Above `verifiedBands[0].from` the number is supported by 61 students at a
-   *    mean of 1.4 points. Below it the number is an extrapolation that reads
-   *    optimistic, and the panel prints that instead of the figure alone.
+   *    AN EARLIER VERSION OF THIS FILE CLAIMED THE OPPOSITE — that the curve ran
+   *    +10.75 optimistic below ATAR 90, worsening to +34 in the bottom band — and
+   *    the panel printed that as a warning under every figure below 90. The claim
+   *    was an artefact of this project's own reader, not a property of the
+   *    workbook. The sheet's cells are keyed by (column, row); that reader
+   *    iterated rows once per column, so every subject mark arrived seven times.
+   *    The top four of such a list is four copies of a student's single best
+   *    subject, which is not an aggregate. The numbers above are what is left
+   *    once each subject is counted once.
    *
    *    WHAT THIS MEANS FOR THE STUDENT. This is one institution's conversion for
-   *    one intake, worked through one student's example. It is not an official
-   *    ATAR statement. Every surface printing a number from this function prints
-   *    the caveat with it, and `verifiedAgainst` records what was actually
-   *    checked rather than claiming general validity.
+   *    one intake. It is not an official ATAR statement. Every surface printing a
+   *    number from this function prints the caveat with it, and `verifiedAgainst`
+   *    records what was actually checked rather than claiming general validity.
    *
-   *    `saneRange` is the span over which the curve is monotonic. Outside it the
-   *    conversion returns null instead of a number: the polynomial turns over
-   *    above roughly 373, and a tool that reported "ATAR 97.85" for a perfect
-   *    aggregate because of a curve artefact would be worse than one that says
-   *    it cannot answer.
+   *    `saneRange` is where the curve has been CHECKED, not where it is
+   *    monotonic: it rises smoothly from 0 all the way to its turnover at
+   *    aggregate 374.67, so monotonicity on its own would justify no floor at
+   *    all. The floor is set by the data — the lowest best-four aggregate the
+   *    workbook records is 105.8, a student who finished at ATAR 21.6, and the
+   *    curve reads 22.35 there. Below that there is nothing to check against, so
+   *    the conversion returns null rather than extrapolating. The ceiling is the
+   *    turnover: a tool that reported "ATAR 97.85" for a perfect aggregate
+   *    because of a curve artefact would be worse than one that says it cannot
+   *    answer.
    *
    *    Model: atar = c0 + c1*x + ... over x = sum of the best N subject marks.
    * ------------------------------------------------------------------------*/
@@ -1174,16 +1172,20 @@ window.ADVISING = (function () {
     verified: '2026-09-25',
     verifiedAgainst:
       'the workbook states aggregate 239.12838737245087 -> ATAR 80; this curve ' +
-      'reproduces 80.00 there and is monotonic across the whole stated range',
+      'reproduces 80.00 there. Recalculated independently in a spreadsheet ' +
+      'engine, which agreed at every aggregate tried, and measured against the ' +
+      '272 students in the workbook who carry four or more marks',
     // Measured against every student the workbook records, not the convenient
-    // ones. Kept as data so the panel and the tests read the same numbers the
-    // README quotes, and so a future re-measurement updates the prose by
-    // changing these rather than by editing sentences.
+    // ones. Keyed by AGGREGATE, because the aggregate is the input the curve
+    // actually takes and the thing `saneRange` bounds. Kept as data so the panel
+    // and the tests read the same numbers the README quotes, and so a future
+    // re-measurement updates the prose by changing these rather than by editing
+    // sentences.
     verifiedBands: [
-      { from: 90, to: 100, students: 61, meanError: 1.40, worstError: 6.69,
+      { from: 105, to: 200, students: 74, meanError: 0.44, worstError: 12.42,
         verdict: 'supported' },
-      { from: 0, to: 90, students: 212, meanError: 10.75, worstError: 37.77,
-        verdict: 'over-predicts' },
+      { from: 200, to: 373, students: 198, meanError: 0.40, worstError: 13.30,
+        verdict: 'supported' },
     ],
     aggregateSize: 4,
     aggregateMax: 100,
@@ -1196,22 +1198,28 @@ window.ADVISING = (function () {
       2.84286953057e-09,
       -1.92463295e-12,
     ],
-    // Monotonic and meaningful between 4x50 and 4x93.2. Above the top the curve
-    // turns over, so that input is refused rather than clamped to a wrong answer.
-    saneRange: [200, 373],
+    // Checked from 4x26.5 to 4x93.25 — the span the workbook's own students
+    // cover. Below the floor nothing has been checked against, and above the
+    // ceiling the curve turns over, so both are refused rather than clamped to a
+    // wrong answer.
+    saneRange: [105, 373],
     maxAtar: 99.95,
     clamp: [0, 99.95],
     caveat:
       'One institution\'s conversion for one intake, taken from the source ' +
       'workbook. Not an official ATAR statement — treat it as an estimate and ' +
       'confirm against your own admissions centre.',
-    // Printed with any figure below the supported band, because a number alone
-    // reads as authoritative and this one runs high there.
-    overPredictNote:
-      'Below an ATAR of about 90 this curve has only been checked against ' +
-      'cohorts whose marks are scaled differently, and against those it reads ' +
-      'roughly 10 points optimistic on average. Treat the figure as an upper ' +
-      'bound rather than an estimate.',
+    // Printed under every figure, because it is true of every figure. The
+    // workbook's curve is fitted to FINAL SCALED marks — the last column of its
+    // own sheet — and a mark read off a school gradebook part-way through the
+    // year is not one. The earlier version of this panel instead warned that the
+    // curve ran ten points high below ATAR 90; that warning was wrong, and a
+    // wrong warning is worse than none because it teaches the reader to discount
+    // a number that was right.
+    schoolMarkNote:
+      'This converts whatever marks you enter as if they were your final ones. ' +
+      'Marks read off a school gradebook mid-year are not final scaled marks, so ' +
+      'read the figure as where this level of work finishes, not as a prediction.',
   }
 
   /* The curve is only usable if it is monotonic and reproduces the reference the
