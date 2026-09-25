@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Advising · Study Notes</title>
+<meta name="description" content="Advising · Study Notes">
+<link rel="alternate" hreflang="zh-CN" href="index.html">
+<link rel="stylesheet" href="../../assets/style.css">
+<link rel="stylesheet" href="../../assets/advising.css">
+</head>
+<body class="advising advising-wide">
+<header class="site">
+  <div class="wrap">
+    <a class="brand" href="../../index.html">Study Notes</a>
+    <nav><a href="../../index.html">Home</a>
+      <a href="../../notes/timetable.html">Timetable</a>
+      <a href="../../notes/timeline.html">Timeline</a>
+      <a href="../../notes/subjects.html">Subjects</a>
+      <a href="../../notes/mindmap.html">Mind Map</a>
+      <a href="index.html" class="on">Advising</a>
+      <a href="../../notes/about.html">About</a></nav>
+    <div class="lang-switch">
+      <a class="lang-link" href="index.html" hreflang="zh-CN" lang="zh">中文</a>
+    </div>
+  </div>
+</header>
+<main><div class="wrap">
+<div class="advising">
+
+<div class="note-head"><a class="back" href="../../index.html">← Back</a>
+<h1>Advising self-check</h1>
+<div class="meta">Fill in one student record and the tool assembles the advice that applies, each paragraph tagged with the rule behind it. The rule catalog is readable line by line.</div></div>
+
+<nav class="tabs" role="tablist">
+  <button role="tab" aria-selected="true" data-tab="student">1 · Student record</button>
+  <button role="tab" aria-selected="false" data-tab="report">2 · Advising report</button>
+  <button role="tab" aria-selected="false" data-tab="tracker">3 · Assessment tracker</button>
+  <button role="tab" aria-selected="false" data-tab="coverage">4 · Rule coverage</button>
+</nav>
+
+<div id="tab-student">
+  <div id="validationBox"></div>
+  <div class="grid">
+    <section class="card">
+      <h2>Identity & standing</h2>
+      <div class="field"><label for="fullName">Full name</label>
+        <input type="text" id="fullName"></div>
+      <div class="row2">
+        <div class="field"><label for="studentId">Student ID</label>
+          <input type="text" id="studentId"></div>
+        <div class="field"><label for="year11School">Year 11 school</label>
+          <input type="text" id="year11School"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label for="englishFirstLanguage">English is first language</label>
+          <select id="englishFirstLanguage"><option value="">— not stated —</option>
+            <option value="true">Yes</option><option value="false">No</option></select></div>
+        <div class="field"><label for="previousIntake">Previous intake attended</label>
+          <select id="previousIntake"><option value="">— none —</option>
+            <option>September intake</option>
+            <option>January intake</option></select></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label for="targetAtar">Target ATAR</label>
+          <input type="number" id="targetAtar" min="0" max="99.95" step="0.05"></div>
+        <div class="field"><label for="estimatedAtar">Current estimated ATAR</label>
+          <input type="number" id="estimatedAtar" min="0" max="99.95" step="0.05"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label for="stillDeciding">Still deciding on a course</label>
+          <select id="stillDeciding"><option value="false">No</option>
+            <option value="true">Yes</option></select></div>
+        <div class="field"><label for="fundingSecured">Funding arrangement confirmed</label>
+          <select id="fundingSecured"><option value="">— not stated —</option>
+            <option value="true">Yes</option><option value="false">No</option></select></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Destinations & academic interests</h2>
+      <table><thead><tr><th style="width:34%">Country</th>
+        <th style="width:34%">Field</th><th>Target university</th><th style="width:38px"></th></tr></thead>
+        <tbody id="interestRows"></tbody></table>
+      <button class="ghost mini" id="addInterest">+ Add row</button>
+    </section>
+  </div>
+
+  <section class="card">
+    <h2>Subjects & results</h2>
+    <table><thead><tr><th style="width:16%">Level</th><th>Subject</th>
+      <th style="width:13%">Mark (%)</th><th style="width:16%">Assessed (%)</th>
+      <th style="width:38px"></th></tr></thead>
+      <tbody id="subjectRows"></tbody></table>
+    <button class="ghost mini" id="addSubject">+ Add subject</button>
+    <div class="row2" style="margin-top:18px">
+      <div class="field"><label for="year11Results">Year 11 results (one per line: Subject: mark)</label>
+        <textarea id="year11Results" rows="5"></textarea></div>
+      <div class="field"><label for="priorResults">Prior intake results (one per line: Subject: mark)</label>
+        <textarea id="priorResults" rows="5"></textarea></div>
+    </div>
+  </section>
+
+  <div class="toolbar">
+    <button class="action" id="btnGenerate">Generate report →</button>
+    <button class="ghost" id="btnSave">Save to this browser</button>
+    <button class="ghost" id="btnLoad">Restore saved</button>
+    <button class="ghost" id="btnClear">Clear all</button>
+    <button class="ghost" id="btnSample">Load sample student</button>
+  </div>
+</div>
+
+<div id="tab-report" class="hidden">
+  <div id="reportWarnings"></div>
+  <div class="toolbar">
+    <button class="ghost" id="btnPrint">Print / save as PDF</button>
+    <button class="ghost" id="btnCopy">Copy as text</button>
+    <button class="ghost" id="btnDownload">Download as .md</button>
+  </div>
+  <section class="card">
+    <h2>Advising report <span class="muted" id="reportStamp"></span></h2>
+    <div class="report" id="reportBody"></div>
+  </section>
+</div>
+
+<div id="tab-tracker" class="hidden">
+  <section class="card">
+    <table><thead><tr><th>Assessment</th><th style="width:12%">Weight (%)</th>
+      <th>Due</th><th style="width:14%">Importance</th>
+      <th style="width:13%">Urgency</th><th style="width:9%">Done</th>
+      <th style="width:30%">Action</th></tr></thead>
+      <tbody id="assessRows"></tbody></table>
+    <button class="ghost mini" id="addAssess">+ Add assessment</button>
+    <p class="muted" id="trackerSummary"></p>
+  </section>
+</div>
+
+<div id="tab-coverage" class="hidden">
+  <div id="coverageSummary"></div>
+  <section class="card">
+    <h2>Rule coverage</h2>
+    <table><thead><tr><th style="width:15%">Domain</th><th>Rule</th>
+      <th style="width:9%">Fired</th><th style="width:14%">Verification</th></tr></thead>
+      <tbody id="coverageRows"></tbody></table>
+  </section>
+</div>
+
+</div>
+</div></main>
+<footer class="site"><div class="wrap">AUSMAT May 2026 · personal study notes</div></footer>
+<span class="hidden" id="appTitle"></span><span class="hidden" id="appSub"></span>
+<script src="advising-rules.js"></script>
+<script src="../../assets/advising.js"></script>
+</body>
+</html>

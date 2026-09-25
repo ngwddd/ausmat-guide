@@ -1,0 +1,100 @@
+/* ─────────────────────────────────────────────────────────────
+   升学自检 · 仅此页使用的样式
+   配色全部沿用 assets/style.css 的变量：这里不定义任何颜色，
+   换整站配色时本文件不需要改。
+   类名统一加 .advising 前缀作用域，避免影响站内其他页面。
+   ───────────────────────────────────────────────────────────── */
+
+/* 表单与数据表比阅读栏宽，只放宽这一页 */
+body.advising-wide .wrap { max-width: 1180px; }
+
+.advising .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
+@media (max-width: 900px) { .advising .grid { grid-template-columns: 1fr; } }
+
+.advising .card {
+  border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 4px 18px 14px; margin: 0 0 18px; background: var(--bg-soft);
+}
+.advising .card > h2 {
+  font-size: .82rem; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--text-soft); margin: 18px 0 12px;
+}
+
+.advising nav.tabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 0 0 22px; }
+.advising nav.tabs button {
+  font: inherit; font-size: .9rem; cursor: pointer;
+  padding: 7px 14px; border: 1px solid var(--line); border-radius: 6px;
+  background: var(--bg); color: var(--text-soft);
+}
+.advising nav.tabs button[aria-selected="true"] {
+  background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600;
+}
+
+.advising label { display: block; font-size: .84rem; color: var(--text-soft); margin-bottom: 4px; }
+.advising input[type=text], .advising input[type=number], .advising input[type=date],
+.advising select, .advising textarea {
+  width: 100%; padding: 7px 9px; font: inherit; font-size: .92rem;
+  border: 1px solid var(--line); border-radius: 6px;
+  background: var(--bg); color: var(--text);
+}
+.advising input:focus, .advising select:focus, .advising textarea:focus {
+  outline: 2px solid var(--accent-bg); border-color: var(--accent);
+}
+.advising .field { margin-bottom: 12px; }
+.advising .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 620px) { .advising .row2 { grid-template-columns: 1fr; } }
+
+/* 站点样式把表格首列设成不折行，这里要允许折行：科目名与建议都很长 */
+.advising table { font-size: .88rem; }
+.advising th, .advising td { white-space: normal; }
+.advising td:first-child, .advising th:first-child { white-space: normal; }
+
+.advising button.action {
+  font: inherit; font-weight: 600; cursor: pointer;
+  padding: 8px 15px; border: 1px solid var(--accent); border-radius: 6px;
+  background: var(--accent); color: #fff;
+}
+.advising button.ghost {
+  font: inherit; cursor: pointer;
+  padding: 8px 15px; border: 1px solid var(--line); border-radius: 6px;
+  background: var(--bg); color: var(--text);
+}
+.advising button.mini { padding: 3px 10px; font-size: .84rem; }
+.advising .toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 18px; }
+
+.advising .report { white-space: pre-wrap; font-size: .96rem; line-height: 1.85; }
+.advising .advice { margin: 0 0 2px; }
+.advising .report .src {
+  display: block; font-size: .78rem; color: var(--text-soft);
+  border-left: 2px solid var(--line); padding-left: 9px; margin: 2px 0 16px;
+}
+.advising .badge {
+  display: inline-block; font-size: .74rem; font-weight: 600;
+  padding: 1px 8px; margin-right: 6px; vertical-align: 1px;
+  border-radius: 20px; background: var(--accent-bg); color: var(--accent);
+}
+.advising .badge.off { background: var(--bg-code); color: var(--text-soft); }
+.advising .badge.warn { background: var(--warn-bg); color: var(--warn); }
+.advising .note {
+  border-left: 3px solid var(--warn); background: var(--warn-bg);
+  padding: 12px 16px; margin: 0 0 16px; font-size: .9rem;
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+.advising .note.err { border-left-color: var(--warn); }
+.advising .note.ok { border-left-color: var(--accent); background: var(--accent-bg); }
+.advising .muted { color: var(--text-soft); font-size: .85rem; }
+.advising code { font-size: .85em; }
+.advising .hidden { display: none !important; }
+
+/* 报告是要交出去的成品：打印时去掉一切交互外壳 */
+@media print {
+  body.advising-wide .wrap { max-width: none; }
+  .advising nav.tabs, .advising .toolbar, .advising .note,
+  .advising #tab-student, .advising #tab-tracker, .advising #tab-coverage { display: none !important; }
+  .advising #tab-report.hidden { display: block !important; }
+  .advising .card { border: none; background: #fff; padding: 0; margin: 0; }
+  .advising .card > h2 { display: none; }
+  .advising .advice, .advising .report .src { break-inside: avoid; page-break-inside: avoid; }
+  .advising .badge { background: none; border: 1px solid #999; color: #000; }
+  .advising .report .src { color: #555; border-left-color: #ccc; }
+}

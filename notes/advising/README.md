@@ -1,269 +1,178 @@
-# Student Advising Workbook
+# 升学自检 · Advising self-check
 
-A rules-driven advising report generator. An advisor fills in one student
-record; the engine emits the advice that applies to that student, each
-paragraph tagged with the rule that produced it.
+规则驱动的升学建议生成器。填一份学生情况，工具把适用的建议汇总成一篇报告，
+每段都标出它来自哪条规则。
 
-This is a **clean-room reimplementation of an architecture**, not a copy of any
-existing workbook. See [Provenance](#provenance) for exactly what that means.
+页面本身是中英成对的，和站内其他页面一样：
 
-## Run it
-
-Open `index.html` in any browser. No build step, no server, no dependencies, no
-network access. The three shipped files are the whole application:
-
-| File | Role |
+| 页面 | 语言 |
 | --- | --- |
-| `advising-rules.js` | The catalog: domains, vocabularies, thresholds, capabilities, course expectations, rules, matrix, calibration |
-| `index.html` | The engine: expression evaluator, validation, report assembly, UI |
-| `verify-*.mjs` | Verification suites (Node, no dependencies) |
+| `notes/advising/index.html` | 中文 |
+| `notes/advising/en.html` | English |
 
-## The one architectural decision that matters
+切换是页头右上角的普通链接，**不需要 JavaScript**。语言由根元素的 `data-lang`
+决定，站点样式表据此显示对应的文案。
 
-**Advice is data; the engine contains none of it.**
+## 文件构成
 
-Every piece of advising text lives in `advising-rules.js` as a rule with a
-condition. The engine walks the catalog, evaluates each condition against the
-student record, and prints the advice of every rule that fires. So:
+| 文件 | 作用 |
+| --- | --- |
+| `notes/advising/index.html` | 中文页：静态外壳（表单、页签、表头） |
+| `notes/advising/en.html` | 英文页：同一外壳，英文文案 |
+| `notes/advising/advising-rules.js` | **规则库**：类别、词表、阈值、能力表、规则、矩阵、换算参数，中英双语 |
+| `assets/advising.js` | 引擎：表达式求值、校验、报告拼装、界面行为 |
+| `assets/advising.css` | 仅本工具使用的样式，配色全部继承站点的变量 |
 
-- Editing advice never means editing engine code.
-- Adding a rule is one entry in one array.
-- The full rule set is readable in one screen-ish document, instead of being
-  scattered across hundreds of individual formulas.
-- Every rule carries a `source` and a `verified` date, so an unverified claim
-  is visible as unverified rather than indistinguishable from a checked one.
+配色不在本工具里定义。改 `assets/style.css` 的 `:root` 变量即可换整站配色，
+本工具不需要跟着改——唯一的例外是打印样式，那里刻意固定为白纸黑字。
 
-The **coverage view** (tab 4) is the payoff: it lists every rule, whether it
-fired, and whether its content has been verified. That view cannot exist when
-advice is embedded in formulas, because there is no list to render.
+## 一个决定性的架构选择
 
-## Capabilities, not a course list
+**建议是数据，引擎里一条建议都没有。**
 
-Prerequisite checking goes through a **capability** layer rather than a table of
-courses and their requirements:
+所有话术都在 `advising-rules.js` 里，每条规则带一个条件。引擎遍历规则库、
+对每条规则求值、把命中的建议按类别顺序拼成报告。于是：
 
-```
-capabilities          mathematics -> [Mathematics, Mathematics Methods, ...]
-                      physicalScience -> [Physics, Chemistry]
-courseExpectations    Engineering -> expects [mathematics, physicalScience]
-```
+- 改建议永远不用碰引擎代码
+- 加一条规则＝在数组里加一项
+- 全部规则能在一处读完，而不是散在几百个公式里
+- 每条规则带 `source` 和 `verified`，未核实的表述**显示为未核实**，而不是与已核实的外观一样
 
-A rule then asks "does this student's recorded subject set satisfy what the
-stated field normally expects?" and the mapping from capability to subject names
-lives in exactly one place. Adding a newly recognised subject name to
-`capabilities.mathematics` immediately affects every rule that consumes it.
+**规则总览**页签就是这件事的回报：它列出每一条规则、是否命中、内容是否已核实。
+当建议埋在公式里时，这个视图根本无法存在，因为没有可供渲染的清单。
 
-This is a deliberate departure. The institutional workbook this reimplements
-carries a course database whose prerequisite column is free text. Profiling it
-found three rows in a machine-readable shape (`English-YES Mathematics-YES
-Science/Other-NO`) and a further twelve written as prose — for example
-"Mathematics (Australian Higher Year 12 equivalent) and at least one of
-Chemistry or Physics (Australian Year 12 equivalent) are formal prerequisites
-for the Bachelor of Engineering." Parsing that into YES/NO flags would
-manufacture precision the source does not have, which is the failure mode this
-project exists to avoid. So the tool asks the capability question reliably, and
-where it has no figure it says so:
+## 规则语言
 
-- `courseExpectations[*].namedAtar` is `null` for every field, meaning "no
-  current figure is held". The `atar-figure-not-recorded` rule turns that into
-  visible advice rather than letting a student assume a number.
-- `anyInterestExpectationGap` reports only when a capability is genuinely
-  absent; an unknown field returns no gap rather than guessing.
-- `anyInterestOptionalGap` stays quiet while a required capability is still
-  missing, so advice never competes with itself.
+规则条件是一个**小程序语言**的表达式，**不是 JavaScript**。引擎里没有任何
+`eval`，也没有 `new Function`。这是刻意的：用 `Function` 编译的表达式能够触达
+整个全局作用域，包括 `record.constructor.constructor("...")()`，而文本扫描堵不住
+这个洞——逃逸发生在语言运行时里，不在扫描器看得见的名字上。解析表达式、解释语法树，
+是把问题**消除**而不是缓解。
 
-## Rule language
+由此带来的约束：
 
-Rule conditions are expressions in a small grammar, **not JavaScript**. There is
-no `eval` and no `new Function` anywhere in the engine. That is deliberate: an
-expression compiled with `Function` can reach the whole global scope, including
-`record.constructor.constructor("...")()`, and no amount of text scanning closes
-that hole because the escape happens through the language runtime rather than
-through a name a scanner can see. Parsing the expression and interpreting the
-tree removes the problem instead of mitigating it.
-
-Consequences worth knowing:
-
-- No arrow functions, statements, assignments, loops, or function definitions.
-- Comparisons against list elements go through helpers that contain the
-  traversal, because the language cannot express a callback:
+- 没有箭头函数、语句、赋值、循环、函数定义
+- 针对列表元素的比较走助手函数，因为这门语言表达不了回调：
 
 ```js
-anyInterest("i.country", "Australia")                  // any interest in AU
-anyInterest("i.field", ["Medicine", "Dentistry"])      // any of several
+anyInterest("i.country", "Australia")                  // 任一意向国家
+anyInterest("i.field", ["Medicine", "Dentistry"])      // 命中多个之一
 !anyInterest("i.country", ["Australia", "United Kingdom"])
-anyScoreBelow(T.weakMark)                              // uses a named threshold
+anyScoreBelow(T.weakMark)                              // 用命名阈值
 record.estimatedAtar < record.targetAtar - T.targetGapPoints
 ```
 
-- Only a fixed set of identifiers resolves: `record`, `T`, and the helpers
-  `anyInterest`, `countSubject`, `anyScoreBelow`, `anyValueBelow`,
-  `hasSubject`, `score`. A typo becomes a reported compile error naming the
-  rule, never a rule that silently never fires.
-- Only a fixed set of methods may be called: `some`, `every`, `includes`,
-  `indexOf`, `test`, `match`, `startsWith`, `endsWith`.
-- Property names `constructor`, `__proto__`, `prototype`, `caller`, `callee`,
-  and `arguments` are refused on every value, by every access form.
+- 只有固定的一批标识符可解析：`record`、`T`、以及助手 `anyInterest`、
+  `countSubject`、`anyScoreBelow`、`anyValueBelow`、`hasSubject`、`score`、
+  `anyInterestExpectationGap`、`anyInterestOptionalGap`、`anyInterestMissing`、
+  `belowStatedMinimum`。**拼错会变成一条点名该规则的编译错误**，而不会变成
+  一条永远不触发的规则。
+- 只有固定的方法可调用：`some`、`every`、`includes`、`indexOf`、`test`、
+  `match`、`startsWith`、`endsWith`。
+- 属性名 `constructor`、`__proto__`、`prototype`、`caller`、`callee`、
+  `arguments` 在任何值上、以任何访问形式都被拒绝。
 
-## Thresholds
+## 阈值
 
-Policy numbers live in one `thresholds` object, and rules reference them as
-`T.weakMark` rather than `60`. Advice text interpolates the same value with
-`{{weakMark}}`, so the number stated in a sentence cannot drift away from the
-number its condition tests.
+政策数字集中在一个 `thresholds` 对象里，规则以 `T.weakMark` 引用，而不是写 `60`；
+建议正文用 `{{weakMark}}` 插值。所以**句子里写的数字和条件里测的数字不可能不一致**。
 
-This is not hypothetical tidiness. The design this reimplements compared marks
-against a hard-coded `55` in one rule while its own prose implied `60` — two
-rules disagreeing about what "weak" means, which verification caught and
-reading did not.
+这不是洁癖。本工具所仿制的原始工作簿里，一条规则拿 `55` 做比较，而它自己的
+文案暗示的是 `60`——两条规则对"偏弱"的定义互相矛盾，这是**验证发现的，不是读出来的**。
 
-## Calibration: read before using any ATAR figure
+## 换算参数：用之前必读
 
-`calibration` in the catalog is an **unverified placeholder**. The design being
-reimplemented embedded a fitted six-term polynomial with coefficients calibrated
-against one particular exam cycle; those coefficients are another author's work
-and are deliberately **not** reproduced here.
+规则库里的 `calibration` 是一个**未经核实的占位实现**。原始工作簿内嵌了一条
+六次多项式，系数是其作者针对某一届考试成绩拟合的；那是他人的成果，此处**刻意没有复制**。
 
-Before this tool states an ATAR anywhere:
+在本工具给出任何 ATAR 数字之前：
 
-1. Fit `coefficients` to your own official conversion tables.
-2. Set `calibration.verified` to a date.
-3. Remove the caveat from the report output, or keep it and label the figure
-   as indicative.
+1. 对着你自己的官方换算表拟合 `coefficients`
+2. 把 `calibration.verified` 设为日期
+3. 从报告输出里移除那段免责声明，或者保留它并明确标注该数字仅为参考
 
-Until step 2, the UI labels the conversion uncalibrated everywhere it appears.
-An uncalibrated conversion emitting confident-looking numbers is the most
-dangerous failure this kind of tool can have, and the guard is deliberate.
+在第 2 步完成之前，界面会在每一处标明该换算未经校准。一个未校准的换算却输出看起来
+很确定的数字，是这类工具最危险的失效方式，所以这道闸门是故意留着的。
 
-## Verification
+## 能力层，而不是一张专业清单
 
-```sh
-node verify-rules.mjs   # rule language, catalog consistency, content policy
-node verify-dom.mjs     # the real engine, driven against a DOM stub
+先修条件检查走的是**能力**层，而不是"专业＋要求"的对照表：
+
+```
+capabilities          mathematics     -> [Mathematics, Mathematics Methods, ...]
+                      physicalScience -> [Physics, Chemistry]
+courseExpectations    Engineering     -> expects [mathematics, physicalScience]
 ```
 
-`verify-rules.mjs` mirrors the engine's evaluator **textually** and checks it
-against adversarial input: global access, `constructor` escape by dot and by
-index, arrow functions, assignments, statements, unknown helpers, methods
-outside the allow-list, unterminated strings. It also asserts catalog
-invariants — every rule has a source and a title, no rule hard-codes a currency
-figure, thresholds are consistent, the matrix is fully populated — and exercises
-the capability layer case by case: a covered expected set, a missing physical
-science, a missing mathematics, a field with no expectations claiming nothing,
-an unknown field claiming nothing, and the optional-gap suppression rule.
+规则问的是"这位学生记录的科目是否满足该方向通常要求的准备"，而能力到科目名的映射
+只存在一处。把新确认的科目名加进 `capabilities.mathematics`，所有消费它的规则**立刻**
+跟着生效。
 
-`verify-dom.mjs` loads the **production engine out of `index.html`** and drives
-it with a hand-written DOM stub, so it tests shipped code rather than a copy. It
-covers record reading (an empty field is `null`, never `0`), validation,
-rule firing on a realistic record, report assembly and provenance, threshold
-interpolation, conversion clamping, and aggregate selection.
+这是刻意的取舍。原始工作簿的课程库里，先修要求那一列是自由文本：全表 124 行里，
+只有 3 行是机器可读的形状（`English-YES Mathematics-YES Science/Other-NO`），
+另有 12 行写成散文，例如 "Mathematics (Australian Higher Year 12 equivalent) and at
+least one of Chemistry or Physics are formal prerequisites for the Bachelor of
+Engineering"。把那种散文解析成 YES/NO 标记，等于**制造源数据并不具备的精确性**，
+而这正是本项目要避免的失效方式。所以工具可靠地问出能力层面的问题，而在没有依据的地方
+它说没有：
 
-A browser-based suite was attempted and removed: Playwright launches Chromium
-with `--remote-debugging-pipe`, Chrome's own mojo IPC needs named pipes, and the
-environment this was built in denies named pipes. Widening the sandbox merely to
-run a test was not a good trade, so the DOM stub covers the same ground without
-weakening anything. **The UI has therefore not been rendered in a real browser**
-— if you have one available, open `index.html` and click through the four tabs
-once before trusting it with a real student.
+- `courseExpectations[*].namedAtar` 一律为 `null`，意思是"没有现成数字"。
+  `atar-figure-not-recorded` 规则把这件事变成可见的建议，而不是让学生自行假设一个数字。
+- `anyInterestExpectationGap` 只在能力**确实缺失**时才报告；未知方向不报缺口。
+- `anyInterestOptionalGap` 在必需能力仍缺失时保持沉默，所以建议之间不会互相打架。
 
-## Deploying under the course-notes site
+## 验证
 
-The template is built to sit under the same static site. What was checked and
-what was changed:
+验证脚本不在本目录内，也不随站点发布（本仓库曾因此泄露过一次脚本）。它们在本地运行，
+覆盖：包结构、规则语言安全、目录一致性、内容政策、能力层逐例判定，以及
+**把生产引擎本身**在 DOM 桩上跑一遍。
 
-**Already compatible**: no build step, no CDN, no network access; a classic
-`<script src>` tag rather than an ES module, so there is no CORS or MIME issue
-over HTTPS; `localStorage` works on GitHub Pages; the deployment workflow
-uploads the whole repository directory, so a subdirectory is published without
-touching the workflow.
+一个浏览器端套件曾被尝试并放弃：Playwright 用 `--remote-debugging-pipe` 启动 Chromium，
+而 Chrome 自身的 mojo IPC 也需要命名管道，构建此工具的环境禁止命名管道。为了跑一个测试
+去放宽沙箱不是划算的交换，所以 DOM 桩覆盖了同样的逻辑。**因此本页面的渲染从未在真实
+浏览器里验证过**——如果你有浏览器，打开这两个页面把四个页签各点一遍。
 
-**Changed to fit**: the palette now uses the site's token values, with a
-`prefers-color-scheme: dark` block mirroring the site's own media query, so one
-preference is honoured in both places. A real `@media print` block was added —
-chrome removed, colours dropped to ink, advice paragraphs kept off page
-boundaries — because a printed report is this tool's main output and it had only
-a `window.print()` button before.
+## 内容政策
 
-**Still to decide**: naming and placement. The site uses lowercase directories
-(`notes/`, `assets/`) and a 780px reading column; this tool needs a wider
-column, so it should keep its own max-width rather than inherit the notes one.
+规则库里的每一句话都是为本模板**原创撰写**的示例文案，不是政策来源。所有数字都是占位值。
+做事实性主张的规则会指出人类需要在何处核实，并在核实之前显示为"待核实"。
+验证套件会在规则写出货币金额时报错，因为金额应当指向当前项目页面的链接，
+而不是一个会悄悄过期的字符串。
 
-### Privacy: read before publishing this
+## 来源与边界
 
-The site's own home page states that it contains **no personal information**.
-This tool exists to hold a student's record. Those two statements cannot both be
-true once it is deployed to that site.
+架构研究自一份机构工作簿，并从零重新实现。具体而言：
 
-The repository is public, and the Pages workflow uploads everything not covered
-by `.gitignore`, so any file added here becomes world-readable — including the
-advice catalog, which would let a student read the exact rules they are being
-assessed against. The tool itself keeps records only in the browser's
-`localStorage` and makes no network request, so nothing is transmitted; the
-exposure is the files, not the data flow.
+**取用的架构**（想法，不是表达）：表单 → 规则表 → 生成报告的整体形状；
+"只输出命中的内容，未命中的规则不产生任何输出"；由考核自身的权重推导其重要度；
+用重要度×紧急度的二维矩阵给出单一建议动作；用一次合成分换算出目标计算器所需的 ATAR。
 
-Options, none of them fixed here because the choice is the site owner's:
+**未取用**：任何建议文案、任何规则措辞、任何数值系数、任何阈值、任何大学或奖学金名单、
+任何金额或网址、任何代码。原件从未在 Excel 中打开过，其宏从未被执行。其课程库只被读取
+以**测量其先修数据的形态**——发现它主要是散文，这正是本模板改用能力层而不复制清单的原因。
 
-1. **Keep it local.** Open `index.html` from disk. Nothing is published, the
-   home page's statement stays true, and no hosting decision is needed.
-2. **Publish it deliberately**, and amend the home page's statement so it is
-   accurate rather than contradicted.
-3. **Host it separately**, so the notes site's claim remains untouched.
+**刻意改动**（每一条都是原设计真实存在的缺陷）：
 
-GitHub Pages on the free tier cannot serve from a private repository, so
-"publish but keep it private" is not available without changing host.
-
-## Content policy
-
-Every string in the catalog is originally written for this template and is
-**illustrative sample copy**, not a policy source. All figures are placeholders.
-Rules that make a factual claim point at where a human must confirm it, and show
-as *verify* in the coverage view until someone does. The suite fails if a rule
-states a currency amount, because amounts belong in a link to a current program
-page, not in a string that will silently go stale.
-
-## Provenance
-
-The architecture was studied from an existing institutional workbook and
-reimplemented from scratch. Specifically:
-
-**Taken from the architecture** (ideas, not expression): the overall shape of
-form → rule table → generated report; "emit only what applies, and let
-non-matching rules produce nothing"; deriving each assessment's importance from
-its own weight; a two-dimensional importance × urgency matrix returning one
-advisory action; a single aggregate-to-ATAR conversion feeding a target
-calculator.
-
-**Not taken**: any advice text, any rule wording, any numeric coefficient, any
-threshold value, any university or scholarship list, any figure or URL, and any
-code. The workbook itself was never opened in Excel and its macros were never
-executed. Its course database was read only to profile the *shape* of its
-prerequisite data — the finding that it is mostly prose, which is why this
-template uses a capability layer instead of copying the list.
-
-**Deliberately changed** (each one is a defect the original design had):
-
-| Original | Here |
+| 原始设计 | 本实现 |
 | --- | --- |
-| Advice embedded in individual formulas | Advice is data in one catalog |
-| Unguarded exact-string comparisons, so a typo silently disabled advice | Controlled vocabularies plus validation that reports the problem |
-| Validation attached to four cells out of fifteen sheets | Every field validated, with reasons |
-| Rules scattered with no way to see the whole set | A coverage view listing every rule and its status |
-| Thresholds hard-coded per rule | Named thresholds, referenced by conditions and prose alike |
-| A course list whose prerequisites are free text, treated as if structured | A capability layer, with unheld figures surfaced rather than invented |
-| Rules and student data in the same distributed file | Rules in the catalog, student data separate |
-| Requires Excel 2021+ dynamic arrays, untested on older versions | Runs in any browser with no version dependency |
-| A fitted conversion polynomial trusted outside its fitted range | An explicitly unverified placeholder that refuses to look confident |
+| 建议嵌在各条公式里 | 建议是规则库里的数据 |
+| 无保护的精确字符串比较，打错一个字建议就静默消失 | 受控词表＋会报出问题的校验 |
+| 15 张表只挂了 4 处数据验证 | 每个字段都校验，并说明原因 |
+| 规则散落，无法看到全集 | 规则总览视图列出每条规则及其状态 |
+| 阈值硬编码在各条规则里 | 命名阈值，条件与文案引用同一个值 |
+| 课程库的先修要求是自由文本，却当作结构化数据使用 | 能力层；没有依据的数字显式暴露而非编造 |
+| 规则与学生数据在同一份分发文件里 | 规则在规则库，学生数据独立 |
+| 依赖 Excel 2021+ 的动态数组函数，未测旧版本 | 任意浏览器可运行，无版本依赖 |
+| 拟合多项式在其拟合区间外仍被信任 | 显式标注未经核实的占位实现，拒绝显得确定 |
 
-## Known gaps
+## 已知缺口
 
-- The UI has not been exercised in a real browser (see Verification).
-- `calibration` is unverified.
-- Rules marked *verify* in the coverage view have unconfirmed factual claims.
-- `courseExpectations[*].namedAtar` is `null` for every field, so the tool can
-  compare a standing against a figure *you* record but supplies none itself.
-- The capability mapping is a starting set of subject names. It is the first
-  thing to correct against your actual subject catalogue.
-- Storage is `localStorage` in one browser. There is no multi-advisor sync, no
-  audit log, and no per-student file format yet.
-- The report is exportable as Markdown and via the browser's print-to-PDF; there
-  is no `.docx` output.
+- **本页面未在真实浏览器中渲染验证过**（见"验证"）。
+- `calibration` 未经校准。
+- 规则总览里标为"待核实"的规则，含有尚未对照当前来源确认的事实性表述。
+- `courseExpectations[*].namedAtar` 全部为 `null`，所以工具能拿你记录的数字作比较，
+  但自己不提供任何数字。
+- 能力层的科目名映射是一个起点，应当第一个按你实际的科目目录校正。
+- 存储只有浏览器 `localStorage`，且**按语言分开保存**。没有多顾问同步、没有审计日志、
+  没有单个学生的文件格式。
+- 报告可导出为 Markdown，或经浏览器打印为 PDF；没有 `.docx` 输出。
