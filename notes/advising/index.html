@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>升学自检 · 学习笔记</title>
+<title>AUSMAT Guide · 升学自检</title>
 <meta name="description" content="升学自检 · 学习笔记">
 <link rel="alternate" hreflang="en" href="en.html">
 <link rel="stylesheet" href="../../assets/style.css">
@@ -91,6 +91,30 @@
     <button class="ghost mini" id="addSubject">+ 增加一门</button>
   </section>
 
+  <section class="card">
+    <h2>ATAR 估算</h2>
+    <p class="muted">按你上面填的成绩算：取最高的四门合计成合成分，再换算成 ATAR。换算式来自源工作簿，是某一所院校某一个招生轮次的换算，不是官方 ATAR 成绩单——只当估算，并以你自己的招生中心为准。</p>
+    <div class="toolbar">
+      <button class="ghost" id="btnAtar">算一下</button>
+    </div>
+    <div id="atarBox"></div>
+    <p class="muted" id="atarMethod"></p>
+  </section>
+
+  <section class="card">
+    <h2>往届参考</h2>
+    <div class="toolbar">
+      <button class="ghost" id="btnHistory">看往届分布</button>
+    </div>
+    <div id="historyBox"></div>
+  </section>
+
+  <section class="card">
+    <h2>备注（给你的顾问或自己）</h2>
+    <p class="muted">写在这里的内容会随记录一起保存和导出，打印时会印在报告末尾。常用的说法可以存在这里重复使用。</p>
+    <textarea id="notes" rows="4" spellcheck="false"></textarea>
+  </section>
+
   <div class="toolbar">
     <button class="action" id="btnGenerate">生成报告 →</button>
     <button class="ghost" id="btnSave">保存到本浏览器</button>
@@ -106,6 +130,7 @@
     <button class="ghost" id="btnPrint">打印 / 存为 PDF</button>
     <button class="ghost" id="btnCopy">复制为文本</button>
     <button class="ghost" id="btnDownload">下载 .md</button>
+    <button class="ghost" id="btnCsv">下载记录表 (.csv)</button>
   </div>
   <section class="card">
     <h2>建议报告 <span class="muted" id="reportStamp"></span></h2>
@@ -152,6 +177,7 @@
 <span class="hidden" id="appTitle"></span><span class="hidden" id="appSub"></span>
 <script src="advising-rules.js"></script>
 <script src="courses.js"></script>
+<script src="history.js"></script>
 <script src="../../assets/advising.js"></script>
 </body>
 </html>

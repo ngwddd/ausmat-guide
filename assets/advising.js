@@ -41,6 +41,86 @@
     ? window.COURSES
     : { rows: [], snapshot: '', count: 0 }
 
+  var ROADMAP = R.roadmap || {}
+  var OPPORTUNITIES = R.opportunities || { pathways: {}, timelines: {} }
+  function roadmapRow(rec) {
+    for (var i = 0; i < rec.interests.length; i++) {
+      var f = rec.interests[i].field
+      if (f && ROADMAP[f]) return { field: f, row: ROADMAP[f][LANG] || ROADMAP[f].en }
+    }
+    return null
+  }
+  function timelineParts(rec) {
+    var out = []
+    for (var i = 0; i < rec.interests.length; i++) {
+      var c = rec.interests[i].country
+      var t = c ? OPPORTUNITIES.timelines[c] : null
+      if (!t) continue
+      var text = t[LANG] || t.en
+      if (out.indexOf(text) === -1) out.push(text)
+    }
+    return out
+  }
+  function optionParts() {
+    var list = OPPORTUNITIES.pathways[LANG] || OPPORTUNITIES.pathways.en || []
+    return list.map(function (p) {
+      var labels = (p.links || []).map(function (l) { return l.label }).join(', ')
+      return p.text + (labels ? ' (' + labels + ')' : '')
+    })
+  }
+  // Which named prerequisites the recorded courses ask for and the
+  // student has not taken. Reads the requirement lines the workbook
+  // itself carries; a course that names no subject contributes nothing.
+  function namedPrereqGaps(rec) {
+    var taken = {}
+    ;(rec.subjects || []).forEach(function (s) {
+      if (s.subject) taken[String(s.subject).toUpperCase()] = true
+    })
+    var groups = {}
+    matchingCourses(rec).forEach(function (c) {
+      var needs = c.needs || {}
+      Object.keys(needs).forEach(function (name) {
+        var codes = needs[name] || []
+        var have = codes.some(function (code) { return taken[code] })
+        if (have) return
+        var label = c.university + ' ' + c.course
+        if (!groups[name]) groups[name] = []
+        if (groups[name].indexOf(label) === -1) groups[name].push(label)
+      })
+    })
+    return groups
+  }
+  // Rendered the same way the field-expectation gaps are, so both read
+  // alike in the report.
+  function namedPrereqParts(rec) {
+    var groups = namedPrereqGaps(rec)
+    return Object.keys(groups).map(function (name) {
+      return name + ' (' + groups[name].join(LANG === 'zh' ? '、' : '; ') + ')'
+    })
+  }
+  // Fills the module tokens for one record. Deliberately NOT done inside the
+  // helpers: a helper returns its own boolean, so anything after that return
+  // is dead code, and the first version of this shipped em dashes in the
+  // prose for exactly that reason. Named rather than inlined so a test can
+  // call it and prove the tokens actually get set.
+  function primeModuleScope(rec, ruleScope) {
+    var road = roadmapRow(rec)
+    if (road) {
+      ruleScope.roadmapField = road.field
+      ruleScope.roadmapCareers = road.row.careers
+      ruleScope.roadmapActivities = road.row.activities
+      ruleScope.roadmapSkills = road.row.skills
+      ruleScope.roadmapWhy = road.row.why
+    }
+    var times = timelineParts(rec)
+    if (times.length) ruleScope.timelineList = times.join(' ')
+    var opts = optionParts()
+    if (opts.length) ruleScope.optionsList = opts.join(' ')
+    var named = namedPrereqParts(rec)
+    if (named.length) ruleScope.namedPrereqGaps = named.join('; ')
+    return ruleScope
+  }
+
   function fieldWords(text) {
     return String(text || '').toLowerCase().split(/[^a-z]+/).filter(function (w) { return w.length > 3 })
   }
@@ -439,6 +519,13 @@
         scope.__nearest = null
         scope.__gap = null
         scope.__courseCount = null
+        scope.__roadmapField = null
+        scope.__roadmapCareers = null
+        scope.__roadmapActivities = null
+        scope.__roadmapSkills = null
+        scope.__roadmapWhy = null
+        scope.__timelineList = null
+        scope.__optionsList = null
         scope.__optionalFields = null
         var result = evaluateAst(ast, scope)
         if (ruleScope) {
@@ -449,6 +536,13 @@
           if (scope.__nearest) ruleScope.nearestCourse = scope.__nearest
           if (scope.__gap !== null && scope.__gap !== undefined) ruleScope.atarGap = scope.__gap
           if (scope.__courseCount) ruleScope.courseCount = scope.__courseCount
+          if (scope.__roadmapField) ruleScope.roadmapField = scope.__roadmapField
+          if (scope.__roadmapCareers) ruleScope.roadmapCareers = scope.__roadmapCareers
+          if (scope.__roadmapActivities) ruleScope.roadmapActivities = scope.__roadmapActivities
+          if (scope.__roadmapSkills) ruleScope.roadmapSkills = scope.__roadmapSkills
+          if (scope.__roadmapWhy) ruleScope.roadmapWhy = scope.__roadmapWhy
+          if (scope.__timelineList) ruleScope.timelineList = scope.__timelineList
+          if (scope.__optionsList) ruleScope.optionsList = scope.__optionsList
           if (scope.__optionalFields) ruleScope.optionalFields = scope.__optionalFields
         }
         return result
@@ -581,6 +675,29 @@
           currentScope.__gap = Math.round((cmp.nearest.atar - cmp.standing) * 10) / 10
         }
         return !!cmp.reachable
+      },
+      // The field roadmap. True only when the student named a field the
+      // roadmap covers, so the rule stays silent rather than printing a
+      // generic paragraph — filler advice in a report is worse than a gap.
+      // The scope slots are filled by primeRoadmap() BEFORE evaluation:
+      // these helpers return their own boolean, so nothing after that
+      // return would ever run, and a first version of this that set the
+      // slots here instead produced '—' in the prose.
+      roadmapFor: function (currentScope, args) {
+        return roadmapRow(currentScope.record) !== null
+      },
+      timelineFor: function (currentScope, args) {
+        return timelineParts(currentScope.record).length > 0
+      },
+      optionsFor: function (currentScope, args) {
+        return optionParts().length > 0
+      },
+      // True when at least one recorded course for the stated interest
+      // names a prerequisite subject the student has not taken. The prose
+      // value is primed by primeModuleScope, for the same reason as the
+      // others: a helper's own return makes later statements dead code.
+      anyNamedPrereqMissing: function (currentScope, args) {
+        return namedPrereqParts(currentScope.record).length > 0
       },
 
       anyInterestMatching: function (currentScope, args) {
@@ -821,10 +938,12 @@
       fundingSecured: boolOrNull($('fundingSecured').value),
       interests: interests,
       subjects: subjects,
+      notes: $('notes') ? $('notes').value : '',
     }
   }
 
   function writeRecord(rec) {
+    if ($('notes')) $('notes').value = rec.notes || ''
     $('fullName').value = rec.fullName || ''
     $('englishFirstLanguage').value = rec.englishFirstLanguage === null || rec.englishFirstLanguage === undefined ? '' : String(rec.englishFirstLanguage)
     $('targetAtar').value = rec.targetAtar === null || rec.targetAtar === undefined ? '' : rec.targetAtar
@@ -923,7 +1042,7 @@
       if (rule.enabled === false) { outcome.reason = pick('disabled in catalog', '规则库中已停用'); return outcome }
       if (compileErrors[rule.id]) { outcome.reason = pick('compile error: ', '编译错误：') + compileErrors[rule.id]; return outcome }
       try {
-        var ruleScope = {}
+        var ruleScope = primeModuleScope(rec, {})
         outcome.fired = !!compiled[rule.id](rec, helpers, ruleScope)
         outcome.scope = ruleScope
       } catch (error) {
@@ -934,26 +1053,155 @@
   }
 
   /* ---------------------------------------------------------------------
-   * ATAR conversion. Deliberately refuses to imply confidence it does not
-   * have: while the calibration is unverified, the number is labelled as
-   * such everywhere it appears.
+   * ATAR conversion.
+   *
+   * Two things this refuses to do, both because the alternative is a confident
+   * wrong number:
+   *   - It will not answer outside the calibrated span. The curve turns over at
+   *     the top, so a perfect aggregate would otherwise convert DOWN to ~97.9.
+   *     Returning null lets the page say "outside the calibrated range".
+   *   - It will not print a figure without the caveat. `calibrationCheck` runs at
+   *     load; if it failed, `atarAvailable()` is false and every caller must
+   *     handle that rather than falling through to arithmetic on a bad curve.
    * -------------------------------------------------------------------*/
+  function atarAvailable() {
+    return !!(R.calibrationCheck && R.calibrationCheck.ok)
+  }
+
   function aggregateToAtar(sum) {
+    if (!atarAvailable()) return null
+    var range = R.calibration.saneRange
+    if (!(sum >= range[0] && sum <= range[1])) return null
     var c = R.calibration.coefficients
     var value = 0
     for (var i = 0; i < c.length; i++) value += c[i] * Math.pow(sum, i)
+    if (isNaN(value)) return null
     return Math.max(R.calibration.clamp[0], Math.min(R.calibration.clamp[1], value))
   }
 
+  /* The inverse: what aggregate does a target ATAR need? Solved by bisection
+   * rather than algebra — inverting a degree-6 polynomial in closed form is more
+   * code and more ways to be wrong, and the curve is monotonic where we allow it.
+   * Returns null when the target is not reachable inside the calibrated span. */
+  function atarToAggregate(target) {
+    if (!atarAvailable()) return null
+    if (typeof target !== 'number' || isNaN(target)) return null
+    var lo = R.calibration.saneRange[0]
+    var hi = R.calibration.saneRange[1]
+    var atLo = aggregateToAtar(lo)
+    var atHi = aggregateToAtar(hi)
+    if (atLo === null || atHi === null) return null
+    if (target < atLo || target > atHi) return null
+    for (var i = 0; i < 80; i++) {
+      var mid = (lo + hi) / 2
+      if (aggregateToAtar(mid) < target) lo = mid
+      else hi = mid
+    }
+    return (lo + hi) / 2
+  }
+
+  /* The best aggregate: the top N marks, only from subjects that count. A mark
+   * entered as a percentage of a different maximum is not comparable, so
+   * `aggregateMax` defines what a full mark is and anything above it is a likely
+   * data-entry error rather than a very good student. */
   function bestAggregate(rec) {
+    var n = R.calibration.aggregateSize
     var marks = rec.subjects
       .map(function (s) { return s.mark })
+      .filter(function (m) {
+        return typeof m === 'number' && !isNaN(m) && m >= 0 && m <= R.calibration.aggregateMax
+      })
+      .sort(function (a, b) { return b - a })
+    if (marks.length < n) return null
+    return marks.slice(0, n).reduce(function (a, b) { return a + b }, 0)
+  }
+
+  /* Everything the ATAR panel and the rules both need, computed once. `status`
+   * is the honest word for what happened, so the UI never has to infer it. */
+  function atarPicture(rec) {
+    var agg = bestAggregate(rec)
+    if (!atarAvailable()) {
+      return { status: 'unavailable', aggregate: agg, atar: null, reason: 'calibration failed its own check' }
+    }
+    if (agg === null) {
+      return {
+        status: 'insufficient', aggregate: null, atar: null,
+        reason: 'need ' + R.calibration.aggregateSize + ' countable subject marks',
+      }
+    }
+    var atar = aggregateToAtar(agg)
+    if (atar === null) {
+      var range = R.calibration.saneRange
+      return {
+        status: 'out-of-range', aggregate: agg, atar: null,
+        reason: 'aggregate ' + agg.toFixed(1) + ' is outside the calibrated span ' +
+          range[0] + '-' + range[1],
+      }
+    }
+    var target = rec.targetAtar
+    var needed = typeof target === 'number' ? atarToAggregate(target) : null
+    var perSubject = needed === null ? null : needed / R.calibration.aggregateSize
+    return {
+      status: 'ok',
+      aggregate: agg,
+      atar: atar,
+      target: target,
+      neededAggregate: needed,
+      neededPerSubject: perSubject,
+      gapToTarget: needed === null ? null : needed - agg,
+    }
+  }
+
+  /* ---------------------------------------------------------------------
+   * The record as a spreadsheet row.
+   *
+   * The original keeps one workbook per student, so a teacher's normal move is
+   * to open a spreadsheet. A markdown report cannot be sorted or filtered across
+   * a cohort; a CSV can. This is the export that makes the tool usable in the
+   * workflow the original lived in, without asking anyone to hand-write JSON.
+   * -------------------------------------------------------------------*/
+  function recordToRow(rec) {
+    var interest = (rec.interests && rec.interests[0]) || {}
+    var marks = (rec.subjects || []).map(function (s) { return s.mark })
       .filter(function (m) { return typeof m === 'number' })
       .sort(function (a, b) { return b - a })
-    var n = R.calibration.aggregateSize
-    if (marks.length < n) return null
-    var top = marks.slice(0, n)
-    return top.reduce(function (a, b) { return a + b }, 0)
+    var agg = marks.length >= R.calibration.aggregateSize
+      ? marks.slice(0, R.calibration.aggregateSize).reduce(function (a, b) { return a + b }, 0)
+      : null
+    var atar = agg === null ? null : aggregateToAtar(agg)
+    return {
+      name: rec.fullName || '',
+      country: interest.country || '',
+      field: interest.field || '',
+      university: interest.university || '',
+      targetAtar: rec.targetAtar === null || rec.targetAtar === undefined ? '' : rec.targetAtar,
+      estimatedAtar: rec.estimatedAtar === null || rec.estimatedAtar === undefined ? '' : rec.estimatedAtar,
+      subjectCount: (rec.subjects || []).length,
+      aggregate: agg === null ? '' : agg.toFixed(1),
+      convertedAtar: atar === null ? '' : atar.toFixed(2),
+      subjects: (rec.subjects || []).map(function (s) {
+        return s.subject + ':' + (typeof s.mark === 'number' ? s.mark : '')
+      }).join(' '),
+      notes: rec.notes || '',
+    }
+  }
+
+  var CSV_HEADERS = ['name', 'country', 'field', 'university', 'targetAtar',
+                     'estimatedAtar', 'subjectCount', 'aggregate', 'convertedAtar',
+                     'subjects', 'notes']
+
+  /* RFC 4180 quoting: wrap when the value contains a comma, quote, CR or LF, and
+   * double any inner quote. A name with a comma in it silently shifting every
+   * later column is the classic way a CSV export corrupts a dataset. */
+  function csvCell(value) {
+    var s = value === null || value === undefined ? '' : String(value)
+    if (/[",\r\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"'
+    return s
+  }
+
+  function recordToCsv(rec) {
+    var row = recordToRow(rec)
+    return CSV_HEADERS.map(function (h) { return csvCell(row[h]) }).join(',') + '\r\n'
   }
 
   /* ---------------------------------------------------------------------
@@ -997,14 +1245,55 @@
 
     if (fired.length === 0) lines.push(pick('No rule conditions were met. The record may be too sparse to advise on.', '没有命中任何规则，可能是记录信息太少，不足以给出建议。'))
 
-    var agg = bestAggregate(rec)
-    if (agg !== null) {
+    var picture = atarPicture(rec)
+    if (picture.status !== 'insufficient') {
       lines.push('')
       lines.push(LANG === 'zh' ? '— 合成分换算 —' : '— AGGREGATE CONVERSION —')
       lines.push('')
-      lines.push(LANG === 'zh' ? ('最好的 ' + R.calibration.aggregateSize + ' 门科目合计 ' + agg.toFixed(1) + '。') : ('Best ' + R.calibration.aggregateSize + ' subject marks total ' + agg.toFixed(1) + '.'))
-      lines.push((LANG === 'zh' ? '参考 ATAR：' : 'Indicative ATAR: ') + aggregateToAtar(agg).toFixed(2))
-      lines.push('   [' + R.calibration.caveat + ']')
+      lines.push(LANG === 'zh'
+        ? ('最好的 ' + R.calibration.aggregateSize + ' 门科目合计 ' +
+           (picture.aggregate === null ? '（无法计入）' : picture.aggregate.toFixed(1)) + '。')
+        : ('Best ' + R.calibration.aggregateSize + ' subject marks total ' +
+           (picture.aggregate === null ? '(not countable)' : picture.aggregate.toFixed(1)) + '.'))
+      if (picture.status === 'ok') {
+        lines.push(LANG === 'zh' ? ('参考 ATAR：' + picture.atar.toFixed(2))
+                                : ('Indicative ATAR: ' + picture.atar.toFixed(2)))
+        if (picture.neededAggregate !== null) {
+          lines.push(LANG === 'zh'
+            ? ('目标 ' + picture.target + ' 需要合成分 ' + picture.neededAggregate.toFixed(1) +
+               '（' + R.calibration.aggregateSize + ' 门平均 ' + picture.neededPerSubject.toFixed(1) + '）。')
+            : ('Target ' + picture.target + ' needs an aggregate of ' +
+               picture.neededAggregate.toFixed(1) + ' (' + picture.neededPerSubject.toFixed(1) +
+               ' per subject across ' + R.calibration.aggregateSize + ').'))
+          lines.push(picture.gapToTarget > 0
+            ? (LANG === 'zh' ? ('比你现在高 ' + picture.gapToTarget.toFixed(1) + '。')
+                             : ('That is ' + picture.gapToTarget.toFixed(1) + ' above where you are.'))
+            : (LANG === 'zh' ? ('你已经比这个目标需要的水平高 ' + Math.abs(picture.gapToTarget).toFixed(1) + '。')
+                             : ('You are already ' + Math.abs(picture.gapToTarget).toFixed(1) + ' above what that target needs.')))
+        } else if (typeof picture.target === 'number') {
+          lines.push(LANG === 'zh'
+            ? ('目标 ' + picture.target + ' 超出这个换算能回答的范围。')
+            : ('Target ' + picture.target + ' is outside the range this conversion can answer for.'))
+        }
+        lines.push('   [' + R.calibration.caveat + ']')
+      } else {
+        lines.push(LANG === 'zh' ? ('不给 ATAR 数字：' + picture.reason + '。')
+                                : ('No ATAR is reported: ' + picture.reason + '.'))
+        lines.push(LANG === 'zh'
+          ? '   [这里拒绝猜是有意的——给个数字会显得权威，而且是错的。]'
+          : '   [Refusing to guess is the point — a number here would look authoritative and be wrong.]')
+      }
+    }
+
+    // Whatever the adviser wrote lands at the end, after every generated
+    // paragraph, so it reads as an addition to the report rather than as one of
+    // the tool's own claims. That distinction matters: the notes are a person's
+    // words, and the report labels everything else with the rule that produced it.
+    if (rec.notes && String(rec.notes).trim()) {
+      lines.push('')
+      lines.push(LANG === 'zh' ? '— 备注 —' : '— NOTES —')
+      lines.push('')
+      lines.push(String(rec.notes).trim())
     }
 
     return { text: lines.join('\n'), fired: fired }
@@ -1201,6 +1490,127 @@
   }
 
   /* -------------------------- tabs, storage, export ------------------- */
+  function atarRow(label, value, cls) {
+    var tr = el('tr')
+    tr.appendChild(el('th', { 'class': 'atar-key', text: label }))
+    tr.appendChild(el('td', { 'class': 'num ' + (cls || ''), text: value }))
+    return tr
+  }
+  function renderAtar() {
+    var box = $('atarBox')
+    if (!box) return
+    var rec = readRecord()
+    var p = atarPicture(rec)
+    box.innerHTML = ''
+    var n = R.calibration.aggregateSize
+    if (p.status === 'unavailable') {
+      box.appendChild(el('p', { 'class': 'warn', text: U.atar_unavailable }))
+      atarMethod()
+      return
+    }
+    if (p.status === 'insufficient') {
+      box.appendChild(el('p', { 'class': 'warn',
+        text: U.atar_insufficient.replace('{n}', String(n)) }))
+      atarMethod()
+      return
+    }
+    var table = el('table', { 'class': 'atar-table' })
+    table.appendChild(atarRow(U.atar_row_agg.replace('{n}', String(n)), p.aggregate.toFixed(1)))
+    if (p.status === 'out-of-range') {
+      box.appendChild(table)
+      var range = R.calibration.saneRange
+      box.appendChild(el('p', { 'class': 'warn', text: U.atar_out_of_range
+        .replace('{agg}', p.aggregate.toFixed(1))
+        .replace('{lo}', String(range[0])).replace('{hi}', String(range[1])) }))
+      atarMethod()
+      return
+    }
+    table.appendChild(atarRow(U.atar_row_atar, p.atar.toFixed(2), 'big'))
+    if (typeof p.target === 'number') {
+      table.appendChild(atarRow(U.atar_row_target, String(p.target)))
+      if (p.neededAggregate !== null) {
+        table.appendChild(atarRow(U.atar_row_needed, p.neededAggregate.toFixed(1)))
+      }
+    }
+    box.appendChild(table)
+    var line = el('p')
+    if (p.neededAggregate !== null) {
+      line.appendChild(el('span', { text: U.atar_need
+        .replace('{target}', String(p.target))
+        .replace('{agg}', p.neededAggregate.toFixed(1))
+        .replace('{per}', p.neededPerSubject.toFixed(1)) + ' ' }))
+      var gap = Math.abs(p.gapToTarget)
+      line.appendChild(el('strong', { text: p.gapToTarget > 0
+        ? U.atar_above.replace('{gap}', gap.toFixed(1))
+        : U.atar_below.replace('{gap}', gap.toFixed(1)) }))
+    } else {
+      line.appendChild(el('span', { 'class': 'muted', text: U.atar_no_target }))
+    }
+    box.appendChild(line)
+    var caveat = el('p', { 'class': 'muted', text: R.calibration.caveat })
+    box.appendChild(caveat)
+    atarMethod()
+  }
+  function atarMethod() {
+    var el2 = $('atarMethod')
+    if (!el2) return
+    var check = R.calibrationCheck || { ok: false, reference: 0 }
+    el2.textContent = U.atar_method
+      .replace('{n}', String(R.calibration.aggregateSize))
+      .replace('{ref}', '239.1')
+      .replace('{got}', check.reference ? check.reference.toFixed(2) : '—')
+  }
+  on('btnAtar', 'click', renderAtar)
+  // The prior-cohort panel. Its whole value is context, so the cohort
+  // caveat is rendered with the numbers rather than tucked away: these
+  // students are a narrow high band, and a band label without that
+  // sentence reads as a position in the population.
+  function renderHistory() {
+    var box = $('historyBox')
+    if (!box) return
+    box.innerHTML = ''
+    var H = (typeof window !== 'undefined' && window.HISTORY) ? window.HISTORY : null
+    if (!H || !H.count) {
+      box.appendChild(el('p', { 'class': 'muted', text: U.atar_unavailable }))
+      return
+    }
+    box.appendChild(el('p', { text: U.history_intro }))
+    box.appendChild(el('p', { text: U.history_range
+      .replace('{count}', String(H.count))
+      .replace('{lo}', String(H.atarMin)).replace('{hi}', String(H.atarMax)) }))
+    var caveat = H.cohortCaveat || {}
+    box.appendChild(el('p', { 'class': 'warn',
+      text: (LANG === 'zh' ? caveat.zh : caveat.en) || '' }))
+    box.appendChild(el('p', { 'class': 'muted', text: U.history_bands }))
+    var bandTable = el('table', { 'class': 'atar-table' })
+    ;(H.bands || []).forEach(function (b) {
+      bandTable.appendChild(atarRow(LANG === 'zh' ? (b.labelZh || b.label) : b.label,
+        String(b.atar)))
+    })
+    box.appendChild(bandTable)
+    box.appendChild(el('p', { 'class': 'muted', text: U.history_examples }))
+    var table = el('table')
+    var head = el('tr')
+    ;[U.history_col_atar, U.history_col_top4, U.history_col_marks].forEach(function (h) {
+      head.appendChild(el('th', { text: h }))
+    })
+    table.appendChild(head)
+    ;(H.examples || []).forEach(function (e) {
+      var tr = el('tr')
+      tr.appendChild(el('td', { 'class': 'num', text: String(e.atar) }))
+      tr.appendChild(el('td', { 'class': 'num', text: String(e.top4) }))
+      var cell = el('td')
+      ;(e.marks || []).forEach(function (m, i) {
+        cell.appendChild(el('span', { 'class': 'mark-chip',
+          text: ((e.codes || [])[i] || '?') + ' ' + m }))
+      })
+      tr.appendChild(cell)
+      table.appendChild(tr)
+    })
+    box.appendChild(table)
+  }
+  on('btnHistory', 'click', renderHistory)
+
   function renderCourses() {
     var body = $('courseRows')
     if (!body) return
@@ -1308,6 +1718,22 @@
     if (!generated) return
     var blob = new Blob([generated.report.text], { type: 'text/markdown' })
     var a = el('a', { href: URL.createObjectURL(blob), download: 'advising-report.md' })
+    document.body.appendChild(a); a.click(); a.remove()
+  })
+  // The record as one spreadsheet row. Header included so a cohort of these can
+  // be concatenated into a single CSV a teacher can sort and filter.
+  //
+  // Wired through on(), not addEventListener: the report tab exists on both
+  // pages but the guest page has no CSV button, and an unguarded listener on a
+  // missing node is what once killed the whole engine on the guest page.
+  on('btnCsv', 'click', function () {
+    var rec = readRecord()
+    var csv = CSV_HEADERS.join(',') + '\r\n' + recordToCsv(rec)
+    // The BOM is what makes Excel open UTF-8 correctly; without it a Chinese
+    // name arrives as mojibake, which is the one thing that would make this
+    // export useless for the people most likely to use it.
+    var blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' })
+    var a = el('a', { href: URL.createObjectURL(blob), download: 'advising-record.csv' })
     document.body.appendChild(a); a.click(); a.remove()
   })
   Array.prototype.forEach.call(document.querySelectorAll('nav.tabs button'), function (b) {

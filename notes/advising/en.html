@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Advising · Study Notes</title>
+<title>AUSMAT Guide · Advising</title>
 <meta name="description" content="Advising · Study Notes">
 <link rel="alternate" hreflang="zh-CN" href="index.html">
 <link rel="stylesheet" href="../../assets/style.css">
@@ -91,6 +91,30 @@
     <button class="ghost mini" id="addSubject">+ Add subject</button>
   </section>
 
+  <section class="card">
+    <h2>ATAR estimate</h2>
+    <p class="muted">Computed from the marks above: the best four are summed into an aggregate, and the aggregate is converted to an ATAR. The conversion comes from the source workbook and is the curve of one institution for one intake — not an official ATAR statement. Treat it as an estimate and confirm against your own admissions centre.</p>
+    <div class="toolbar">
+      <button class="ghost" id="btnAtar">Calculate</button>
+    </div>
+    <div id="atarBox"></div>
+    <p class="muted" id="atarMethod"></p>
+  </section>
+
+  <section class="card">
+    <h2>Prior cohorts</h2>
+    <div class="toolbar">
+      <button class="ghost" id="btnHistory">Show prior outcomes</button>
+    </div>
+    <div id="historyBox"></div>
+  </section>
+
+  <section class="card">
+    <h2>Notes (for your adviser, or yourself)</h2>
+    <p class="muted">Whatever you write here is saved and exported with the record, and printed at the end of the report. Reusable wording can be kept here.</p>
+    <textarea id="notes" rows="4" spellcheck="false"></textarea>
+  </section>
+
   <div class="toolbar">
     <button class="action" id="btnGenerate">Generate report →</button>
     <button class="ghost" id="btnSave">Save to this browser</button>
@@ -106,6 +130,7 @@
     <button class="ghost" id="btnPrint">Print / save as PDF</button>
     <button class="ghost" id="btnCopy">Copy as text</button>
     <button class="ghost" id="btnDownload">Download as .md</button>
+    <button class="ghost" id="btnCsv">Download record (.csv)</button>
   </div>
   <section class="card">
     <h2>Advising report <span class="muted" id="reportStamp"></span></h2>
@@ -152,6 +177,7 @@
 <span class="hidden" id="appTitle"></span><span class="hidden" id="appSub"></span>
 <script src="advising-rules.js"></script>
 <script src="courses.js"></script>
+<script src="history.js"></script>
 <script src="../../assets/advising.js"></script>
 </body>
 </html>
