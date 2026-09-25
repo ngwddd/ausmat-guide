@@ -1673,14 +1673,32 @@
     }
   }
   on('navcourses', 'click', renderCourses)
-  on('btnCourses', 'click', renderCourses)
+  // Every panel the page actually has. A test compares this list to the
+  // panels in the real markup, because it once omitted 'courses': the tab
+  // bar offered it, clicking it set aria-selected, and the panel stayed
+  // hidden forever, so the course table could never be seen at all. A hand
+  // written list of tab names is exactly the kind of thing that rots
+  // quietly. The hiding loop below reads THIS list rather than carrying
+  // its own copy, which is how the omission lasted.
+  var TAB_PANELS = ['student', 'report', 'tracker', 'courses', 'coverage']
+  // Panels that fill themselves when first shown. The course table is 54
+  // rows most visits never open, so rendering it on load would be waste;
+  // but naming it here rather than in an on-click handler is what keeps the
+  // list of tabs in ONE place. Fixing TAB_PANELS alone once left the tab
+  // visible and empty, because the only thing that rendered it was a
+  // listener on a button the page does not have.
+  var TAB_RENDERERS = { courses: function () { renderCourses() } }
 
   function showTab(which) {
-    ['student', 'report', 'tracker', 'coverage'].forEach(function (t) {
+    TAB_PANELS.forEach(function (t) {
+      // A panel this page does not have is skipped, not fatal. The guest
+      // pages emit no tracker panel, and a null dereference here is what
+      // once took the whole engine down on the guest page.
       var node = $('tab-' + t)
       if (!node) return
       node.classList.toggle('hidden', t !== which)
     })
+    if (TAB_RENDERERS[which]) TAB_RENDERERS[which]()
     Array.prototype.forEach.call(document.querySelectorAll('nav.tabs button'), function (b) {
       b.setAttribute('aria-selected', String(b.dataset.tab === which))
     })
