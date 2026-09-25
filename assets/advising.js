@@ -1699,7 +1699,10 @@
            ' Minimums change every intake; verify at the institution.')
     }
   }
-  on('navcourses', 'click', renderCourses)
+  // No on('navcourses') here. There is no such element: the courses tab is
+  // the data-tab button in the tab bar, and showTab calls the renderer via
+  // TAB_RENDERERS. A binding for a nonexistent id is not harmless — on()
+  // returns quietly, so it looks wired and is not.
   // Every panel the page actually has. A test compares this list to the
   // panels in the real markup, because it once omitted 'courses': the tab
   // bar offered it, clicking it set aria-selected, and the panel stayed
