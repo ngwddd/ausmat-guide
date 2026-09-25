@@ -471,7 +471,13 @@
   }
 
   /* -------------------------- DOM plumbing ---------------------------- */
-  function $(id) { return document.getElementById(id) }
+  function $(id) { return document.getElementById(id) || null }
+  // Wires a listener only if the control is on this page.
+  function on(id, event, handler) {
+    var node = $(id)
+    if (node && node.addEventListener) node.addEventListener(event, handler)
+    return node
+  }
   function el(tag, attrs, kids) {
     var node = document.createElement(tag)
     if (attrs) Object.keys(attrs).forEach(function (k) {
@@ -545,7 +551,6 @@
     return {
       fullName: $('fullName').value.trim(),
       englishFirstLanguage: boolOrNull($('englishFirstLanguage').value),
-      previousIntake: $('previousIntake').value || null,
       targetAtar: numOrNull($('targetAtar').value),
       estimatedAtar: numOrNull($('estimatedAtar').value),
       stillDeciding: $('stillDeciding').value === 'true',
@@ -558,7 +563,6 @@
   function writeRecord(rec) {
     $('fullName').value = rec.fullName || ''
     $('englishFirstLanguage').value = rec.englishFirstLanguage === null || rec.englishFirstLanguage === undefined ? '' : String(rec.englishFirstLanguage)
-    $('previousIntake').value = rec.previousIntake || ''
     $('targetAtar').value = rec.targetAtar === null || rec.targetAtar === undefined ? '' : rec.targetAtar
     $('estimatedAtar').value = rec.estimatedAtar === null || rec.estimatedAtar === undefined ? '' : rec.estimatedAtar
     $('stillDeciding').value = rec.stillDeciding ? 'true' : 'false'
@@ -705,6 +709,7 @@
     var lines = []
     lines.push(LANG === 'zh' ? '升学自检报告' : R.meta.title.toUpperCase())
     lines.push((LANG === 'zh' ? '学生：' : 'Advising report for ') + (rec.fullName || (LANG === 'zh' ? '（未填姓名）' : '(unnamed)')))
+    if (rec.studentId) lines.push('Student ID: ' + rec.studentId)
     lines.push((LANG === 'zh' ? '生成时间：' : 'Generated: ') + new Date().toLocaleString())
     lines.push('')
 
@@ -758,7 +763,7 @@
     generated = { record: rec, report: report, results: results, check: check }
 
     // Report tab
-    $('reportBody').innerHTML = ''
+    if ($('reportBody')) $('reportBody').innerHTML = ''
     report.fired.forEach(function (item) {
       var d = R.domains.filter(function (x) { return x.id === item.rule.domain })[0]
       $('reportBody').appendChild(el('p', { 'class': 'advice', html:
@@ -898,6 +903,7 @@
       if (due && new Date(due).getTime() < now) tr.style.background = 'var(--bad-soft)'
       else tr.style.background = ''
     })
+    if (!$('trackerSummary')) return
     $('trackerSummary').textContent = outstanding === 0
       ? (LANG === 'zh' ? '没有未完成的考核。' : 'No outstanding assessments recorded.')
       : (LANG === 'zh'
@@ -943,30 +949,30 @@
   }
 
   /* -------------------------- wiring ---------------------------------- */
-  $('addInterest').addEventListener('click', function () { addInterestRow() })
-  $('addSubject').addEventListener('click', function () { addSubjectRow() })
-  $('addAssess').addEventListener('click', function () { addAssessRow() })
-  $('btnGenerate').addEventListener('click', renderReport)
-  $('btnSample').addEventListener('click', function () { writeRecord(sample()); renderReport() })
-  $('btnClear').addEventListener('click', function () { writeRecord({ interests: [], subjects: [] }); $('validationBox').innerHTML = '' })
-  $('btnSave').addEventListener('click', function () {
+  on('addInterest', 'click', function () { addInterestRow() })
+  on('addSubject', 'click', function () { addSubjectRow() })
+  on('addAssess', 'click', function () { addAssessRow() })
+  on('btnGenerate', 'click', renderReport)
+  on('btnSample', 'click', function () { writeRecord(sample()); renderReport() })
+  on('btnClear', 'click', function () { writeRecord({ interests: [], subjects: [] }); $('validationBox').innerHTML = '' })
+  on('btnSave', 'click', function () {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(readRecord()))
-      $('validationBox').innerHTML = '<div class="note ok">Saved to this browser only. Nothing was sent anywhere.</div>'
+      if ($('validationBox')) $('validationBox').innerHTML = '<div class="note ok">Saved to this browser only. Nothing was sent anywhere.</div>'
     } catch (e) {
-      $('validationBox').innerHTML = '<div class="note err">Could not save: ' + escapeHtml(e.message) + '</div>'
+      if ($('validationBox')) $('validationBox').innerHTML = '<div class="note err">Could not save: ' + escapeHtml(e.message) + '</div>'
     }
   })
-  $('btnLoad').addEventListener('click', function () {
+  on('btnLoad', 'click', function () {
     var raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) { $('validationBox').innerHTML = '<div class="note">Nothing saved in this browser yet.</div>'; return }
     writeRecord(JSON.parse(raw))
   })
-  $('btnPrint').addEventListener('click', function () { window.print() })
-  $('btnCopy').addEventListener('click', function () {
+  on('btnPrint', 'click', function () { window.print() })
+  on('btnCopy', 'click', function () {
     if (generated) navigator.clipboard.writeText(generated.report.text)
   })
-  $('btnDownload').addEventListener('click', function () {
+  on('btnDownload', 'click', function () {
     if (!generated) return
     var blob = new Blob([generated.report.text], { type: 'text/markdown' })
     var a = el('a', { href: URL.createObjectURL(blob), download: 'advising-report.md' })
@@ -976,8 +982,9 @@
     b.addEventListener('click', function () { showTab(b.dataset.tab) })
   })
 
-  // appTitle/appSub are baked into the page shell, not set here.
+  if ($('appTitle')) $('appTitle').textContent = R.meta.title
+  if ($('appSub')) $('appSub').textContent = R.meta.subtitle + ' · v' + R.meta.version + ' · ' + R.meta.contentPolicy
 
   writeRecord({ interests: [], subjects: [] })
-  addAssessRow({ name: 'Sample assessment', weight: 15, urgency: 4, due: '' })
+  if ($('assessRows')) addAssessRow({ name: 'Sample assessment', weight: 15, urgency: 4, due: '' })
 })()
