@@ -1128,6 +1128,32 @@ window.ADVISING = (function () {
    *    re-derivation of the workbook's own calibration, NOT an independent
    *    calibration, and it is labelled that way rather than dressed up.
    *
+   *    WHAT WAS ACTUALLY CHECKED. The workbook's Historical data sheet holds 321
+   *    students across three blocks. Testing this curve against all of them
+   *    produced a finding that matters more than the curve itself:
+   *
+   *      AC:AI  61 students, ATAR 90.95–99.65   mean error  +1.40, worst  6.69
+   *      L:R   212 students, ATAR 32.8–90.95    mean error +10.75, worst 37.77
+   *
+   *    and inside the L:R block the error is systematic rather than random:
+   *    +34.2 in the 0–40 band, +17.4 at 40–60, +12.1 at 60–75, +5.4 at 75–90,
+   *    +2.5 at 90–100. The curve over-predicts, and it gets worse the lower the
+   *    student sits. Read one way that is a broken conversion. Read more
+   *    carefully it is a conversion that was fitted to ONE cohort's scaling and is
+   *    being asked about students from others: the same "Final Scaled" heading
+   *    holds marks on different scales in different blocks, so the aggregate is
+   *    only comparable inside a block.
+   *
+   *    Either way the practical consequence is the same, so the tool says it
+   *    rather than picking the flattering interpretation:
+   *
+   *      trustedAbove  the band where it agrees with recorded outcomes
+   *      overPredicts  the band where it runs high, and by roughly how much
+   *
+   *    Above `verifiedBands[0].from` the number is supported by 61 students at a
+   *    mean of 1.4 points. Below it the number is an extrapolation that reads
+   *    optimistic, and the panel prints that instead of the figure alone.
+   *
    *    WHAT THIS MEANS FOR THE STUDENT. This is one institution's conversion for
    *    one intake, worked through one student's example. It is not an official
    *    ATAR statement. Every surface printing a number from this function prints
@@ -1148,6 +1174,16 @@ window.ADVISING = (function () {
     verifiedAgainst:
       'the workbook states aggregate 239.12838737245087 -> ATAR 80; this curve ' +
       'reproduces 80.00 there and is monotonic across the whole stated range',
+    // Measured against every student the workbook records, not the convenient
+    // ones. Kept as data so the panel and the tests read the same numbers the
+    // README quotes, and so a future re-measurement updates the prose by
+    // changing these rather than by editing sentences.
+    verifiedBands: [
+      { from: 90, to: 100, students: 61, meanError: 1.40, worstError: 6.69,
+        verdict: 'supported' },
+      { from: 0, to: 90, students: 212, meanError: 10.75, worstError: 37.77,
+        verdict: 'over-predicts' },
+    ],
     aggregateSize: 4,
     aggregateMax: 100,
     coefficients: [
@@ -1168,6 +1204,13 @@ window.ADVISING = (function () {
       'One institution\'s conversion for one intake, taken from the source ' +
       'workbook. Not an official ATAR statement — treat it as an estimate and ' +
       'confirm against your own admissions centre.',
+    // Printed with any figure below the supported band, because a number alone
+    // reads as authoritative and this one runs high there.
+    overPredictNote:
+      'Below an ATAR of about 90 this curve has only been checked against ' +
+      'cohorts whose marks are scaled differently, and against those it reads ' +
+      'roughly 10 points optimistic on average. Treat the figure as an upper ' +
+      'bound rather than an estimate.',
   }
 
   /* The curve is only usable if it is monotonic and reproduces the reference the

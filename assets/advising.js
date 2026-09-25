@@ -43,6 +43,9 @@
     caveat:
       '这是源工作簿里某所院校某个招生轮次的换算式，不是官方 ATAR 成绩单。' +
       '只当估算，并以你自己的招生中心为准。',
+    overPredictNote:
+      '在 ATAR 约 90 以下，这条曲线只和工作簿里另外几届分数标定方式不同的学生' +
+      '比对过，而对比结果是平均偏高约 10 分。请把这个数字当作上界，而不是估计值。',
   }
   function calText(key) {
     var c = R.calibration || {}
@@ -1570,6 +1573,15 @@
     box.appendChild(line)
     var caveat = el('p', { 'class': 'muted', text: calText('caveat') })
     box.appendChild(caveat)
+    // Below the band the curve was actually checked in, the figure runs
+    // high against the other cohorts in the workbook. Printing the number
+    // alone there would read as an estimate; printing the warning beside
+    // it is the difference between an estimate and a flattering guess.
+    var bands = R.calibration.verifiedBands || []
+    var supported = bands.filter(function (b) { return b.verdict === 'supported' })[0]
+    if (supported && p.atar < supported.from) {
+      box.appendChild(el('p', { 'class': 'warn', text: calText('overPredictNote') }))
+    }
     atarMethod()
   }
   function atarMethod() {
