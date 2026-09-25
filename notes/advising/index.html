@@ -37,6 +37,7 @@
   <button role="tab" aria-selected="true" data-tab="student">1 · 学生情况</button>
   <button role="tab" aria-selected="false" data-tab="report">2 · 建议报告</button>
   <button role="tab" aria-selected="false" data-tab="tracker">3 · 考核追踪</button>
+  <button role="tab" aria-selected="false" data-tab="courses">课程参考</button>
   <button role="tab" aria-selected="false" data-tab="coverage">4 · 规则总览</button>
 </nav>
 
@@ -124,6 +125,17 @@
   </section>
 </div>
 
+<div id="tab-courses" class="hidden">
+  <section class="card">
+    <h2>课程最低分参考</h2>
+    <p class="muted" id="courseNote"></p>
+    <table><thead><tr><th>院校</th><th>专业</th>
+      <th style="width:9%">最低分</th><th>除分数外的要求</th>
+      <th style="width:12%">来源</th></tr></thead>
+      <tbody id="courseRows"></tbody></table>
+  </section>
+</div>
+
 <div id="tab-coverage" class="hidden">
   <div id="coverageSummary"></div>
   <section class="card">
@@ -139,6 +151,7 @@
 <footer class="site"><div class="wrap">AUSMAT May 2026 · 个人学习笔记</div></footer>
 <span class="hidden" id="appTitle"></span><span class="hidden" id="appSub"></span>
 <script src="advising-rules.js"></script>
+<script src="courses.js"></script>
 <script src="../../assets/advising.js"></script>
 </body>
 </html>

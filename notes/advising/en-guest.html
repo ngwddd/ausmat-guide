@@ -36,6 +36,7 @@
 <nav class="tabs" role="tablist">
   <button role="tab" aria-selected="true" data-tab="student">1 · Student record</button>
   <button role="tab" aria-selected="false" data-tab="report">2 · Advising report</button>
+  <button role="tab" aria-selected="false" data-tab="courses">Course reference</button>
   <button role="tab" aria-selected="false" data-tab="coverage">4 · Rule coverage</button>
 </nav>
 
@@ -107,6 +108,17 @@
 
 
 
+<div id="tab-courses" class="hidden">
+  <section class="card">
+    <h2>Recorded minimums</h2>
+    <p class="muted" id="courseNote"></p>
+    <table><thead><tr><th>Institution</th><th>Course</th>
+      <th style="width:9%">Min.</th><th>Requirements beyond the score</th>
+      <th style="width:12%">Source</th></tr></thead>
+      <tbody id="courseRows"></tbody></table>
+  </section>
+</div>
+
 <div id="tab-coverage" class="hidden">
   <div id="coverageSummary"></div>
   <section class="card">
@@ -122,6 +134,7 @@
 <footer class="site"><div class="wrap">AUSMAT May 2026 · personal study notes</div></footer>
 <span class="hidden" id="appTitle"></span><span class="hidden" id="appSub"></span>
 <script src="advising-rules.js"></script>
+<script src="courses.js"></script>
 <script src="../../assets/advising.js"></script>
 </body>
 </html>

@@ -30,6 +30,122 @@
   function pick(en, zh) { return LANG === 'zh' && zh ? zh : en }
   function domainLabel(d) { return (LANG === 'zh' && d.zhLabel) ? d.zhLabel : d.label }
   function bandLabel(b) { return (LANG === 'zh' && b.zhLabel) ? b.zhLabel : b.label }
+
+  /* ── course library ──────────────────────────────────────────────────
+   * Course facts from the workbook's database, with a link check this project
+   * performed (see courses.js). The engine matches them against what the student
+   * entered and compares the student's standing against the recorded minimums.
+   * Nothing here hard-codes a course: the library is data.
+   * ------------------------------------------------------------------*/
+  var LIBRARY = (typeof window !== 'undefined' && window.COURSES)
+    ? window.COURSES
+    : { rows: [], snapshot: '', count: 0 }
+
+  function fieldWords(text) {
+    return String(text || '').toLowerCase().split(/[^a-z]+/).filter(function (w) { return w.length > 3 })
+  }
+  function countryMatches(courseCountry, interestCountry) {
+    if (!interestCountry) return false
+    var a = String(courseCountry || '').toLowerCase()
+    var b = String(interestCountry).toLowerCase()
+    if (a === b) return true
+    // The library writes 'UK' where the form writes 'United Kingdom'.
+    if ((a === 'uk' || a === 'united kingdom') && (b === 'uk' || b === 'united kingdom')) return true
+    return false
+  }
+  function fieldMatches(course, interestField) {
+    if (!interestField) return false
+    var want = String(interestField).toLowerCase()
+    var cat = String(course.category || '').toLowerCase()
+    var name = String(course.course || '').toLowerCase()
+    if (cat && (cat.indexOf(want) !== -1 || want.indexOf(cat) !== -1)) return true
+    if (name.indexOf(want) !== -1) return true
+    // Word overlap, but only on words that carry meaning here. A first attempt
+    // matched any shared word longer than three characters, which let 'Computer
+    // Science' match 'Zoology and Animal Science' and 'Environmental Science' —
+    // 'science' is shared by half the catalogue and distinguishes nothing. The
+    // stop list names the words that appear across unrelated fields; a synonym
+    // map carries the cases where the form and the catalogue use different words
+    // for the same thing.
+    var STOP = { science: 1, sciences: 1, studies: 1, study: 1, general: 1, other: 1, health: 1, arts: 1 }
+    var SYNONYM = {
+      'computer science': ['computing', 'information tech', 'information technology', 'software', 'cyber'],
+      'business': ['business', 'commerce', 'finance', 'accounting', 'marketing', 'management'],
+      'sciences': ['science', 'sciences', 'biology', 'chemistry', 'physics', 'biomedical'],
+      'humanities': ['arts', 'humanities', 'history', 'literature'],
+      'psychology': ['psychology', 'psychological'],
+      'engineering': ['engineering', 'engineer'],
+      'law': ['law', 'legal'],
+      'nursing': ['nursing', 'nurse'],
+      'medicine': ['medicine', 'medical', 'surgery'],
+      'dentistry': ['dentistry', 'dental'],
+      'architecture': ['architecture', 'architectural'],
+      'education': ['education', 'teaching'],
+    }
+    // Aliases are matched per WORD, not as substrings. A substring check is how
+    // 'Medicine' matched 'BioMedical Engineering': indexOf('medical') finds a hit
+    // inside 'biomedical', so an engineering degree was offered as a medical
+    // option. Matching whole words costs a little recall and removes that class of
+    // error entirely.
+    var hayWords = fieldWords(cat + ' ' + name)
+    var aliases = SYNONYM[want] || [want]
+    for (var i = 0; i < aliases.length; i++) {
+      var alias = String(aliases[i]).toLowerCase()
+      var aliasWords = alias.split(/[^a-z]+/).filter(function (w) { return w.length > 2 })
+      var every = aliasWords.length > 0 && aliasWords.every(function (aw) {
+        return hayWords.some(function (hw) { return hw === aw || hw === aw + 's' || hw + 's' === aw })
+      })
+      if (every) return true
+    }
+    // Word overlap on the words the INTEREST carries and the course NAME carries.
+    // An earlier attempt let the category contribute too, which is how 'Medicine'
+    // reached 'Biomedical Engineering' — both sit in 'Health Sciences'.
+    var words = fieldWords(interestField).filter(function (w) { return !STOP[w] })
+    if (!words.length) return false
+    var nameWords = fieldWords(course.course)
+    return words.some(function (w) {
+      return nameWords.some(function (cw) {
+        return cw === w || cw === w + 's' || cw + 's' === w
+      })
+    })
+  }
+  function universityMatches(course, interestUniversity) {
+    if (!interestUniversity) return true
+    var a = String(course.university || '').toLowerCase()
+    var b = String(interestUniversity).toLowerCase()
+    if (a.indexOf(b) !== -1 || b.indexOf(a) !== -1) return true
+    var wsp = fieldWords(interestUniversity)
+    return fieldWords(course.university).some(function (w) { return wsp.indexOf(w) !== -1 })
+  }
+  function matchingCourses(record) {
+    var out = []
+    ;(record.interests || []).forEach(function (interest) {
+      ;(LIBRARY.rows || []).forEach(function (course) {
+        if (!countryMatches(course.country, interest.country)) return
+        if (!fieldMatches(course, interest.field)) return
+        if (!universityMatches(course, interest.university)) return
+        if (out.indexOf(course) === -1) out.push(course)
+      })
+    })
+    return out.sort(function (a, b) { return a.atar - b.atar })
+  }
+  // The nearest recorded minimum at or below the student's standing, and the
+  // nearest above it. Both are what an advisor would actually say out loud.
+  function atarComparison(record, courses) {
+    var standing = record.estimatedAtar
+    if (standing === null || standing === undefined || !courses.length) return null
+    var reachable = courses.filter(function (c) { return c.atar <= standing })
+    var above = courses.filter(function (c) { return c.atar > standing })
+    return {
+      standing: standing,
+      reachable: reachable.length ? reachable[reachable.length - 1] : null,
+      nearest: above.length ? above[0] : null,
+      count: courses.length,
+    }
+  }
+  function courseLabel(c) {
+    return c.university + ' ' + c.course + ' (' + c.atar + ')'
+  }
   // A rule with no `modes` applies everywhere; one that declares modes applies
   // only there. The catalog is filtered once, so every later pass — evaluation,
   // the report, the coverage view — sees the same set.
@@ -310,11 +426,21 @@
         var scope = Object.assign({ record: record, T: R.thresholds }, helpers)
         scope.__gapFields = null
         scope.__matched = null
+        scope.__standing = null
+        scope.__reachable = null
+        scope.__nearest = null
+        scope.__gap = null
+        scope.__courseCount = null
         scope.__optionalFields = null
         var result = evaluateAst(ast, scope)
         if (ruleScope) {
           if (scope.__gapFields) ruleScope.gapFields = scope.__gapFields
           if (scope.__matched) ruleScope.waUniversities = scope.__matched
+          if (scope.__standing !== null && scope.__standing !== undefined) ruleScope.standing = scope.__standing
+          if (scope.__reachable) ruleScope.reachableCourse = scope.__reachable
+          if (scope.__nearest) ruleScope.nearestCourse = scope.__nearest
+          if (scope.__gap !== null && scope.__gap !== undefined) ruleScope.atarGap = scope.__gap
+          if (scope.__courseCount) ruleScope.courseCount = scope.__courseCount
           if (scope.__optionalFields) ruleScope.optionalFields = scope.__optionalFields
         }
         return result
@@ -423,6 +549,32 @@
       // intent avoids a trap the language cannot express clearly.
       // Substring match over a field, recording what matched so the
       // advice can name it instead of alluding to it.
+      // True when the recorded interests match at least one library row.
+      anyInterestHasCourses: function (currentScope, args) {
+        var cmp = atarComparison(currentScope.record, matchingCourses(currentScope.record))
+        if (!cmp) return false
+        currentScope.__standing = cmp.standing
+        currentScope.__courseCount = cmp.count
+        if (cmp.nearest) {
+          currentScope.__nearest = courseLabel(cmp.nearest)
+          currentScope.__gap = Math.round((cmp.nearest.atar - cmp.standing) * 10) / 10
+        }
+        return cmp.count > 0
+      },
+      // True when the standing reaches at least one recorded minimum.
+      anyReachableCourse: function (currentScope, args) {
+        var cmp = atarComparison(currentScope.record, matchingCourses(currentScope.record))
+        if (!cmp) return false
+        currentScope.__standing = cmp.standing
+        currentScope.__courseCount = cmp.count
+        if (cmp.reachable) currentScope.__reachable = courseLabel(cmp.reachable)
+        if (cmp.nearest) {
+          currentScope.__nearest = courseLabel(cmp.nearest)
+          currentScope.__gap = Math.round((cmp.nearest.atar - cmp.standing) * 10) / 10
+        }
+        return !!cmp.reachable
+      },
+
       anyInterestMatching: function (currentScope, args) {
         var path = evaluateAst(args[0], currentScope)
         var needles = evaluateAst(args[1], currentScope)
@@ -1027,6 +1179,49 @@
   }
 
   /* -------------------------- tabs, storage, export ------------------- */
+  function renderCourses() {
+    var body = $('courseRows')
+    if (!body) return
+    var rec = readRecord()
+    var matched = matchingCourses(rec)
+    var list = matched.length ? matched : LIBRARY.rows.slice(0, 25)
+    body.innerHTML = ''
+    list.forEach(function (c) {
+      var tr = el('tr')
+      tr.appendChild(el('td', { text: c.university }))
+      tr.appendChild(el('td', { text: c.course }))
+      tr.appendChild(el('td', { 'class': 'num', text: String(c.atar) }))
+      tr.appendChild(el('td', { text: c.req || '—' }))
+      var cell = el('td')
+      if (c.url) {
+        var mark = c.link === 'ok' ? ''
+          : (c.link === 'blocked' ? pick(' (not verified)', '（未验证）') : pick(' (section page)', '（院系入口）'))
+        cell.appendChild(el('a', { href: c.url, target: '_blank',
+          rel: 'noopener noreferrer', text: pick('verify', '去核对') + mark }))
+      } else {
+        cell.appendChild(el('span', { 'class': 'muted',
+          text: pick('search the institution site', '请在院校官网搜索') }))
+      }
+      tr.appendChild(cell)
+      body.appendChild(tr)
+    })
+    var note = $('courseNote')
+    if (note) {
+      var total = LIBRARY.count || (LIBRARY.rows || []).length
+      note.textContent = LANG === 'zh'
+        ? ('共 ' + total + ' 条课程记录，数据截至 ' + LIBRARY.snapshot + '。' +
+           (matched.length ? ('已按你填写的方向筛出 ' + matched.length + ' 条。')
+                           : '你还没有填写方向，先列出前 25 条。') +
+           '最低分每轮都会变，请以院校官网为准。')
+        : (total + ' course records, snapshot ' + LIBRARY.snapshot + '. ' +
+           (matched.length ? (matched.length + ' match what you entered.')
+                           : 'No field entered yet, so the first 25 are listed.') +
+           ' Minimums change every intake; verify at the institution.')
+    }
+  }
+  on('navcourses', 'click', renderCourses)
+  on('btnCourses', 'click', renderCourses)
+
   function showTab(which) {
     ['student', 'report', 'tracker', 'coverage'].forEach(function (t) {
       var node = $('tab-' + t)

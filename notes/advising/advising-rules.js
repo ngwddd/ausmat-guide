@@ -603,6 +603,44 @@ window.ADVISING = (function () {
       verified: '2026-01-01',
     },
     {
+      id: 'atar-vs-recorded-minimum',
+      domain: 'performance',
+      title: 'Standing against the recorded minimums for the stated interests',
+      zhTitle: '与所填方向已记录最低分的对照',
+      when: 'anyReachableCourse()',
+      advice:
+        'Among the courses recorded for your stated interests, your current standing of ' +
+        '{{standing}} reaches {{reachableCourse}}. The nearest one above you is ' +
+        '{{nearestCourse}}, {{atarGap}} points away. Those minimums are a snapshot and move ' +
+        'every intake, so treat them as a starting point.',
+      zh:
+        '在你填写方向的已记录课程里，你当前 {{standing}} 的水平够得上 {{reachableCourse}}；' +
+        '最近的一门在你之上的是 {{nearestCourse}}，差 {{atarGap}} 分。' +
+        '这些最低分是快照，每轮都会变，只作起点参考。',
+      modes: ['student', 'guest'],
+      source: 'Verify the current minimum on the institution course page',
+      verified: null,
+    },
+    {
+      id: 'atar-below-all-recorded',
+      domain: 'performance',
+      title: 'Standing below every recorded minimum for the stated interests',
+      zhTitle: '低于所填方向的全部已记录最低分',
+      when: 'anyInterestHasCourses() && !anyReachableCourse()',
+      advice:
+        'Your current standing of {{standing}} does not reach any of the {{courseCount}} ' +
+        'recorded minimums for your stated interests. The closest is {{nearestCourse}}, ' +
+        '{{atarGap}} points above you. Better to know now, while there is still time to move ' +
+        'either the target or the study plan.',
+      zh:
+        '你当前 {{standing}} 的水平，与你所填方向已记录的 {{courseCount}} 门课程最低分都还差一点。' +
+        '最近的是 {{nearestCourse}}，高出 {{atarGap}} 分。' +
+        '现在知道比成绩出来后再知道要好——无论是调整目标还是调整复习计划，都还来得及。',
+      modes: ['student', 'guest'],
+      source: 'Verify the current minimum on the institution course page',
+      verified: null,
+    },
+    {
       id: 'wellbeing-plan',
       domain: 'wellbeing',
       title: 'Standing study guidance',
@@ -720,7 +758,7 @@ window.ADVISING = (function () {
   /* --------------------------------------------------------------------------
    * 6. Public surface. The engine consumes only what is exported here.
    * ------------------------------------------------------------------------*/
-  const uiStrings = {"zh": {"app_sub": "规则驱动 · 建议是数据，不是代码 · 全部内容在 advising-rules.js", "tab_student": "1 · 学生情况", "tab_report": "2 · 建议报告", "tab_tracker": "3 · 考核追踪", "tab_coverage": "4 · 规则总览", "sec_identity": "身份与学业状况", "sec_interests": "升学意向", "sec_subjects": "选课与成绩", "label_name": "姓名", "label_sid": "学号", "label_school": "Year 11 就读学校", "label_efl": "英语为母语", "label_intake": "曾就读的预科班次", "label_target": "目标 ATAR", "label_est": "当前预估 ATAR", "label_deciding": "仍在犹豫选什么专业", "label_funding": "学费来源已落实", "opt_unstated": "— 未填写 —", "opt_none": "— 无 —", "opt_yes": "是", "opt_no": "否", "col_country": "国家/地区", "col_field": "专业方向", "col_uni": "目标大学", "col_level": "班次", "col_subject": "科目", "col_mark": "成绩 (%)", "col_assessed": "已考权重 (%)", "btn_add_interest": "+ 增加一行", "btn_add_subject": "+ 增加一门", "btn_generate": "生成报告 →", "btn_save": "保存到本浏览器", "btn_load": "读取已保存", "btn_clear": "全部清空", "btn_sample": "载入示例学生", "btn_print": "打印 / 存为 PDF", "btn_copy": "复制为文本", "btn_download": "下载 .md", "report_title": "建议报告", "col_assessment": "考核项目", "col_weight": "权重 (%)", "col_due": "日期", "col_importance": "重要度", "col_urgency": "紧急度", "col_done": "完成", "col_action": "建议动作", "btn_add_assess": "+ 增加一项考核", "coverage_title": "规则总览", "col_domain": "类别", "col_rule": "规则", "col_fired": "命中", "col_verified": "核实状态", "label_y11": "Year 11 成绩（每行一条：科目: 分数）", "label_prior": "往期班次成绩（每行一条：科目: 分数）"}, "en": {"app_sub": "rules-driven · advice is data, not code · all copy lives in advising-rules.js", "tab_student": "1 · Student record", "tab_report": "2 · Advising report", "tab_tracker": "3 · Assessment tracker", "tab_coverage": "4 · Rule coverage", "sec_identity": "Identity & standing", "sec_interests": "Destinations & academic interests", "sec_subjects": "Subjects & results", "label_name": "Full name", "label_sid": "Student ID", "label_school": "Year 11 school", "label_efl": "English is first language", "label_intake": "Previous intake attended", "label_target": "Target ATAR", "label_est": "Current estimated ATAR", "label_deciding": "Still deciding on a course", "label_funding": "Funding arrangement confirmed", "opt_unstated": "— not stated —", "opt_none": "— none —", "opt_yes": "Yes", "opt_no": "No", "col_country": "Country", "col_field": "Field", "col_uni": "Target university", "col_level": "Level", "col_subject": "Subject", "col_mark": "Mark (%)", "col_assessed": "Assessed (%)", "btn_add_interest": "+ Add row", "btn_add_subject": "+ Add subject", "btn_generate": "Generate report →", "btn_save": "Save to this browser", "btn_load": "Restore saved", "btn_clear": "Clear all", "btn_sample": "Load sample student", "btn_print": "Print / save as PDF", "btn_copy": "Copy as text", "btn_download": "Download as .md", "report_title": "Advising report", "col_assessment": "Assessment", "col_weight": "Weight (%)", "col_due": "Due", "col_importance": "Importance", "col_urgency": "Urgency", "col_done": "Done", "col_action": "Action", "btn_add_assess": "+ Add assessment", "coverage_title": "Rule coverage", "col_domain": "Domain", "col_rule": "Rule", "col_fired": "Fired", "col_verified": "Verification", "label_y11": "Year 11 results (one per line: Subject: mark)", "label_prior": "Prior intake results (one per line: Subject: mark)"}}
+  const uiStrings = {"zh": {"app_sub": "规则驱动 · 建议是数据，不是代码 · 全部内容在 advising-rules.js", "tab_student": "1 · 学生情况", "tab_report": "2 · 建议报告", "tab_tracker": "3 · 考核追踪", "tab_coverage": "4 · 规则总览", "sec_identity": "身份与学业状况", "sec_interests": "升学意向", "sec_subjects": "选课与成绩", "label_name": "姓名", "label_sid": "学号", "label_school": "Year 11 就读学校", "label_efl": "英语为母语", "label_intake": "曾就读的预科班次", "label_target": "目标 ATAR", "label_est": "当前预估 ATAR", "label_deciding": "仍在犹豫选什么专业", "label_funding": "学费来源已落实", "opt_unstated": "— 未填写 —", "opt_none": "— 无 —", "opt_yes": "是", "opt_no": "否", "col_country": "国家/地区", "col_field": "专业方向", "col_uni": "目标大学", "col_level": "班次", "col_subject": "科目", "col_mark": "成绩 (%)", "col_assessed": "已考权重 (%)", "btn_add_interest": "+ 增加一行", "btn_add_subject": "+ 增加一门", "btn_generate": "生成报告 →", "btn_save": "保存到本浏览器", "btn_load": "读取已保存", "btn_clear": "全部清空", "btn_sample": "载入示例学生", "btn_print": "打印 / 存为 PDF", "btn_copy": "复制为文本", "btn_download": "下载 .md", "report_title": "建议报告", "col_assessment": "考核项目", "col_weight": "权重 (%)", "col_due": "日期", "col_importance": "重要度", "col_urgency": "紧急度", "col_done": "完成", "col_action": "建议动作", "btn_add_assess": "+ 增加一项考核", "coverage_title": "规则总览", "col_domain": "类别", "tab_courses": "课程参考", "courses_title": "课程最低分参考", "col_uni_name": "院校", "col_course": "专业", "col_min_atar": "最低分", "col_req": "除分数外的要求", "col_source": "来源", "col_rule": "规则", "col_fired": "命中", "col_verified": "核实状态", "label_y11": "Year 11 成绩（每行一条：科目: 分数）", "label_prior": "往期班次成绩（每行一条：科目: 分数）"}, "en": {"app_sub": "rules-driven · advice is data, not code · all copy lives in advising-rules.js", "tab_student": "1 · Student record", "tab_report": "2 · Advising report", "tab_tracker": "3 · Assessment tracker", "tab_coverage": "4 · Rule coverage", "sec_identity": "Identity & standing", "sec_interests": "Destinations & academic interests", "sec_subjects": "Subjects & results", "label_name": "Full name", "label_sid": "Student ID", "label_school": "Year 11 school", "label_efl": "English is first language", "label_intake": "Previous intake attended", "label_target": "Target ATAR", "label_est": "Current estimated ATAR", "label_deciding": "Still deciding on a course", "label_funding": "Funding arrangement confirmed", "opt_unstated": "— not stated —", "opt_none": "— none —", "opt_yes": "Yes", "opt_no": "No", "col_country": "Country", "col_field": "Field", "col_uni": "Target university", "col_level": "Level", "col_subject": "Subject", "col_mark": "Mark (%)", "col_assessed": "Assessed (%)", "btn_add_interest": "+ Add row", "btn_add_subject": "+ Add subject", "btn_generate": "Generate report →", "btn_save": "Save to this browser", "btn_load": "Restore saved", "btn_clear": "Clear all", "btn_sample": "Load sample student", "btn_print": "Print / save as PDF", "btn_copy": "Copy as text", "btn_download": "Download as .md", "report_title": "Advising report", "col_assessment": "Assessment", "col_weight": "Weight (%)", "col_due": "Due", "col_importance": "Importance", "col_urgency": "Urgency", "col_done": "Done", "col_action": "Action", "btn_add_assess": "+ Add assessment", "coverage_title": "Rule coverage", "col_domain": "Domain", "tab_courses": "Course reference", "courses_title": "Recorded minimums", "col_uni_name": "Institution", "col_course": "Course", "col_min_atar": "Min.", "col_req": "Requirements beyond the score", "col_source": "Source", "col_rule": "Rule", "col_fired": "Fired", "col_verified": "Verification", "label_y11": "Year 11 results (one per line: Subject: mark)", "label_prior": "Prior intake results (one per line: Subject: mark)"}}
 
   return {
     uiStrings,
