@@ -28,6 +28,27 @@
   })()
   var U = R.uiStrings[LANG] || R.uiStrings.en
   function pick(en, zh) { return LANG === 'zh' && zh ? zh : en }
+  // The calibration's own sentences, in the reader's language.
+  //
+  // Deliberately NOT injected into the catalog. An earlier attempt did that and
+  // collided with the passes that inject zhLabel into every `label:` field, so the
+  // caveat is resolved here, beside the rest of the interface copy. The English
+  // still comes from the catalog, which stays the single source for what the
+  // calibration IS; only its rendering is translated.
+  var CAL_ZH = {
+    label: '源工作簿曲线 —— 一所院校、一个招生轮次',
+    verifiedAgainst:
+      '工作簿写明合成分 239.12838737245087 对应 ATAR 80；本条曲线在该点复现 80.00，' +
+      '并在标定区间内全程单调',
+    caveat:
+      '这是源工作簿里某所院校某个招生轮次的换算式，不是官方 ATAR 成绩单。' +
+      '只当估算，并以你自己的招生中心为准。',
+  }
+  function calText(key) {
+    var c = R.calibration || {}
+    if (LANG === 'zh' && CAL_ZH[key]) return CAL_ZH[key]
+    return c[key] || ''
+  }
   function domainLabel(d) { return (LANG === 'zh' && d.zhLabel) ? d.zhLabel : d.label }
   function bandLabel(b) { return (LANG === 'zh' && b.zhLabel) ? b.zhLabel : b.label }
 
@@ -1275,7 +1296,7 @@
             ? ('目标 ' + picture.target + ' 超出这个换算能回答的范围。')
             : ('Target ' + picture.target + ' is outside the range this conversion can answer for.'))
         }
-        lines.push('   [' + R.calibration.caveat + ']')
+        lines.push('   [' + calText('caveat') + ']')
       } else {
         lines.push(LANG === 'zh' ? ('不给 ATAR 数字：' + picture.reason + '。')
                                 : ('No ATAR is reported: ' + picture.reason + '.'))
@@ -1547,7 +1568,7 @@
       line.appendChild(el('span', { 'class': 'muted', text: U.atar_no_target }))
     }
     box.appendChild(line)
-    var caveat = el('p', { 'class': 'muted', text: R.calibration.caveat })
+    var caveat = el('p', { 'class': 'muted', text: calText('caveat') })
     box.appendChild(caveat)
     atarMethod()
   }
