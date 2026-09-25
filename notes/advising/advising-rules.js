@@ -1018,6 +1018,7 @@ window.ADVISING = (function () {
       source: 'Verify the current minimum on the institution course page',
       verified: null,
     },
+
     {
       id: 'wellbeing-plan',
       domain: 'wellbeing',
