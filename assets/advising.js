@@ -1176,7 +1176,7 @@
       var range = R.calibration.saneRange
       return {
         status: 'out-of-range', aggregate: agg, atar: null,
-        reason: 'aggregate ' + agg.toFixed(1) + ' is outside the calibrated span ' +
+        reason: 'aggregate ' + agg.toFixed(R.calibration.display.aggregate) + ' is outside the calibrated span ' +
           range[0] + '-' + range[1],
         target: targetSide.target,
         neededAggregate: targetSide.neededAggregate,
@@ -1216,8 +1216,8 @@
       targetAtar: rec.targetAtar === null || rec.targetAtar === undefined ? '' : rec.targetAtar,
       estimatedAtar: rec.estimatedAtar === null || rec.estimatedAtar === undefined ? '' : rec.estimatedAtar,
       subjectCount: (rec.subjects || []).length,
-      aggregate: agg === null ? '' : agg.toFixed(1),
-      convertedAtar: atar === null ? '' : atar.toFixed(2),
+      aggregate: agg === null ? '' : agg.toFixed(R.calibration.display.aggregate),
+      convertedAtar: atar === null ? '' : atar.toFixed(R.calibration.display.atar),
       subjects: (rec.subjects || []).map(function (s) {
         return s.subject + ':' + (typeof s.mark === 'number' ? s.mark : '')
       }).join(' '),
@@ -1291,24 +1291,24 @@
       lines.push('')
       lines.push(LANG === 'zh'
         ? ('最好的 ' + R.calibration.aggregateSize + ' 门科目合计 ' +
-           (picture.aggregate === null ? '（无法计入）' : picture.aggregate.toFixed(1)) + '。')
+           (picture.aggregate === null ? '（无法计入）' : picture.aggregate.toFixed(R.calibration.display.aggregate)) + '。')
         : ('Best ' + R.calibration.aggregateSize + ' subject marks total ' +
-           (picture.aggregate === null ? '(not countable)' : picture.aggregate.toFixed(1)) + '.'))
+           (picture.aggregate === null ? '(not countable)' : picture.aggregate.toFixed(R.calibration.display.aggregate)) + '.'))
       if (picture.status === 'ok') {
-        lines.push(LANG === 'zh' ? ('参考 ATAR：' + picture.atar.toFixed(2))
-                                : ('Indicative ATAR: ' + picture.atar.toFixed(2)))
+        lines.push(LANG === 'zh' ? ('参考 ATAR：' + picture.atar.toFixed(R.calibration.display.atar))
+                                : ('Indicative ATAR: ' + picture.atar.toFixed(R.calibration.display.atar)))
         if (picture.neededAggregate !== null) {
           lines.push(LANG === 'zh'
-            ? ('目标 ' + picture.target + ' 需要合成分 ' + picture.neededAggregate.toFixed(1) +
-               '（' + R.calibration.aggregateSize + ' 门平均 ' + picture.neededPerSubject.toFixed(1) + '）。')
+            ? ('目标 ' + picture.target + ' 需要合成分 ' + picture.neededAggregate.toFixed(R.calibration.display.aggregate) +
+               '（' + R.calibration.aggregateSize + ' 门平均 ' + picture.neededPerSubject.toFixed(R.calibration.display.aggregate) + '）。')
             : ('Target ' + picture.target + ' needs an aggregate of ' +
-               picture.neededAggregate.toFixed(1) + ' (' + picture.neededPerSubject.toFixed(1) +
+               picture.neededAggregate.toFixed(R.calibration.display.aggregate) + ' (' + picture.neededPerSubject.toFixed(R.calibration.display.aggregate) +
                ' per subject across ' + R.calibration.aggregateSize + ').'))
           lines.push(picture.gapToTarget > 0
-            ? (LANG === 'zh' ? ('比你现在高 ' + picture.gapToTarget.toFixed(1) + '。')
-                             : ('That is ' + picture.gapToTarget.toFixed(1) + ' above where you are.'))
-            : (LANG === 'zh' ? ('你已经比这个目标需要的水平高 ' + Math.abs(picture.gapToTarget).toFixed(1) + '。')
-                             : ('You are already ' + Math.abs(picture.gapToTarget).toFixed(1) + ' above what that target needs.')))
+            ? (LANG === 'zh' ? ('比你现在高 ' + picture.gapToTarget.toFixed(R.calibration.display.aggregate) + '。')
+                             : ('That is ' + picture.gapToTarget.toFixed(R.calibration.display.aggregate) + ' above where you are.'))
+            : (LANG === 'zh' ? ('你已经比这个目标需要的水平高 ' + Math.abs(picture.gapToTarget).toFixed(R.calibration.display.aggregate) + '。')
+                             : ('You are already ' + Math.abs(picture.gapToTarget).toFixed(R.calibration.display.aggregate) + ' above what that target needs.')))
         } else if (typeof picture.target === 'number') {
           lines.push(LANG === 'zh'
             ? ('目标 ' + picture.target + ' 超出这个换算能回答的范围。')
@@ -1554,7 +1554,7 @@
       return
     }
     var table = el('table', { 'class': 'atar-table' })
-    table.appendChild(atarRow(U.atar_row_agg.replace('{n}', String(n)), p.aggregate.toFixed(1)))
+    table.appendChild(atarRow(U.atar_row_agg.replace('{n}', String(n)), p.aggregate.toFixed(R.calibration.display.aggregate)))
     // An unconvertible aggregate suppresses the ATAR row and nothing else.
     // The target rows are computed from the target alone, so they are still
     // answered — withholding them was the bug this replaces: the student
@@ -1562,31 +1562,31 @@
     // told what the goal costs.
     var outOfRange = p.status === 'out-of-range'
     if (!outOfRange) {
-      table.appendChild(atarRow(U.atar_row_atar, p.atar.toFixed(2), 'big'))
+      table.appendChild(atarRow(U.atar_row_atar, p.atar.toFixed(R.calibration.display.atar), 'big'))
     }
     if (typeof p.target === 'number') {
       table.appendChild(atarRow(U.atar_row_target, String(p.target)))
       if (p.neededAggregate !== null) {
-        table.appendChild(atarRow(U.atar_row_needed, p.neededAggregate.toFixed(1)))
+        table.appendChild(atarRow(U.atar_row_needed, p.neededAggregate.toFixed(R.calibration.display.aggregate)))
       }
     }
     box.appendChild(table)
     if (outOfRange) {
       var range = R.calibration.saneRange
       box.appendChild(el('p', { 'class': 'warn', text: U.atar_out_of_range
-        .replace('{agg}', p.aggregate.toFixed(1))
+        .replace('{agg}', p.aggregate.toFixed(R.calibration.display.aggregate))
         .replace('{lo}', String(range[0])).replace('{hi}', String(range[1])) }))
     }
     var line = el('p')
     if (p.neededAggregate !== null) {
       line.appendChild(el('span', { text: U.atar_need
         .replace('{target}', String(p.target))
-        .replace('{agg}', p.neededAggregate.toFixed(1))
-        .replace('{per}', p.neededPerSubject.toFixed(1)) + ' ' }))
+        .replace('{agg}', p.neededAggregate.toFixed(R.calibration.display.aggregate))
+        .replace('{per}', p.neededPerSubject.toFixed(R.calibration.display.aggregate)) + ' ' }))
       var gap = Math.abs(p.gapToTarget)
       line.appendChild(el('strong', { text: p.gapToTarget > 0
-        ? U.atar_above.replace('{gap}', gap.toFixed(1))
-        : U.atar_below.replace('{gap}', gap.toFixed(1)) }))
+        ? U.atar_above.replace('{gap}', gap.toFixed(R.calibration.display.aggregate))
+        : U.atar_below.replace('{gap}', gap.toFixed(R.calibration.display.aggregate)) }))
     } else {
       line.appendChild(el('span', { 'class': 'muted', text: U.atar_no_target }))
     }

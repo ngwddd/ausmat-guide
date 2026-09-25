@@ -1205,6 +1205,18 @@ window.ADVISING = (function () {
     saneRange: [105, 373],
     maxAtar: 99.95,
     clamp: [0, 99.95],
+    // How many decimals each figure is printed to. Single-sourced here because
+    // the panel and the written report had drifted apart on it.
+    //
+    // The aggregate keeps the precision of the marks that produced it: it is a
+    // plain sum, and the source workbook prints 132.93 for the same four marks
+    // this tool was printing as 132.9. The ATAR does NOT keep it. This curve's
+    // measured error is a mean of 0.2 points and a worst case of 13, so
+    // hundredths would claim a precision the conversion does not have — the
+    // workbook shows one decimal for exactly that reason. One decimal is still
+    // more than the conversion earns, but it is the figure the source states and
+    // therefore the one a student can check this tool against.
+    display: { aggregate: 2, atar: 1 },
     caveat:
       'One institution\'s conversion for one intake, taken from the source ' +
       'workbook. Not an official ATAR statement — treat it as an estimate and ' +
