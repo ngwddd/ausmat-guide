@@ -1621,26 +1621,35 @@
         String(b.atar)))
     })
     box.appendChild(bandTable)
-    box.appendChild(el('p', { 'class': 'muted', text: U.history_examples }))
-    var table = el('table')
-    var head = el('tr')
-    ;[U.history_col_atar, U.history_col_top4, U.history_col_marks].forEach(function (h) {
-      head.appendChild(el('th', { text: h }))
-    })
-    table.appendChild(head)
-    ;(H.examples || []).forEach(function (e) {
-      var tr = el('tr')
-      tr.appendChild(el('td', { 'class': 'num', text: String(e.atar) }))
-      tr.appendChild(el('td', { 'class': 'num', text: String(e.top4) }))
-      var cell = el('td')
-      ;(e.marks || []).forEach(function (m, i) {
-        cell.appendChild(el('span', { 'class': 'mark-chip',
-          text: ((e.codes || [])[i] || '?') + ' ' + m }))
+    // The examples are omitted when the source sheet cannot be split into
+    // individual students — it has no column marking where one student's
+    // rows end. Rendering the heading regardless left column labels above
+    // nothing, which reads as a rendering fault rather than a decision.
+    var examples = H.examples || []
+    if (examples.length) {
+      box.appendChild(el('p', { 'class': 'muted', text: U.history_examples }))
+      var table = el('table')
+      var head = el('tr')
+      ;[U.history_col_atar, U.history_col_top4, U.history_col_marks].forEach(function (h) {
+        head.appendChild(el('th', { text: h }))
       })
-      tr.appendChild(cell)
-      table.appendChild(tr)
-    })
-    box.appendChild(table)
+      table.appendChild(head)
+      examples.forEach(function (e) {
+        var tr = el('tr')
+        tr.appendChild(el('td', { 'class': 'num', text: String(e.atar) }))
+        tr.appendChild(el('td', { 'class': 'num', text: String(e.top4) }))
+        var cell = el('td')
+        ;(e.marks || []).forEach(function (m, i) {
+          cell.appendChild(el('span', { 'class': 'mark-chip',
+            text: ((e.codes || [])[i] || '?') + ' ' + m }))
+        })
+        tr.appendChild(cell)
+        table.appendChild(tr)
+      })
+      box.appendChild(table)
+    } else if (H.examplesOmitted) {
+      box.appendChild(el('p', { 'class': 'warn', text: U.history_omitted }))
+    }
   }
   on('btnHistory', 'click', renderHistory)
 
@@ -1656,7 +1665,13 @@
       tr.appendChild(el('td', { text: c.university }))
       tr.appendChild(el('td', { text: c.course }))
       tr.appendChild(el('td', { 'class': 'num', text: String(c.atar) }))
-      tr.appendChild(el('td', { text: c.req || '—' }))
+      // A blank requirement cell is NOT the same as 'there is no' +
+      // requirement' — the source workbook simply leaves the cell empty for
+      // 44 of the 54 rows. The shared placeholder renders both as an em dash,
+      // so a student could read a missing record as a stated absence. Named
+      // differently on purpose.
+      tr.appendChild(el('td', { 'class': c.req ? '' : 'muted',
+        text: c.req || pick('not recorded in the source', '原表未记录') }))
       var cell = el('td')
       if (c.url) {
         var mark = c.link === 'ok' ? ''
