@@ -343,7 +343,32 @@ window.ADVISING = (function () {
       'Business', 'Psychology', 'Nursing', 'Architecture', 'Sciences',
       'Humanities', 'Education', 'Undecided',
     ],
-    level: ['Year 11', 'September intake', 'January intake'],
+    // ── subjects: the ATAR subjects, by the code the school uses ─────────────
+    // Taken from the source workbook's own list (LISTS!A3:A15) and confirmed
+    // against the screen it drives: "Top 4 ATAR Subjects (Choose from list)".
+    // The workbook's list continues past these with a GTCSC/GT…/EPSGS block after
+    // a row of asterisks; those are General courses and **their marks do not
+    // count toward an ATAR**, so they are deliberately absent here. That absence
+    // is doing real work: the best-four aggregate is computed from whatever is
+    // recorded, so a General subject that could be typed in would silently
+    // inflate the aggregate. A pick-list makes it unrepresentable instead.
+    //
+    // Codes only, no names — the workbook shows codes only, and inventing
+    // expansions for courses whose syllabus we have not read would be inventing
+    // fact. Five are sourced: ATMAM is "Mathematics Methods" (the eLearn course
+    // name 260129-ATMAM), and ATPHY/ATHBY/ATCSC/ATEALD match the Physics, Human
+    // Biology, Computer Science and English folders in the course archive.
+    //
+    // There was a `level` vocabulary here before this one:
+    // ['Year 11', 'September intake', 'January intake']. It went with the column
+    // it fed. Three unrelated things had been bundled into it — a year level and
+    // two intake names — and the workbook only ever asks about intake at STUDENT
+    // level ("If you were part of the Sept/ Head Start intakes, please check this
+    // box"), never per subject.
+    subjects: [
+      'ATACF', 'ATBME', 'ATCHE', 'ATCSC', 'ATEALD', 'ATECO', 'ATENG',
+      'ATHBY', 'ATMAA', 'ATMAM', 'ATMAS', 'ATPHY', 'ATPSY',
+    ],
   }
 
   /* --------------------------------------------------------------------------
@@ -390,29 +415,44 @@ window.ADVISING = (function () {
    *    consuming a capability then covers the new subject automatically.
    * ------------------------------------------------------------------------*/
   const capabilities = {
+    // Keyed by the subject CODE, because that is what the form records now.
+    //
+    // These lists used to hold course NAMES with synonyms ('Mathematics',
+    // 'Mathematics Methods', 'Add Maths', 'Additional Mathematics' …). The
+    // synonyms existed only because the subject field was free text and a student
+    // might type any of them; a pick-list makes every one of them unreachable
+    // while keeping the matching exact, which is the point. Anything typed by
+    // hand matched by string equality, so 'Maths' silently satisfied nothing and
+    // the prerequisite rules went quiet without saying why.
+    //
+    // KNOWN COARSENESS: mathematics covers Applications as well as Methods and
+    // Specialist. WACE treats those as different depths, and an engineering
+    // programme that asks for Methods is not satisfied by Applications. The
+    // workbook's own course database does not state the distinction either, so
+    // splitting it here would be inventing a requirement it never recorded.
     mathematics: {
       label: 'Mathematics', zhLabel: '数学',
-      subjects: ['Mathematics', 'Mathematics Methods', 'Mathematics Specialist', 'Add Maths', 'Additional Mathematics'],
+      subjects: ['ATMAA', 'ATMAM', 'ATMAS'],
     },
     physicalScience: {
       label: 'a physical science', zhLabel: '物理或化学',
-      subjects: ['Physics', 'Chemistry'],
+      subjects: ['ATPHY', 'ATCHE'],
     },
     chemistry: {
       label: 'Chemistry', zhLabel: '化学',
-      subjects: ['Chemistry'],
+      subjects: ['ATCHE'],
     },
     biology: {
       label: 'Biology', zhLabel: '生物',
-      subjects: ['Biology', 'Human Biology'],
+      subjects: ['ATHBY'],
     },
     english: {
       label: 'English', zhLabel: '英语',
-      subjects: ['English', 'English as First Language', 'English as Second Language', 'English Literature'],
+      subjects: ['ATENG', 'ATEALD'],
     },
     computing: {
       label: 'Computing', zhLabel: '计算机',
-      subjects: ['Computer Science', 'Computing', 'Information Technology'],
+      subjects: ['ATCSC'],
     },
   }
 
@@ -830,6 +870,22 @@ window.ADVISING = (function () {
       id: 'perf-high-at-load',
       domain: 'performance',
       title: 'Every recorded subject is an advanced-level subject',
+      // Stays off, for a stronger reason than when it was merely unreachable.
+      //
+      // The condition counts subjects whose name begins with "AT" — the marker
+      // the source workbook puts on ATAR courses — and compares that with the
+      // number of subjects recorded. It used to read a "level" dropdown of intake
+      // names, so it could never be true and the rule had never fired once.
+      //
+      // Now that the subject box is a pick-list of the ATAR subjects and nothing
+      // else, the condition is true for EVERY record with four or more subjects.
+      // The distinction it was written to warn about is enforced by the form
+      // itself: a General subject cannot be recorded here, because a General mark
+      // does not count toward an ATAR. Enabling it now would print "all of your
+      // subjects are at the highest available level" on every complete report,
+      // which is the same defect as funding-not-recorded: a constant presented as
+      // advice. It is kept, switched off, so the coverage view records why.
+      enabled: false,
       when: 'record.subjects.length >= T.subjectsForAggregate && countSubject("AT") === record.subjects.length',
       advice: 'All {{subjectCount}} of your recorded subjects are at the highest ' +
         'available level. That is a demanding load, and the aggregate advantage ' +
@@ -1268,7 +1324,7 @@ window.ADVISING = (function () {
   /* --------------------------------------------------------------------------
    * 6. Public surface. The engine consumes only what is exported here.
    * ------------------------------------------------------------------------*/
-  const uiStrings = {"zh": {"app_sub": "规则驱动 · 建议是数据，不是代码 · 全部内容在 advising-rules.js", "tab_student": "1 · 学生情况", "tab_report": "2 · 建议报告", "tab_tracker": "3 · 考核追踪", "tab_coverage": "4 · 规则总览", "sec_identity": "身份与学业状况", "sec_interests": "升学意向", "interests_intro": "只想算 ATAR 的话这一块可以留空；填了才会有目的国、专业、先修科目、语言和费用这几类建议。", "sec_subjects": "选课与成绩", "label_name": "姓名", "label_sid": "学号", "label_school": "Year 11 就读学校", "label_efl": "英语为母语", "label_intake": "曾就读的预科班次", "label_target": "目标 ATAR", "label_est": "当前预估 ATAR", "label_deciding": "仍在犹豫选什么专业", "label_funding": "学费来源已落实", "opt_unstated": "— 未填写 —", "opt_none": "— 无 —", "opt_yes": "是", "opt_no": "否", "col_country": "国家/地区", "col_field": "专业方向", "col_uni": "目标大学", "col_level": "班次", "col_subject": "科目", "col_mark": "成绩 (%)", "col_assessed": "已考权重 (%)", "btn_add_interest": "+ 增加一行", "btn_add_subject": "+ 增加一门", "sec_atar": "ATAR 估算", "atar_intro": "按你上面填的成绩算：取最高的四门合计成合成分，再换算成 ATAR。换算式来自源工作簿，是某一所院校某一个招生轮次的换算，不是官方 ATAR 成绩单——只当估算，并以你自己的招生中心为准。", "btn_atar": "算一下", "atar_need": "目标 {target} 需要合成分 {agg}（四门平均 {per}）。", "atar_above": "比你现在高 {gap}。", "atar_below": "你已经比这个目标需要的水平高 {gap}。", "atar_no_target": "填一个目标 ATAR，就能算出还差多少。", "atar_out_of_range": "合成分 {agg} 超出这套换算能回答的区间（{lo}–{hi}）。这里不给数字——给一个会显得权威，而且是错的。", "atar_insufficient": "至少要 {n} 门有成绩的科目才能算合成分。", "atar_unavailable": "换算式自检没通过，所以不输出数字。", "atar_row_agg": "合成分（最高 {n} 门合计）", "atar_row_atar": "换算 ATAR", "atar_row_target": "目标 ATAR", "atar_row_needed": "目标所需合成分", "atar_method": "方法：最高的 {n} 门成绩相加得合成分，代入源工作簿标定的曲线。曲线在合成分约 373 以上会掉头向下，所以超出区间时本工具拒绝给数。自检：合成分 {ref} 应对应 ATAR 80，实测 {got}。", "sec_history": "往届参考", "btn_history": "看往届分布", "sec_notes": "备注（给你的顾问或自己）", "notes_intro": "写在这里的内容会随记录一起保存和导出，打印时会印在报告末尾。常用的说法可以存在这里重复使用。", "notes_heading": "备注", "history_intro": "下面是工作簿里记录的往届学生结果，用来参照你估算出来的位置。", "history_range": "共 {count} 名学生，ATAR 落在 {lo} 到 {hi} 之间。", "history_bands": "这组人内部的位置：", "history_examples": "几位往届学生的成绩与结果：", "history_col_atar": "记录的 ATAR", "history_col_top4": "最高四门合计", "history_col_marks": "各科成绩", "history_omitted": "这里不列往届样例：源表没有任何一列标记某位学生的行到哪里结束，所以单独的某一行无法可靠还原。上面的分布不受这个缺陷影响。", "btn_generate": "生成报告 →", "btn_save": "保存到本浏览器", "btn_load": "读取已保存", "btn_clear": "全部清空", "btn_sample": "载入示例学生", "btn_print": "打印 / 存为 PDF", "btn_copy": "复制为文本", "btn_download": "下载 .md", "btn_csv": "下载记录表 (.csv)", "report_title": "建议报告", "col_assessment": "考核项目", "col_weight": "权重 (%)", "col_due": "日期", "col_importance": "重要度", "col_urgency": "紧急度", "col_done": "完成", "col_action": "建议动作", "btn_add_assess": "+ 增加一项考核", "coverage_title": "规则总览", "col_domain": "类别", "tab_courses": "课程参考", "courses_title": "课程最低分参考", "col_uni_name": "院校", "col_course": "专业", "col_min_atar": "最低分", "col_req": "除分数外的要求", "col_source": "来源", "col_rule": "规则", "col_fired": "命中", "col_verified": "核实状态", "label_y11": "Year 11 成绩（每行一条：科目: 分数）", "label_prior": "往期班次成绩（每行一条：科目: 分数）"}, "en": {"app_sub": "rules-driven · advice is data, not code · all copy lives in advising-rules.js", "tab_student": "1 · Student record", "tab_report": "2 · Advising report", "tab_tracker": "3 · Assessment tracker", "tab_coverage": "4 · Rule coverage", "sec_identity": "Identity & standing", "sec_interests": "Destinations & academic interests", "interests_intro": "Leave this blank if all you want is the ATAR. Filling it in is what unlocks the destination, course, prerequisite, language and funding advice.", "sec_subjects": "Subjects & results", "label_name": "Full name", "label_sid": "Student ID", "label_school": "Year 11 school", "label_efl": "English is first language", "label_intake": "Previous intake attended", "label_target": "Target ATAR", "label_est": "Current estimated ATAR", "label_deciding": "Still deciding on a course", "label_funding": "Funding arrangement confirmed", "opt_unstated": "— not stated —", "opt_none": "— none —", "opt_yes": "Yes", "opt_no": "No", "col_country": "Country", "col_field": "Field", "col_uni": "Target university", "col_level": "Level", "col_subject": "Subject", "col_mark": "Mark (%)", "col_assessed": "Assessed (%)", "btn_add_interest": "+ Add row", "btn_add_subject": "+ Add subject", "sec_atar": "ATAR estimate", "atar_intro": "Computed from the marks above: the best four are summed into an aggregate, and the aggregate is converted to an ATAR. The conversion comes from the source workbook and is the curve of one institution for one intake — not an official ATAR statement. Treat it as an estimate and confirm against your own admissions centre.", "btn_atar": "Calculate", "atar_need": "Target {target} needs an aggregate of {agg} ({per} per subject across four).", "atar_above": "That is {gap} above where you are.", "atar_below": "You are already {gap} above what that target needs.", "atar_no_target": "Enter a target ATAR to see how far off it is.", "atar_out_of_range": "Aggregate {agg} is outside the span this conversion can answer for ({lo}–{hi}). No number is given here — a number would look authoritative and be wrong.", "atar_insufficient": "At least {n} subjects with marks are needed for an aggregate.", "atar_unavailable": "The conversion failed its own load-time check, so no number is produced.", "atar_row_agg": "Aggregate (best {n} summed)", "atar_row_atar": "Converted ATAR", "atar_row_target": "Target ATAR", "atar_row_needed": "Aggregate the target needs", "atar_method": "Method: the best {n} marks are summed, then put through the curve the source workbook is calibrated to. That curve turns over above an aggregate of about 373, so outside the span the tool refuses to answer. Check: an aggregate of {ref} should read ATAR 80; it reads {got}.", "sec_history": "Prior cohorts", "btn_history": "Show prior outcomes", "sec_notes": "Notes (for your adviser, or yourself)", "notes_intro": "Whatever you write here is saved and exported with the record, and printed at the end of the report. Reusable wording can be kept here.", "notes_heading": "Notes", "history_intro": "Recorded outcomes of the students in the source workbook, for reference against your own estimate.", "history_range": "{count} students in total, with ATARs from {lo} to {hi}.", "history_bands": "Positions within this group:", "history_examples": "A few prior students, their marks and their result:", "history_col_atar": "Recorded ATAR", "history_col_top4": "Best four summed", "history_col_marks": "Subject marks", "history_omitted": "No example students are listed: the source sheet has no column marking where one student rows end, so individual rows cannot be reconstructed reliably. The distribution above is unaffected.", "btn_generate": "Generate report →", "btn_save": "Save to this browser", "btn_load": "Restore saved", "btn_clear": "Clear all", "btn_sample": "Load sample student", "btn_print": "Print / save as PDF", "btn_copy": "Copy as text", "btn_download": "Download as .md", "btn_csv": "Download record (.csv)", "report_title": "Advising report", "col_assessment": "Assessment", "col_weight": "Weight (%)", "col_due": "Due", "col_importance": "Importance", "col_urgency": "Urgency", "col_done": "Done", "col_action": "Action", "btn_add_assess": "+ Add assessment", "coverage_title": "Rule coverage", "col_domain": "Domain", "tab_courses": "Course reference", "courses_title": "Recorded minimums", "col_uni_name": "Institution", "col_course": "Course", "col_min_atar": "Min.", "col_req": "Requirements beyond the score", "col_source": "Source", "col_rule": "Rule", "col_fired": "Fired", "col_verified": "Verification", "label_y11": "Year 11 results (one per line: Subject: mark)", "label_prior": "Prior intake results (one per line: Subject: mark)"}}
+  const uiStrings = {"zh": {"app_sub": "规则驱动 · 建议是数据，不是代码 · 全部内容在 advising-rules.js", "tab_student": "1 · 学生情况", "tab_report": "2 · 建议报告", "tab_tracker": "3 · 考核追踪", "tab_coverage": "4 · 规则总览", "sec_identity": "身份与学业状况", "sec_interests": "升学意向", "interests_intro": "只想算 ATAR 的话这一块可以留空；填了才会有目的国、专业、先修科目、语言和费用这几类建议。", "sec_subjects": "选课与成绩", "label_name": "姓名", "label_sid": "学号", "label_school": "Year 11 就读学校", "label_efl": "英语为母语", "label_intake": "曾就读的预科班次", "label_target": "目标 ATAR", "label_est": "当前预估 ATAR", "label_deciding": "仍在犹豫选什么专业", "label_funding": "学费来源已落实", "opt_unstated": "— 未填写 —", "opt_none": "— 无 —", "opt_yes": "是", "opt_no": "否", "col_country": "国家/地区", "col_field": "专业方向", "col_uni": "目标大学", "col_subject": "科目", "col_mark": "成绩 (%)", "btn_add_interest": "+ 增加一行", "btn_add_subject": "+ 增加一门", "sec_atar": "ATAR 估算", "atar_intro": "按你上面填的成绩算：取最高的四门合计成合成分，再换算成 ATAR。换算式来自源工作簿，是某一所院校某一个招生轮次的换算，不是官方 ATAR 成绩单——只当估算，并以你自己的招生中心为准。", "btn_atar": "算一下", "atar_need": "目标 {target} 需要合成分 {agg}（四门平均 {per}）。", "atar_above": "比你现在高 {gap}。", "atar_below": "你已经比这个目标需要的水平高 {gap}。", "atar_no_target": "填一个目标 ATAR，就能算出还差多少。", "atar_out_of_range": "合成分 {agg} 超出这套换算能回答的区间（{lo}–{hi}）。这里不给数字——给一个会显得权威，而且是错的。", "atar_insufficient": "至少要 {n} 门有成绩的科目才能算合成分。", "atar_unavailable": "换算式自检没通过，所以不输出数字。", "atar_row_agg": "合成分（最高 {n} 门合计）", "atar_row_atar": "换算 ATAR", "atar_row_target": "目标 ATAR", "atar_row_needed": "目标所需合成分", "atar_method": "方法：最高的 {n} 门成绩相加得合成分，代入源工作簿标定的曲线。曲线在合成分约 373 以上会掉头向下，所以超出区间时本工具拒绝给数。自检：合成分 {ref} 应对应 ATAR 80，实测 {got}。", "sec_history": "往届参考", "btn_history": "看往届分布", "sec_notes": "备注（给你的顾问或自己）", "notes_intro": "写在这里的内容会随记录一起保存和导出，打印时会印在报告末尾。常用的说法可以存在这里重复使用。", "notes_heading": "备注", "history_intro": "下面是工作簿里记录的往届学生结果，用来参照你估算出来的位置。", "history_range": "共 {count} 名学生，ATAR 落在 {lo} 到 {hi} 之间。", "history_bands": "这组人内部的位置：", "history_examples": "几位往届学生的成绩与结果：", "history_col_atar": "记录的 ATAR", "history_col_top4": "最高四门合计", "history_col_marks": "各科成绩", "history_omitted": "这里不列往届样例：源表没有任何一列标记某位学生的行到哪里结束，所以单独的某一行无法可靠还原。上面的分布不受这个缺陷影响。", "btn_generate": "生成报告 →", "btn_save": "保存到本浏览器", "btn_load": "读取已保存", "btn_clear": "全部清空", "btn_sample": "载入示例学生", "btn_print": "打印 / 存为 PDF", "btn_copy": "复制为文本", "btn_download": "下载 .md", "btn_csv": "下载记录表 (.csv)", "report_title": "建议报告", "col_assessment": "考核项目", "col_weight": "权重 (%)", "col_due": "日期", "col_importance": "重要度", "col_urgency": "紧急度", "col_done": "完成", "col_action": "建议动作", "btn_add_assess": "+ 增加一项考核", "coverage_title": "规则总览", "col_domain": "类别", "tab_courses": "课程参考", "courses_title": "课程最低分参考", "col_uni_name": "院校", "col_course": "专业", "col_min_atar": "最低分", "col_req": "除分数外的要求", "col_source": "来源", "col_rule": "规则", "col_fired": "命中", "col_verified": "核实状态", "label_y11": "Year 11 成绩（每行一条：科目: 分数）", "label_prior": "往期班次成绩（每行一条：科目: 分数）"}, "en": {"app_sub": "rules-driven · advice is data, not code · all copy lives in advising-rules.js", "tab_student": "1 · Student record", "tab_report": "2 · Advising report", "tab_tracker": "3 · Assessment tracker", "tab_coverage": "4 · Rule coverage", "sec_identity": "Identity & standing", "sec_interests": "Destinations & academic interests", "interests_intro": "Leave this blank if all you want is the ATAR. Filling it in is what unlocks the destination, course, prerequisite, language and funding advice.", "sec_subjects": "Subjects & results", "label_name": "Full name", "label_sid": "Student ID", "label_school": "Year 11 school", "label_efl": "English is first language", "label_intake": "Previous intake attended", "label_target": "Target ATAR", "label_est": "Current estimated ATAR", "label_deciding": "Still deciding on a course", "label_funding": "Funding arrangement confirmed", "opt_unstated": "— not stated —", "opt_none": "— none —", "opt_yes": "Yes", "opt_no": "No", "col_country": "Country", "col_field": "Field", "col_uni": "Target university", "col_subject": "Subject", "col_mark": "Mark (%)", "btn_add_interest": "+ Add row", "btn_add_subject": "+ Add subject", "sec_atar": "ATAR estimate", "atar_intro": "Computed from the marks above: the best four are summed into an aggregate, and the aggregate is converted to an ATAR. The conversion comes from the source workbook and is the curve of one institution for one intake — not an official ATAR statement. Treat it as an estimate and confirm against your own admissions centre.", "btn_atar": "Calculate", "atar_need": "Target {target} needs an aggregate of {agg} ({per} per subject across four).", "atar_above": "That is {gap} above where you are.", "atar_below": "You are already {gap} above what that target needs.", "atar_no_target": "Enter a target ATAR to see how far off it is.", "atar_out_of_range": "Aggregate {agg} is outside the span this conversion can answer for ({lo}–{hi}). No number is given here — a number would look authoritative and be wrong.", "atar_insufficient": "At least {n} subjects with marks are needed for an aggregate.", "atar_unavailable": "The conversion failed its own load-time check, so no number is produced.", "atar_row_agg": "Aggregate (best {n} summed)", "atar_row_atar": "Converted ATAR", "atar_row_target": "Target ATAR", "atar_row_needed": "Aggregate the target needs", "atar_method": "Method: the best {n} marks are summed, then put through the curve the source workbook is calibrated to. That curve turns over above an aggregate of about 373, so outside the span the tool refuses to answer. Check: an aggregate of {ref} should read ATAR 80; it reads {got}.", "sec_history": "Prior cohorts", "btn_history": "Show prior outcomes", "sec_notes": "Notes (for your adviser, or yourself)", "notes_intro": "Whatever you write here is saved and exported with the record, and printed at the end of the report. Reusable wording can be kept here.", "notes_heading": "Notes", "history_intro": "Recorded outcomes of the students in the source workbook, for reference against your own estimate.", "history_range": "{count} students in total, with ATARs from {lo} to {hi}.", "history_bands": "Positions within this group:", "history_examples": "A few prior students, their marks and their result:", "history_col_atar": "Recorded ATAR", "history_col_top4": "Best four summed", "history_col_marks": "Subject marks", "history_omitted": "No example students are listed: the source sheet has no column marking where one student rows end, so individual rows cannot be reconstructed reliably. The distribution above is unaffected.", "btn_generate": "Generate report →", "btn_save": "Save to this browser", "btn_load": "Restore saved", "btn_clear": "Clear all", "btn_sample": "Load sample student", "btn_print": "Print / save as PDF", "btn_copy": "Copy as text", "btn_download": "Download as .md", "btn_csv": "Download record (.csv)", "report_title": "Advising report", "col_assessment": "Assessment", "col_weight": "Weight (%)", "col_due": "Due", "col_importance": "Importance", "col_urgency": "Urgency", "col_done": "Done", "col_action": "Action", "btn_add_assess": "+ Add assessment", "coverage_title": "Rule coverage", "col_domain": "Domain", "tab_courses": "Course reference", "courses_title": "Recorded minimums", "col_uni_name": "Institution", "col_course": "Course", "col_min_atar": "Min.", "col_req": "Requirements beyond the score", "col_source": "Source", "col_rule": "Rule", "col_fired": "Fired", "col_verified": "Verification", "label_y11": "Year 11 results (one per line: Subject: mark)", "label_prior": "Prior intake results (one per line: Subject: mark)"}}
 
   return {
     uiStrings,

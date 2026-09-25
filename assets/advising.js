@@ -808,9 +808,17 @@
         })
       },
       countSubject: function (currentScope, args) {
+        // Counts recorded subjects whose NAME starts with the prefix. It used to
+        // test `s.level`, which could never match: the prefix rules pass is "AT"
+        // — the marker the source workbook puts on ATAR subjects (ATMAM, ATPHY,
+        // …) — and the level dropdown held intake names instead. So the one rule
+        // that calls this was unreachable by construction. With the subject
+        // pick-list still to come, the field name is now the right one, and
+        // perf-high-at-load stays switched off until a student can actually
+        // choose an AT code rather than type a course name.
         var prefix = evaluateAst(args[0], currentScope)
         return record.subjects.filter(function (s) {
-          return s.level && s.level.indexOf(prefix) === 0
+          return s.subject && s.subject.indexOf(prefix) === 0
         }).length
       },
       anyScoreBelow: function (currentScope, args) {
@@ -940,12 +948,10 @@
     })
     var subjects = []
     Array.prototype.forEach.call($('subjectRows').querySelectorAll('tr'), function (tr) {
-      var level = tr.querySelector('.s-level').value
       var subject = tr.querySelector('.s-subject').value.trim()
       var mark = numOrNull(tr.querySelector('.s-mark').value)
-      var assessed = numOrNull(tr.querySelector('.s-assessed').value)
-      if (subject || level) {
-        subjects.push({ level: level, subject: subject, mark: mark, assessed: assessed, credits: null })
+      if (subject) {
+        subjects.push({ subject: subject, mark: mark })
       }
     })
     return {
@@ -984,23 +990,33 @@
     $('interestRows').appendChild(tr)
   }
 
+  /* A subject row is a subject and a mark.
+   *
+   * The subject is a pick-list of the ATAR subject codes, straight from the
+   * workbook's own list, because a free-text box could not be matched against
+   * anything: the capability layer compares exact strings, so a student who typed
+   * "Maths" or "数学" satisfied no prerequisite and the prerequisite rules went
+   * quiet without saying why. It also makes the ATAR arithmetic honest — the
+   * best-four aggregate is summed from whatever is recorded, and a General
+   * subject (whose mark does not count toward an ATAR) is no longer typeable.
+   *
+   * The row used to carry two more columns, a "level" and an "assessed %", both
+   * removed with the reasons recorded in the catalog: the level dropdown held
+   * intake names the workbook only ever uses at student level, and the assessed
+   * figure was the workbook's "Total (%) already assessed by school", whose
+   * calculation was never ported. A column nothing reads is a question with no
+   * consequence. */
   function addSubjectRow(preset) {
     preset = preset || {}
     var tr = el('tr')
-    var level = el('select', { 'class': 's-level' }, [])
-    level.appendChild(options(R.vocabularies.level, preset.level, '— level —'))
-    var subject = el('input', { 'class': 's-subject', type: 'text', placeholder: 'e.g. Mathematics' })
-    subject.value = preset.subject || ''
+    var subject = el('select', { 'class': 's-subject' }, [])
+    subject.appendChild(options(R.vocabularies.subjects, preset.subject, '— ' + (LANG === 'zh' ? '科目' : 'subject') + ' —'))
     var mark = el('input', { 'class': 's-mark', type: 'number', min: '0', max: '100' })
     mark.value = preset.mark === null || preset.mark === undefined ? '' : preset.mark
-    var assessed = el('input', { 'class': 's-assessed', type: 'number', min: '0', max: '100' })
-    assessed.value = preset.assessed === null || preset.assessed === undefined ? '' : preset.assessed
     var bin = el('button', { 'class': 'ghost mini', text: '×' })
     bin.addEventListener('click', function () { tr.remove() })
-    tr.appendChild(el('td', {}, [level]))
     tr.appendChild(el('td', {}, [subject]))
     tr.appendChild(el('td', {}, [mark]))
-    tr.appendChild(el('td', {}, [assessed]))
     tr.appendChild(el('td', {}, [bin]))
     $('subjectRows').appendChild(tr)
   }
@@ -1015,16 +1031,13 @@
     var warnings = []
     if (rec.subjects.length === 0) errors.push(pick('At least one subject is required.', '至少需要填写一门科目。'))
     rec.subjects.forEach(function (s, i) {
-      if (!s.level) errors.push('Subject ' + (i + 1) + pick(': level not selected.', '：未选择班次。'))
       if (!s.subject) errors.push('Subject ' + (i + 1) + pick(': subject name is empty.', '：科目名为空。'))
       if (s.mark !== null && (s.mark < 0 || s.mark > 100)) errors.push('Subject ' + (i + 1) + pick(': mark must be between 0 and 100.', '：成绩必须在 0 到 100 之间。'))
-      if (s.assessed !== null && (s.assessed < 0 || s.assessed > 100)) warnings.push('Subject ' + (i + 1) + pick(': assessed weight is outside 0–100%.', '：已考权重超出 0–100%。'))
     })
     var seen = {}
     rec.subjects.forEach(function (s) {
-      var key = s.level + '|' + s.subject
-      if (s.subject && seen[key]) warnings.push(pick('Duplicate subject recorded: ', '科目重复：') + s.subject + ' (' + s.level + ').')
-      seen[key] = true
+      if (s.subject && seen[s.subject]) warnings.push(pick('Duplicate subject recorded: ', '科目重复：') + s.subject + '.')
+      seen[s.subject] = true
     })
     rec.interests.forEach(function (it, i) {
       if (!it.country) warnings.push('Interest ' + (i + 1) + pick(': no country selected, so destination rules cannot fire.', '：未选择国家，方向类规则不会触发。'))
@@ -1672,11 +1685,11 @@
         { country: 'United Kingdom', field: 'Engineering', university: 'University of Manchester' },
       ],
       subjects: [
-        { level: 'Year 11', subject: 'Mathematics', mark: 82, assessed: 45 },
-        { level: 'Year 11', subject: 'Physics', mark: 74, assessed: 40 },
-        { level: 'Year 11', subject: 'Chemistry', mark: 58, assessed: 35 },
-        { level: 'Year 11', subject: 'English', mark: 71, assessed: 50 },
-        { level: 'Year 11', subject: 'Psychology', mark: 66, assessed: 30 },
+        { subject: 'Mathematics Methods', mark: 82 },
+        { subject: 'Physics', mark: 74 },
+        { subject: 'Chemistry', mark: 58 },
+        { subject: 'English', mark: 71 },
+        { subject: 'Psychology', mark: 66 },
       ],
     }
   }

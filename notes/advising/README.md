@@ -105,14 +105,27 @@ record.estimatedAtar < record.targetAtar - T.targetGapPoints
 先修条件检查走的是**能力**层，而不是"专业＋要求"的对照表：
 
 ```
-capabilities          mathematics     -> [Mathematics, Mathematics Methods, ...]
-                      physicalScience -> [Physics, Chemistry]
+capabilities          mathematics     -> [ATMAA, ATMAM, ATMAS]
+                      physicalScience -> [ATPHY, ATCHE]
 courseExpectations    Engineering     -> expects [mathematics, physicalScience]
 ```
 
-规则问的是"这位学生记录的科目是否满足该方向通常要求的准备"，而能力到科目名的映射
-只存在一处。把新确认的科目名加进 `capabilities.mathematics`，所有消费它的规则**立刻**
+规则问的是"这位学生记录的科目是否满足该方向通常要求的准备"，而能力到科目代码的映射
+只存在一处。把新确认的科目加进 `capabilities.mathematics`，所有消费它的规则**立刻**
 跟着生效。
+
+**这里原先写的是科目名**（`Mathematics`、`Physics`…），因为科目那一格是自由文本框。
+那是个陷阱：匹配是精确字符串比较，学生打 `Maths`、`数学`、`Math` 都不等于
+`Mathematics`，于是先修规则**静默失效**——不报错，只是从此不说话。现在科目改成下拉，
+选项就是工作簿自己的科目代码，同义名一览表随之删掉：下拉里不可能出现同义名，
+而一览表只会让匹配看起来比实际宽松。
+
+代码取自工作簿 `LISTS` 表的 `SUBJECTS` 列，即原版 `Top 4 ATAR Subjects (Choose from
+list)` 那张下拉：`ATACF ATBME ATCHE ATCSC ATEALD ATECO ATENG ATHBY ATMAA ATMAM
+ATMAS ATPHY ATPSY`。工作簿的清单在这 13 项之后还有一段 `GTCSC … GTDRA / EPSGS`
+（General 课程），**刻意没有收进来**——它们的分数不计入 ATAR。这个"没有"在做事：
+最好四门合计是从记录里现算的，能打进去的 General 科目会**悄悄抬高合成分**。
+下拉让这种记录压根无法表达。
 
 这是刻意的取舍。原始工作簿的课程库里，先修要求那一列是自由文本：全表 124 行里，
 只有 3 行是机器可读的形状（`English-YES Mathematics-YES Science/Other-NO`），
@@ -298,7 +311,10 @@ DNS 能解析、TCP 443 能连，我当时却把它当成了对方的坏链。
 - 规则总览里标为"待核实"的规则，含有尚未对照当前来源确认的事实性表述。
 - `courseExpectations[*].namedAtar` 全部为 `null`，所以工具能拿你记录的数字作比较，
   但自己不提供任何数字。
-- 能力层的科目名映射是一个起点，应当第一个按你实际的科目目录校正。
+- 能力层现在按工作簿的科目代码索引，但 `mathematics` 把 `ATMAA`（Applications）与
+  `ATMAM`/`ATMAS`（Methods / Specialist）算作同一项。WACE 把这几个当作不同深度，
+  要求 Methods 的工程专业并不被 Applications 满足。工作簿自己的课程库也没记这个区别，
+  所以在这里拆开等于**发明一条它从未记录的要求**。这是能力层目前最粗的一处。
 - **实测删掉的字段**：第一轮删掉 `学号`、`Year 11 学校`、`Year 11 成绩`、`往期成绩`
   以及 `往期班次`。前四个经探针实测**没有任何规则读取**（探针在真实求值时记录字段访问；
   静态扫描看不穿 `anyInterest("i.country", …)` 这类把字段名当字符串参数的写法）。
@@ -315,14 +331,18 @@ DNS 能解析、TCP 443 能连，我当时却把它当成了对方的坏链。
 | --- | --- | --- |
 | `form-incomplete` | `fullName`、`year11School` | 每一份报告都印上"这份报告只是暂定的" |
 | `funding-not-recorded` | `fundingSecured` | 每一份报告都说"还没有记录学费来源" |
+| `perf-high-at-load` | `s.level`（读了错的字段） | 恒不成立，从未触发；改对字段后又恒成立 |
+
+前两条是"每一份报告都带着一句假话"，第三条是它的镜像：一句**永远不会出现**的话。
+三种状态都是同一个毛病的不同侧面——**字段没了，规则不能装作还在读它**。
 
 这不是"建议稍微不准"，是**每一份报告都带着一句不成立的话**——而且是那种读者会当成
 真实结论的话。`form-incomplete` 更尴尬：它唯一还成立的子句（科目表为空）本来就是一条
 硬校验错误，有它的时候根本生成不出报告。
 
-处理方式是把两条规则标成 `enabled: false`，**而不是删掉**。这个文件开头的约定就是这么写的：
+处理方式是把它们标成 `enabled: false`，**而不是删掉**。这个文件开头的约定就是这么写的：
 停用的规则留在目录里，规则总览会把它列出来并注明"已停用"。删掉的话，决定就从记录里消失了，
-下一次有人问"为什么没有这条建议"就查不到答案。目录仍是 30 条，其中 2 条停用。
+下一次有人问"为什么没有这条建议"就查不到答案。目录仍是 30 条，其中 **3 条停用**。
 
 另外两条规则只是**少了一个子句**，去掉后依然成立，于是保留：
 
@@ -331,6 +351,35 @@ DNS 能解析、TCP 443 能连，我当时却把它当成了对方的坏链。
   "如果英语不是你的母语……"，而本工具已经不再收集这个信息，所以**文案也改了**：
   改成陈述"这些目的地以英语授课，当地多数院校会要求英语能力证明"。
   不能保留一句依赖已删字段的假设，哪怕它听起来更贴心。
+
+### 第三条停用的规则：它读错了字段，而且两种状态都是错的
+
+`perf-high-at-load`（"你记录的每一门都是最高阶科目"）判的是
+`countSubject("AT") === record.subjects.length`，而 `countSubject` 当时读的是
+`s.level`——科目行上那个"班次"下拉。工作簿里 `AT…` 是**科目代码**的前缀
+（`ATMAM`、`ATPHY`…，代表计入 ATAR 的课程），班次下拉里则是
+`Year 11 / September intake / January intake`。没有一个以 `AT` 开头，于是
+`countSubject("AT")` 恒为 0，而另一个条件要求科目数 ≥ 4 —— **这条规则从写下来那天起
+一次也没有触发过。** 套件里"Year 11 科目不应触发高阶课程规则"那条断言一直在通过：
+它通过是因为什么都触发不了。**断言比缺陷宽，就会漏。**
+
+把字段改对之后，它撞上第二种错：科目下拉只提供 ATAR 课程，于是
+`countSubject("AT") === 科目数` 对**每一份**完整记录都成立。这时若启用它，
+每一份报告都会印上"你所有科目都是最高阶"——和 `funding-not-recorded` 同一类：
+把常量当建议。这个区分已经由表单本身保证（General 课程打不进来），所以这条规则
+**留在目录里、标为停用**，由规则总览记录这个决定。
+
+### 删掉的两列：班次、已考权重
+
+两列都不是凭空来的，但都以错误的方式留在了表单上。
+
+| 列 | 来源 | 为什么删 |
+| --- | --- | --- |
+| 班次 | 工作簿里 intake 是**学生一级**的勾选框（"If you were part of the Sept/ Head Start intakes, please check this box"） | 删身份区块时，`previousIntake` 的**词表**没跟着删，飘到了科目行上，变成问一个已不存在的问题；还顺手弄死了上面那条规则。工作簿的科目表里没有这一列 |
+| 已考权重 | 工作簿 `TARGET CALCULATOR` 的 `Total (%) already assessed by school` | 我们只搬了输入，没搬算法。那一列的用处是喂给旁边的 `Marks required for remaining assessment(s)` 和 `Maximum possible mark`，以及下方的 `Focused weightage calculator`（`coverage % × current marks % = banked`）。一条计算都没搬，于是它成了一个只进不出的输入框——读者看不懂是必然的 |
+
+已考权重**将来可能回来**：等要做"已经锁定多少分 / 剩下的考核要考多少才够目标"时，
+它是那套算法的输入。届时一并补上，而不是单独把这一格放回去。
 
 ### 让这类缺陷下次自己暴露
 
