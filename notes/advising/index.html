@@ -45,8 +45,9 @@
   <section class="card">
     <h2>升学意向</h2>
     <p class="muted">只想算 ATAR 的话这一块可以留空；填了才会有目的国、专业、先修科目、语言和费用这几类建议。</p>
-    <table><thead><tr><th style="width:34%">国家/地区</th>
-      <th style="width:34%">专业方向</th><th>目标大学</th><th style="width:38px"></th></tr></thead>
+    <table><thead><tr><th style="width:26%">国家/地区</th>
+      <th style="width:26%">专业方向</th><th>目标大学</th>
+      <th style="width:14%">记录最低分</th><th style="width:38px"></th></tr></thead>
       <tbody id="interestRows"></tbody></table>
     <button class="ghost mini" id="addInterest">+ 增加一行</button>
   </section>
@@ -66,8 +67,6 @@
     <div class="row2">
       <div class="field"><label for="targetAtar">目标 ATAR</label>
         <input type="number" id="targetAtar" min="0" max="99.95" step="0.05"></div>
-      <div class="field"><label for="estimatedAtar">当前预估 ATAR</label>
-        <input type="number" id="estimatedAtar" min="0" max="99.95" step="0.05"></div>
     </div>
     <div class="toolbar">
       <button class="ghost" id="btnAtar">算一下</button>

@@ -221,11 +221,19 @@
   }
   function universityMatches(course, interestUniversity) {
     if (!interestUniversity) return true
-    var a = String(course.university || '').toLowerCase()
-    var b = String(interestUniversity).toLowerCase()
-    if (a.indexOf(b) !== -1 || b.indexOf(a) !== -1) return true
-    var wsp = fieldWords(interestUniversity)
-    return fieldWords(course.university).some(function (w) { return wsp.indexOf(w) !== -1 })
+    // Exact, because the form is now a pick-list of the library's own names.
+    //
+    // It used to fall back to word overlap for a typed name, and that fallback
+    // was quietly wrong: "Curtin University" and "University of Western
+    // Australia" share the word "university", so EVERY institution matched every
+    // other one. A student comparing against Curtin was shown UWA's minimums,
+    // and the panel named a course they had not chosen — with no error anywhere,
+    // because a course list that is too long still looks like a course list.
+    //
+    // Equality is now sufficient as well as honest: the value can only come from
+    // `universityNames()`, which reads the same rows this compares against.
+    return String(course.university || '').trim().toLowerCase() ===
+           String(interestUniversity).trim().toLowerCase()
   }
   function matchingCourses(record) {
     var out = []
@@ -242,7 +250,12 @@
   // The nearest recorded minimum at or below the student's standing, and the
   // nearest above it. Both are what an advisor would actually say out loud.
   function atarComparison(record, courses) {
-    var standing = record.estimatedAtar
+    // The standing is the number the tool computed from the marks, not one the
+    // student typed. Reading a typed estimate here is what kept every
+    // library-comparison rule silent until the student guessed: no standing means
+    // this returns null, which means anyInterestHasCourses is false, which means
+    // none of them fire.
+    var standing = record.computedAtar
     if (standing === null || standing === undefined || !courses.length) return null
     var reachable = courses.filter(function (c) { return c.atar <= standing })
     var above = courses.filter(function (c) { return c.atar > standing })
@@ -695,6 +708,42 @@
         }
         return !!cmp.reachable
       },
+      // True when the nearest recorded minimum ABOVE the standing is within
+      // the margin: the near-miss case, which neither helper above can
+      // express. anyReachableCourse means you are already past something;
+      // anyInterestHasCourses means a comparison is possible at all. This
+      // one is the only shape that says 'this close'.
+      nearestAboveWithin: function (currentScope, args) {
+        var margin = Number(evaluateAst(args[0], currentScope))
+        var cmp = atarComparison(currentScope.record, matchingCourses(currentScope.record))
+        if (!cmp || isNaN(margin)) return false
+        currentScope.__standing = cmp.standing
+        currentScope.__courseCount = cmp.count
+        if (cmp.nearest) {
+          currentScope.__nearest = courseLabel(cmp.nearest)
+          currentScope.__gap = Math.round((cmp.nearest.atar - cmp.standing) * 10) / 10
+        }
+        if (!cmp.nearest) return false
+        return cmp.nearest.atar - cmp.standing <= margin
+      },
+      // True when at least one recorded choice matches no library course.
+      // anyInterestHasCourses unions across choices, so a single unmatched
+      // choice disappears from the comparison with nothing said about it:
+      // the student sees a comparison that silently covers fewer choices
+      // than they entered. This asks per-choice, which is the only way to
+      // notice the one that dropped out.
+      anyInterestUnmatched: function (currentScope, args) {
+        var any = false
+        ;(currentScope.record.interests || []).forEach(function (i) {
+          if (!i.country && !i.field && !i.university) return
+          any = true
+        })
+        if (!any) return false
+        return (currentScope.record.interests || []).some(function (i) {
+          if (!i.country && !i.field && !i.university) return false
+          return matchingCourses({ interests: [i] }).length === 0
+        })
+      },
       // The field roadmap. True only when the student named a field the
       // roadmap covers, so the rule stays silent rather than printing a
       // generic paragraph — filler advice in a report is worse than a gap.
@@ -943,7 +992,13 @@
       var field = tr.querySelector('.i-field').value
       var uni = tr.querySelector('.i-uni').value
       if (country || field || uni) {
-        interests.push({ country: country, field: field, university: uni, atarRequirement: null })
+        // No atarRequirement: the field was always null, because no control ever
+        // set it, and a rule read it as "the student has not recorded a figure"
+        // — so it fired on every report with a choice and told the reader to
+        // record something the form could not collect. The minimum now comes
+        // from the course library, matched on all three of these values, which
+        // is why the institution is a pick-list rather than a text box.
+        interests.push({ country: country, field: field, university: uni })
       }
     })
     var subjects = []
@@ -954,22 +1009,51 @@
         subjects.push({ subject: subject, mark: mark })
       }
     })
-    return {
+    var rec = {
       targetAtar: numOrNull($('targetAtar').value),
-      estimatedAtar: numOrNull($('estimatedAtar').value),
       interests: interests,
       subjects: subjects,
     }
+    // The standing is COMPUTED, not asked for. It used to be a typed estimate
+    // ("Current (estimated) ATAR"), and the entire course-library comparison was
+    // gated on it: atarComparison returns null without a standing, so
+    // anyInterestHasCourses was false, so every rule that compares the student
+    // against a recorded minimum stayed silent unless the student first guessed
+    // a number. The tool can work this out from the marks it already has.
+    // Null when the marks cannot be converted, which keeps those rules silent
+    // rather than comparing against a figure that does not exist.
+    rec.computedAtar = atarPicture(rec).atar
+    return rec
   }
 
   function writeRecord(rec) {
     $('targetAtar').value = rec.targetAtar === null || rec.targetAtar === undefined ? '' : rec.targetAtar
-    $('estimatedAtar').value = rec.estimatedAtar === null || rec.estimatedAtar === undefined ? '' : rec.estimatedAtar
 
     $('interestRows').innerHTML = ''
     ;(rec.interests && rec.interests.length ? rec.interests : [{}]).forEach(addInterestRow)
     $('subjectRows').innerHTML = ''
     ;(rec.subjects && rec.subjects.length ? rec.subjects : [{}]).forEach(addSubjectRow)
+  }
+
+  /* An interest row: where, what field, and which institution.
+   *
+   * The institution is a pick-list drawn from the course library, and the last
+   * cell shows the minimum the library records for the combination. Both halves
+   * matter. A typed name had to be matched by word overlap, so "Curtin" matched
+   * "Curtin University" but "Monash" was ambiguous between the Australian and
+   * Malaysian campuses and a typo matched nothing — silently, because a record
+   * whose institution matches no course simply produces no comparison and no
+   * error. And the read-only figure is what makes choosing an institution worth
+   * doing: it is the number the report and the ATAR panel compare against, and
+   * it comes from the library rather than from a text box nobody could fill. */
+  function universityNames() {
+    var seen = {}
+    var out = []
+    ;(LIBRARY.rows || []).forEach(function (c) {
+      var name = String(c.university || '')
+      if (name && !seen[name]) { seen[name] = true; out.push(name) }
+    })
+    return out.sort()
   }
 
   function addInterestRow(preset) {
@@ -979,15 +1063,36 @@
     country.appendChild(options(R.vocabularies.countries, preset.country, '— country —'))
     var field = el('select', { 'class': 'i-field' }, [])
     field.appendChild(options(R.vocabularies.fields, preset.field, '— field —'))
-    var uni = el('input', { 'class': 'i-uni', type: 'text', placeholder: 'optional' })
-    uni.value = preset.university || ''
+    var uni = el('select', { 'class': 'i-uni' }, [])
+    uni.appendChild(options(universityNames(), preset.university, '— ' + (LANG === 'zh' ? '院校' : 'institution') + ' —'))
+    var recorded = el('td', { 'class': 'muted num' })
     var bin = el('button', { 'class': 'ghost mini', text: '×' })
     bin.addEventListener('click', function () { tr.remove() })
+
+    // Recomputed whenever any of the three changes, because the library matches
+    // on all three together. Shown as "—" when the library has nothing for the
+    // combination, which is honest: it means no comparison is possible, not that
+    // the requirement is low.
+    function refresh() {
+      var courses = matchingCourses({ interests: [{ country: country.value, field: field.value, university: uni.value }] })
+      var lowest = null
+      courses.forEach(function (c) {
+        if (typeof c.atar === 'number' && (lowest === null || c.atar < lowest)) lowest = c.atar
+      })
+      recorded.textContent = lowest === null ? '—' : lowest.toFixed(R.calibration.display.atar)
+      recorded.title = courses.length
+        ? courses.length + (LANG === 'zh' ? ' 门课程，最低 ' + lowest : ' course(s), lowest ' + lowest)
+        : (LANG === 'zh' ? '课程库里没有这个组合' : 'nothing in the library for this combination')
+    }
+    ;[country, field, uni].forEach(function (node) { node.addEventListener('change', refresh) })
+
     tr.appendChild(el('td', {}, [country]))
     tr.appendChild(el('td', {}, [field]))
     tr.appendChild(el('td', {}, [uni]))
+    tr.appendChild(recorded)
     tr.appendChild(el('td', {}, [bin]))
     $('interestRows').appendChild(tr)
+    refresh()
   }
 
   /* A subject row is a subject and a mark.
@@ -1043,8 +1148,8 @@
       if (!it.country) warnings.push('Interest ' + (i + 1) + pick(': no country selected, so destination rules cannot fire.', '：未选择国家，方向类规则不会触发。'))
       if (!it.field) warnings.push('Interest ' + (i + 1) + pick(': no field selected, so course rules cannot fire.', '：未选择专业方向，专业类规则不会触发。'))
     })
-    if (rec.targetAtar !== null && rec.estimatedAtar !== null && rec.estimatedAtar > rec.targetAtar + 20) {
-      warnings.push('The estimated ATAR exceeds the target by more than 20 points — confirm both were entered in the same direction.')
+    if (rec.targetAtar !== null && rec.computedAtar !== null && rec.computedAtar > rec.targetAtar + 20) {
+      warnings.push('The computed ATAR exceeds the target by more than 20 points — confirm the target was entered in the same direction.')
     }
     Object.keys(compileErrors).forEach(function (id) {
       errors.push(pick('Rule "' + id + '" cannot be evaluated: ', '规则「' + id + '」无法求值：') + compileErrors[id] + '.')
@@ -1208,7 +1313,7 @@
       field: interest.field || '',
       university: interest.university || '',
       targetAtar: rec.targetAtar === null || rec.targetAtar === undefined ? '' : rec.targetAtar,
-      estimatedAtar: rec.estimatedAtar === null || rec.estimatedAtar === undefined ? '' : rec.estimatedAtar,
+      computedAtar: rec.computedAtar === null || rec.computedAtar === undefined ? '' : rec.computedAtar,
       subjectCount: (rec.subjects || []).length,
       aggregate: agg === null ? '' : agg.toFixed(R.calibration.display.aggregate),
       convertedAtar: atar === null ? '' : atar.toFixed(R.calibration.display.atar),
@@ -1219,7 +1324,7 @@
   }
 
   var CSV_HEADERS = ['country', 'field', 'university', 'targetAtar',
-                     'estimatedAtar', 'subjectCount', 'aggregate', 'convertedAtar',
+                     'computedAtar', 'subjectCount', 'aggregate', 'convertedAtar',
                      'subjects']
 
   /* RFC 4180 quoting: wrap when the value contains a comma, quote, CR or LF, and
@@ -1515,6 +1620,32 @@
       line.appendChild(el('span', { 'class': 'muted', text: U.atar_no_target }))
     }
     box.appendChild(line)
+    // The institution the student chose, against the minimum the library
+    // records for it. This is the line that makes filling in a choice worth
+    // the keystrokes: before it, the institution only affected the written
+    // report, and the panel answered a question about no institution in
+    // particular. It reads the same atarComparison the rules use, so the
+    // panel and the report cannot disagree about the same student.
+    var chosen = rec.interests.filter(function (i) { return i.university })
+    if (chosen.length && p.status !== 'out-of-range') {
+      var cmp2 = atarComparison(rec, matchingCourses(rec))
+      var uniLine = el('p', { 'class': 'muted' })
+      uniLine.appendChild(el('strong', { text: U.atar_uni_head + '：' }))
+      if (cmp2 && cmp2.reachable) {
+        uniLine.appendChild(el('span', { text: U.atar_uni_above
+          .replace('{standing}', p.atar.toFixed(R.calibration.display.atar))
+          .replace('{label}', courseLabel(cmp2.reachable))
+          .replace('{gap}', (p.atar - cmp2.reachable.atar).toFixed(R.calibration.display.atar)) }))
+      } else if (cmp2 && cmp2.nearest) {
+        uniLine.appendChild(el('span', { text: U.atar_uni_below
+          .replace('{standing}', p.atar.toFixed(R.calibration.display.atar))
+          .replace('{label}', courseLabel(cmp2.nearest))
+          .replace('{gap}', (cmp2.nearest.atar - p.atar).toFixed(R.calibration.display.atar)) }))
+      } else {
+        uniLine.appendChild(el('span', { text: U.atar_uni_none }))
+      }
+      box.appendChild(uniLine)
+    }
     box.appendChild(el('p', { 'class': 'muted', text: calText('caveat') }))
     // Printed under every figure rather than only the low ones. The earlier
     // version warned that the curve ran ten points high below ATAR 90; that
@@ -1679,7 +1810,6 @@
   function sample() {
     return {
       targetAtar: 88,
-      estimatedAtar: 79.5,
       interests: [
         { country: 'Australia', field: 'Engineering', university: 'Curtin University' },
         { country: 'United Kingdom', field: 'Engineering', university: 'University of Manchester' },
