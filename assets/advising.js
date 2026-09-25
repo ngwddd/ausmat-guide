@@ -269,6 +269,20 @@
   function courseLabel(c) {
     return c.university + ' ' + c.course + ' (' + c.atar + ')'
   }
+  // The same, but honest when the named course is one of several at the same
+  // minimum. "University of Western Australia Biomedical Engineering (80)" reads
+  // as the requirement; it is one of three courses at 80, and which one the sort
+  // put first is not information. Ties are common — a whole engineering school
+  // usually publishes one entry score — so the prose says so instead.
+  function courseSetLabel(courses, c) {
+    var tied = (courses || []).filter(function (x) { return x.atar === c.atar })
+    if (tied.length < 2) return courseLabel(c)
+    var names = tied.slice(0, 3).map(function (x) { return x.course })
+    var rest = tied.length > names.length ? (LANG === 'zh' ? ' 等 ' : ', …') : ''
+    return LANG === 'zh'
+      ? (c.atar + ' 分并列的 ' + tied.length + ' 门（' + names.join('、') + rest + '）')
+      : (tied.length + ' courses tied at ' + c.atar + ' (' + names.join(', ') + rest + ')')
+  }
   // Every pass reads the catalog directly. A rule that is switched off stays in
   // the set on purpose: `evaluate` returns it with a reason instead of firing it,
   // which is what puts it in the coverage view as deliberately silent.
@@ -696,7 +710,7 @@
         currentScope.__standing = cmp.standing
         currentScope.__courseCount = cmp.count
         if (cmp.nearest) {
-          currentScope.__nearest = courseLabel(cmp.nearest)
+          currentScope.__nearest = courseSetLabel(matchingCourses(currentScope.record), cmp.nearest)
           currentScope.__gap = Math.round((cmp.nearest.atar - cmp.standing) * 10) / 10
         }
         return cmp.count > 0
@@ -707,9 +721,9 @@
         if (!cmp) return false
         currentScope.__standing = cmp.standing
         currentScope.__courseCount = cmp.count
-        if (cmp.reachable) currentScope.__reachable = courseLabel(cmp.reachable)
+        if (cmp.reachable) currentScope.__reachable = courseSetLabel(matchingCourses(currentScope.record), cmp.reachable)
         if (cmp.nearest) {
-          currentScope.__nearest = courseLabel(cmp.nearest)
+          currentScope.__nearest = courseSetLabel(matchingCourses(currentScope.record), cmp.nearest)
           currentScope.__gap = Math.round((cmp.nearest.atar - cmp.standing) * 10) / 10
         }
         return !!cmp.reachable
@@ -726,7 +740,7 @@
         currentScope.__standing = cmp.standing
         currentScope.__courseCount = cmp.count
         if (cmp.nearest) {
-          currentScope.__nearest = courseLabel(cmp.nearest)
+          currentScope.__nearest = courseSetLabel(matchingCourses(currentScope.record), cmp.nearest)
           currentScope.__gap = Math.round((cmp.nearest.atar - cmp.standing) * 10) / 10
         }
         if (!cmp.nearest) return false
@@ -1024,23 +1038,69 @@
 
   /* An interest row: where, what field, and which institution.
    *
-   * The institution is a pick-list drawn from the course library, and the last
-   * cell shows the minimum the library records for the combination. Both halves
-   * matter. A typed name had to be matched by word overlap, so "Curtin" matched
-   * "Curtin University" but "Monash" was ambiguous between the Australian and
-   * Malaysian campuses and a typo matched nothing — silently, because a record
-   * whose institution matches no course simply produces no comparison and no
-   * error. And the read-only figure is what makes choosing an institution worth
-   * doing: it is the number the report and the ATAR panel compare against, and
-   * it comes from the library rather than from a text box nobody could fill. */
-  function universityNames() {
+   * The last cell reports what the library holds for the combination. Three
+   * things here are deliberate, because the first version was not rigorous:
+   *
+   *   1. The institution list depends on the country. Offering all sixteen under
+   *      every country let a student record "Australia + Sunway University",
+   *      which can never match anything, and the only feedback was a dash.
+   *   2. The cell reports a RANGE and a COUNT, not one number. A single figure
+   *      was the lowest matching course, which silently answered "the easiest
+   *      thing there" to a question about the course the student has in mind:
+   *      Deakin holds six matching courses from 52.4 to 87.5, and "52.4" is the
+   *      floor, not the requirement.
+   *   3. When the library holds nothing, the cell says so in words. A dash is
+   *      what an unfilled cell looks like, and the two mean opposite things.
+   */
+  function universitiesIn(country) {
     var seen = {}
     var out = []
     ;(LIBRARY.rows || []).forEach(function (c) {
       var name = String(c.university || '')
-      if (name && !seen[name]) { seen[name] = true; out.push(name) }
+      if (!name || seen[name]) return
+      if (country && !countryMatches(c.country, country)) return
+      seen[name] = true
+      out.push(name)
     })
     return out.sort()
+  }
+
+  function countriesInLibrary() {
+    var seen = {}
+    var out = []
+    ;(LIBRARY.rows || []).forEach(function (c) {
+      if (c.country && !seen[c.country]) { seen[c.country] = true; out.push(c.country) }
+    })
+    return out.sort()
+  }
+
+  function countryInLibrary(country) {
+    if (!country) return true
+    return (LIBRARY.rows || []).some(function (c) { return countryMatches(c.country, country) })
+  }
+
+  function coursesFor(country, field, university) {
+    return matchingCourses({ interests: [{ country: country, field: field, university: university }] })
+      .slice()
+      .sort(function (a, b) { return a.atar - b.atar })
+  }
+
+  /* Which of the three values is the one that excludes everything. "No course for
+   * that combination" is true and useless: the student needs to know whether to
+   * change the country, the institution or the field, and the three have
+   * different fixes. The order is deliberate — country first, because it is the
+   * coarsest constraint, then the institution, then the field. */
+  function libraryDiagnosis(country, field, university) {
+    if (!country && !field && !university) return 'blank'
+    if (country && !countryInLibrary(country)) return 'country'
+    if (university) {
+      var here = (LIBRARY.rows || []).filter(function (c) {
+        return countryMatches(c.country, country) && String(c.university) === String(university)
+      })
+      if (!here.length) return 'university'
+      return 'field'
+    }
+    return 'field'
   }
 
   function addInterestRow(preset) {
@@ -1051,27 +1111,60 @@
     var field = el('select', { 'class': 'i-field' }, [])
     field.appendChild(options(R.vocabularies.fields, preset.field, '— field —'))
     var uni = el('select', { 'class': 'i-uni' }, [])
-    uni.appendChild(options(universityNames(), preset.university, '— ' + (LANG === 'zh' ? '院校' : 'institution') + ' —'))
     var recorded = el('td', { 'class': 'muted num' })
     var bin = el('button', { 'class': 'ghost mini', text: '×' })
     bin.addEventListener('click', function () { tr.remove() })
 
-    // Recomputed whenever any of the three changes, because the library matches
-    // on all three together. Shown as "—" when the library has nothing for the
-    // combination, which is honest: it means no comparison is possible, not that
-    // the requirement is low.
-    function refresh() {
-      var courses = matchingCourses({ interests: [{ country: country.value, field: field.value, university: uni.value }] })
-      var lowest = null
-      courses.forEach(function (c) {
-        if (typeof c.atar === 'number' && (lowest === null || c.atar < lowest)) lowest = c.atar
-      })
-      recorded.textContent = lowest === null ? '—' : lowest.toFixed(R.calibration.display.atar)
-      recorded.title = courses.length
-        ? courses.length + (LANG === 'zh' ? ' 门课程，最低 ' + lowest : ' course(s), lowest ' + lowest)
-        : (LANG === 'zh' ? '课程库里没有这个组合' : 'nothing in the library for this combination')
+    // Rebuilt on every country change, keeping the current pick only while the
+    // library still offers it there.
+    function fillUniversities() {
+      var keep = uni.value
+      var names = universitiesIn(country.value)
+      uni.innerHTML = ''
+      uni.appendChild(options(names, names.indexOf(keep) === -1 ? '' : keep, names.length
+        ? '— ' + (LANG === 'zh' ? '院校' : 'institution') + ' —'
+        : (LANG === 'zh' ? '这个国家课程库里没有院校' : 'no institution for this country')))
     }
-    ;[country, field, uni].forEach(function (node) { node.addEventListener('change', refresh) })
+
+    function describeCourses(courses) {
+      return courses.slice(0, 10).map(function (c) {
+        return c.course + ' (' + c.atar + ')' + (c.category ? ' [' + c.category + ']' : '')
+      }).join('\n') + (courses.length > 10 ? '\n…' : '')
+    }
+
+    function refresh() {
+      var courses = coursesFor(country.value, field.value, uni.value)
+      var lo = null
+      var hi = null
+      courses.forEach(function (c) {
+        if (typeof c.atar !== 'number') return
+        if (lo === null || c.atar < lo) lo = c.atar
+        if (hi === null || c.atar > hi) hi = c.atar
+      })
+      var d = R.calibration.display.atar
+      if (!courses.length) {
+        var why = libraryDiagnosis(country.value, field.value, uni.value)
+        recorded.textContent = LANG === 'zh' ? '库里没有' : 'not recorded'
+        recorded.title = why === 'country'
+          ? (LANG === 'zh'
+              ? '课程库只覆盖这些国家：' + countriesInLibrary().join('、')
+              : 'the library covers only: ' + countriesInLibrary().join(', '))
+          : why === 'university'
+            ? (LANG === 'zh'
+                ? '课程库里没有这所院校在这个国家的记录' + (uni.value ? '（' + uni.value + '）' : '')
+                : 'the library records nothing for that institution in that country')
+            : (LANG === 'zh'
+                ? '这个国家与院校下，没有匹配「' + (field.value || '—') + '」方向的课程'
+                : 'no course matching that field for this country and institution')
+      } else {
+        recorded.textContent = (lo === hi ? lo.toFixed(d) : lo.toFixed(d) + '–' + hi.toFixed(d)) + ' · ' + courses.length
+        recorded.title = describeCourses(courses)
+      }
+    }
+
+    country.addEventListener('change', function () { fillUniversities(); refresh() })
+    field.addEventListener('change', refresh)
+    uni.addEventListener('change', refresh)
 
     tr.appendChild(el('td', {}, [country]))
     tr.appendChild(el('td', {}, [field]))
@@ -1079,6 +1172,8 @@
     tr.appendChild(recorded)
     tr.appendChild(el('td', {}, [bin]))
     $('interestRows').appendChild(tr)
+    fillUniversities()
+    if (preset.university) uni.value = preset.university
     refresh()
   }
 
@@ -1607,31 +1702,62 @@
       line.appendChild(el('span', { 'class': 'muted', text: U.atar_no_target }))
     }
     box.appendChild(line)
-    // The institution the student chose, against the minimum the library
-    // records for it. This is the line that makes filling in a choice worth
-    // the keystrokes: before it, the institution only affected the written
-    // report, and the panel answered a question about no institution in
-    // particular. It reads the same atarComparison the rules use, so the
-    // panel and the report cannot disagree about the same student.
-    var chosen = rec.interests.filter(function (i) { return i.university })
-    if (chosen.length && p.status !== 'out-of-range') {
-      var cmp2 = atarComparison(rec, matchingCourses(rec))
-      var uniLine = el('p', { 'class': 'muted' })
-      uniLine.appendChild(el('strong', { text: U.atar_uni_head + '：' }))
-      if (cmp2 && cmp2.reachable) {
-        uniLine.appendChild(el('span', { text: U.atar_uni_above
-          .replace('{standing}', p.atar.toFixed(R.calibration.display.atar))
-          .replace('{label}', courseLabel(cmp2.reachable))
-          .replace('{gap}', (p.atar - cmp2.reachable.atar).toFixed(R.calibration.display.atar)) }))
-      } else if (cmp2 && cmp2.nearest) {
-        uniLine.appendChild(el('span', { text: U.atar_uni_below
-          .replace('{standing}', p.atar.toFixed(R.calibration.display.atar))
-          .replace('{label}', courseLabel(cmp2.nearest))
-          .replace('{gap}', (cmp2.nearest.atar - p.atar).toFixed(R.calibration.display.atar)) }))
-      } else {
-        uniLine.appendChild(el('span', { text: U.atar_uni_none }))
-      }
-      box.appendChild(uniLine)
+    // One line per choice, each stating what the library holds for THAT
+    // choice and where the standing sits inside it. The first version
+    // printed a single line over the union of every choice and named one
+    // course out of the set; with three courses tied at 80 it named
+    // whichever the sort happened to put first, which tells the reader
+    // that Biomedical Engineering is the requirement when it is one of
+    // three. It also never said how many courses it was summarising.
+    // Every filled choice gets a line, including one with no institution
+    // chosen: that row still constrains country and field, and the report
+    // already speaks about it, so the panel staying silent was the two
+    // disagreeing about which choices exist.
+    var picked = rec.interests.filter(function (i) { return i.country || i.field || i.university })
+    if (picked.length && p.status !== 'out-of-range') {
+      var d = R.calibration.display.atar
+      picked.forEach(function (i) {
+        var list = coursesFor(i.country, i.field, i.university)
+        var row = el('p', { 'class': 'muted' })
+        var head = i.university || ((i.country || '—') + ' · ' + (i.field || '—'))
+        row.appendChild(el('strong', { text: head + '：' }))
+        if (!list.length) {
+          var why = libraryDiagnosis(i.country, i.field, i.university)
+          row.appendChild(el('span', { text: why === 'country'
+            ? U.atar_uni_nocountry.replace('{countries}', countriesInLibrary().join(LANG === 'zh' ? '、' : ', '))
+            : why === 'university'
+              ? U.atar_uni_nouni.replace('{uni}', String(i.university))
+              : U.atar_uni_nocourse.replace('{field}', String(i.field || '—')) }))
+          box.appendChild(row)
+          return
+        }
+        var lo = list[0].atar
+        var hi = list[list.length - 1].atar
+        row.appendChild(el('span', { text: (lo === hi
+          ? U.atar_uni_holdflat.replace('{n}', String(list.length)).replace('{lo}', lo.toFixed(d))
+          : U.atar_uni_hold.replace('{n}', String(list.length)).replace('{lo}', lo.toFixed(d)).replace('{hi}', hi.toFixed(d))) + ' ' }))
+        var cmpRow = atarComparison(rec, list)
+        var mine = p.atar
+        if (cmpRow && cmpRow.reachable) {
+          row.appendChild(el('span', { text: U.atar_uni_above
+            .replace('{standing}', mine.toFixed(d))
+            .replace('{n}', String(cmpRow.reachable ? list.filter(function (c) { return c.atar <= mine }).length : 0))
+            .replace('{top}', cmpRow.reachable.atar.toFixed(d)) }))
+          if (cmpRow.nearest) {
+            row.appendChild(el('span', { text: ' ' + U.atar_uni_next
+              .replace('{next}', cmpRow.nearest.atar.toFixed(d))
+              .replace('{gap}', (cmpRow.nearest.atar - mine).toFixed(d)) }))
+          }
+        } else if (cmpRow && cmpRow.nearest) {
+          row.appendChild(el('span', { text: U.atar_uni_below
+            .replace('{standing}', mine.toFixed(d))
+            .replace('{n}', String(list.length))
+            .replace('{lo}', lo.toFixed(d))
+            .replace('{gap}', (lo - mine).toFixed(d)) }))
+        }
+        row.appendChild(el('span', { 'class': 'muted', text: ' ' + list.slice(0, 3).map(function (c) { return c.course + ' (' + c.atar + ')' }).join(LANG === 'zh' ? '、' : ', ') + (list.length > 3 ? ' …' : '') }))
+        box.appendChild(row)
+      })
     }
     box.appendChild(el('p', { 'class': 'muted', text: calText('caveat') }))
     // Printed under every figure rather than only the low ones. The earlier
