@@ -610,12 +610,12 @@ window.ADVISING = (function () {
       when: 'anyReachableCourse()',
       advice:
         'Among the courses recorded for your stated interests, your current standing of ' +
-        '{{standing}} reaches {{reachableCourse}}. The nearest one above you is ' +
-        '{{nearestCourse}}, {{atarGap}} points away. Those minimums are a snapshot and move ' +
-        'every intake, so treat them as a starting point.',
+        '{{standing}} reaches {{reachableCourse}}.{{#if nearestCourse}} The nearest one ' +
+        'above you is {{nearestCourse}}, {{atarGap}} points away.{{/if}} Those minimums ' +
+        'are a snapshot and move every intake, so treat them as a starting point.',
       zh:
-        '在你填写方向的已记录课程里，你当前 {{standing}} 的水平够得上 {{reachableCourse}}；' +
-        '最近的一门在你之上的是 {{nearestCourse}}，差 {{atarGap}} 分。' +
+        '在你填写方向的已记录课程里，你当前 {{standing}} 的水平够得上 {{reachableCourse}}。' +
+        '{{#if nearestCourse}}最近的一门在你之上的是 {{nearestCourse}}，差 {{atarGap}} 分。{{/if}}' +
         '这些最低分是快照，每轮都会变，只作起点参考。',
       modes: ['student', 'guest'],
       source: 'Verify the current minimum on the institution course page',

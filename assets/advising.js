@@ -58,6 +58,14 @@
     var want = String(interestField).toLowerCase()
     var cat = String(course.category || '').toLowerCase()
     var name = String(course.course || '').toLowerCase()
+    // A course with no stated category is not restricted to a field, so it
+    // matches whatever field the student named, including "Undecided" — a
+    // student who has not chosen yet is exactly who a course named "ANY
+    // offered" is for. The source workbook records the National University of
+    // Singapore that way, with a blank category, and the blank was being read as
+    // "matches nothing": the row was reachable by country and invisible to every
+    // field. Absence of a restriction is not a restriction.
+    if (!cat) return true
     if (cat && (cat.indexOf(want) !== -1 || want.indexOf(cat) !== -1)) return true
     if (name.indexOf(want) !== -1) return true
     // Word overlap, but only on words that carry meaning here. A first attempt
@@ -703,6 +711,20 @@
    * -------------------------------------------------------------------*/
   function interpolate(text, record, extra) {
     var scope = extra || {}
+    // Optional clauses. A rule may fire in a case where one of its tokens
+    // has nothing to say — reaching a course with no course above you is
+    // the ordinary case, not an error — and substituting '—' there leaves
+    // half a sentence behind ("the nearest one above you is —, — points
+    // away"). {{#if key}} … {{/if}} drops the clause entirely when the key
+    // is absent, empty, or false. Unmatched markers are stripped so a
+    // typo shows up as missing text, not as braces on the page.
+    text = String(text).replace(/\{\{#if (\w+)\}\}([\s\S]*?)\{\{\/if\}\}/g,
+      function (whole, key, body) {
+        var v = Object.prototype.hasOwnProperty.call(scope, key) ? scope[key] : null
+        if (v === null || v === undefined || v === '' || v === false) return ''
+        return body
+      })
+    text = String(text).replace(/\{\{[#/]if \w+\}\}|\{\{\/if\}\}/g, '')
     return String(text).replace(/\{\{(\w+)\}\}/g, function (whole, key) {
       if (Object.prototype.hasOwnProperty.call(scope, key)) return String(scope[key])
       if (key === 'subjectCount') return String(record.subjects.length)
