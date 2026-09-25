@@ -681,6 +681,12 @@
       // NOT mean this: a null second argument is indistinguishable from an
       // omitted one, where the comparison falls back to truthiness. Naming the
       // intent avoids a trap the language cannot express clearly.
+      // anyInterestMissing was here: it reported any interest whose named field
+      // was blank. The only field it was ever pointed at was the per-interest
+      // minimum ATAR, which no control set — so it was true for every record with
+      // a choice, and the rule built on it fired on every report. anyInterestUnmatched
+      // asks the question that still has an answer: does the library know this choice?
+      // fieldPath -> a capability field the stated course expectation requires.
       // Substring match over a field, recording what matched so the
       // advice can name it instead of alluding to it.
       // True when the recorded interests match at least one library row.
@@ -784,13 +790,6 @@
         return hits.length > 0
       },
 
-      anyInterestMissing: function (currentScope, args) {
-        var path = evaluateAst(args[0], currentScope)
-        return record.interests.some(function (interest) {
-          var value = resolvePath({ i: interest, item: interest }, path)
-          return value === null || value === undefined || value === ''
-        })
-      },
       // fieldPath -> a capability field the stated course expectation requires.
       anyInterestExpectationGap: function (currentScope, args) {
         var __gaps = []
@@ -839,23 +838,11 @@
         if (__opts.length) currentScope.__optionalFields = renderGaps(__opts)
         return __opts.length > 0
       },
-      // atarPath, standing, margin -> true when standing is within `margin` BELOW
-      // a stated minimum. Blowing past the minimum is a different message, and a
-      // standing far above it is not worth mentioning at all.
-      belowStatedMinimum: function (currentScope, args) {
-        if (args.length < 3) {
-          throw new Error('belowStatedMinimum needs a path, the standing, and a margin, e.g. belowStatedMinimum("i.atarRequirement", record.estimatedAtar, T.atarMarginPoints)')
-        }
-        var path = evaluateAst(args[0], currentScope)
-        var standing = evaluateAst(args[1], currentScope)
-        var margin = Number(evaluateAst(args[2], currentScope))
-        if (standing === null || standing === undefined || isNaN(margin)) return false
-        return record.interests.some(function (interest) {
-          var minimum = resolvePath({ i: interest, item: interest }, path)
-          if (typeof minimum !== 'number') return false
-          return standing >= minimum - margin && standing < minimum
-        })
-      },
+      // belowStatedMinimum was here: it compared a standing against a per-interest
+      // minimum. That field is gone — it was always null, no control ever set it —
+      // so the helper had no caller left, and a helper the rules cannot use is
+      // documentation for something that does not exist. The near-miss case it
+      // covered is now nearestAboveWithin, which reads the course library.
       countSubject: function (currentScope, args) {
         // Counts recorded subjects whose NAME starts with the prefix. It used to
         // test `s.level`, which could never match: the prefix rules pass is "AT"
