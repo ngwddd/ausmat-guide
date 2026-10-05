@@ -33,8 +33,8 @@
 | 文件 | 作用 |
 | --- | --- |
 | `notes/advising/*.html` | 两个静态外壳（中 / 英），表单、页签与表头都在标记里 |
-| `notes/advising/courses.js` | **课程库**：56 条课程事实（院校、专业、已公布最低分、短要求行、链接），每条带本项目的链接实测状态 |
-| `notes/advising/advising-rules.js` | **规则库**：类别、词表、阈值、能力表、30 条规则、矩阵、换算参数，中英双语。其中 2 条标为 `enabled: false`（见"停用的规则"） |
+| `notes/advising/courses.js` | **课程库**：54 条课程事实（院校、专业、已公布最低分、短要求行、链接），每条带本项目的链接实测状态 |
+| `notes/advising/advising-rules.js` | **规则库**：类别、词表、阈值、能力表、30 条规则、矩阵、换算参数，中英双语。其中 3 条标为 `enabled: false`（见"停用的规则"） |
 | `assets/advising.js` | 引擎：表达式求值、校验、报告拼装、界面行为 |
 | `assets/advising.css` | 仅本工具使用的样式，配色全部继承站点的变量 |
 
@@ -97,8 +97,16 @@ record.estimatedAtar < record.targetAtar - T.targetGapPoints
 
 ## 换算参数：用之前必读
 
-规则库里的 `calibration` 是一个**未经核实的占位实现**。原始工作簿内嵌了一条
-六次多项式，系数是其作者针对某一届考试成绩拟合的；那是他人的成果，此处**刻意没有复制**。
+规则库里的 `calibration` **现在已经填了数**，与上面这段历史说明不再一致，
+所以两种情况都要说清楚：
+
+- 早期版本里它是**未经核实的占位实现**，上面的警告就是为那个状态写的。
+- 现在是**已填并标注来源**的状态：`coefficients` 逐位抄自原始工作簿的六次多项式，
+  并带 `verified: '2026-09-25'` 与 `verifiedAgainst` 说明它对着哪一条拟合
+  （工作簿写明 aggregate 239.12838737245087 → ATAR 80）。
+
+**它仍然只是一所机构、一届招生的经验曲线，不是西澳官方的 scaling 标准分。**
+对 95+ 这种要精确判断的目标，这个区别是实质性的：报告里那段免责声明不要删。
 
 在本工具给出任何 ATAR 数字之前：
 
@@ -413,10 +421,25 @@ verify-rules 的镜像里早就写着这条警告，只是这两个 harness 自�
 ## 已知缺口
 
 - **本页面未在真实浏览器中渲染验证过**（见"验证"）。
-- `calibration` 未经校准。
+- `calibration` 已填入并标注来源（`verified: 2026-09-25`），但**仍是一所机构一届招生的
+  经验曲线，不是西澳官方的 scaling 标准分**（见"换算参数"）。
 - 规则总览里标为"待核实"的规则，含有尚未对照当前来源确认的事实性表述。
 - `courseExpectations[*].namedAtar` 全部为 `null`，所以工具能拿你记录的数字作比较，
   但自己不提供任何数字。
+- **2026-10 数据集修正记录**（三项都是外部核对后改的，不是重排版）：
+  1. **RCSI 从 `United Kingdom` 改为 `Ireland`**。该校在都柏林，校名里就写着 Ireland。
+     改完英国课程 2→1，爱尔兰 0→1；`_sp/reachability.mjs` 原本把错数据写成了期望值，
+     已同步改成更强的断言：英国申请人**不应**再看到 RCSI，爱尔兰申请人**应当**看到。
+  2. **Monash University Malaysia 三行从 `Australia` 改为 `Malaysia`**（Medicine、
+     Pharmacy、Psychology）。同校另外 6 行本来就是 Malaysia。
+  3. **Deakin Nutrition Science 有两行，ATAR 分别是 65.0 与 87.5，其余字段完全相同
+     （同校、同名、同分类、同源 2022 版指南 PDF）。未改动，只记录。**
+     两种解释都说得通：一是其中一个是转录错误；二是 Deakin 在两个开设点各有一个
+     "Nutrition Science"，转录时没区分（Environmental Science 那两行就是两个方向，
+     但名字里带了 Marine / Wildlife 后缀，这两行没有）。**源 PDF 现已被 403 挡住，
+     无法核对，所以按"宁可留冗余也不删可能有效的数据"处理。**
+     注意：引擎是按院校汇总成区间的（"库里 6 门，最低分 52.4–87.5"），不逐条罗列，
+     所以同名两行不会在报告里显示成重复条目。若能拿到 2022 版指南，请复核。
 - 能力层现在按工作簿的科目代码索引，但 `mathematics` 把 `ATMAA`（Applications）与
   `ATMAM`/`ATMAS`（Methods / Specialist）算作同一项。WACE 把这几个当作不同深度，
   要求 Methods 的工程专业并不被 Applications 满足。工作簿自己的课程库也没记这个区别，
