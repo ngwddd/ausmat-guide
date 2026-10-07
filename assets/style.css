@@ -1,4 +1,4 @@
-﻿/* ─────────────────────────────────────────────────────────────
+/* ─────────────────────────────────────────────────────────────
    双语学习站 · 主样式
    单文件、无框架、无构建步骤。改 :root 变量即可换整站配色。
    ───────────────────────────────────────────────────────────── */
@@ -62,9 +62,13 @@ header.site .brand {
   text-decoration: none; letter-spacing: .02em;
 }
 header.site .brand span { color: var(--accent); }
-header.site nav { display: flex; gap: 16px; flex-wrap: wrap; }
+header.site nav { display: flex; gap: 11px; flex-wrap: wrap; }
+/* 9 项导航 + 品牌 + 语言切换在 780px 容器里原本差几个像素放不下，
+   语言切换永远被挤到第二行（游客与低分学生都提到「上面那排很乱」）。
+   把间距 16→11px、字号 .9→.87rem 之后约 675px，留出余量。
+   注意：加导航项时要重新算，别再加第 10 项。 */
 header.site nav a {
-  color: var(--text-soft); text-decoration: none; font-size: .9rem;
+  color: var(--text-soft); text-decoration: none; font-size: .87rem;
   padding-bottom: 2px; border-bottom: 2px solid transparent;
 }
 header.site nav a:hover, header.site nav a.on {
@@ -101,6 +105,12 @@ footer.site {
 .hero { margin-bottom: 36px; }
 .hero h1 { font-size: 1.8rem; margin: 0 0 10px; letter-spacing: -.01em; }
 .hero p  { color: var(--text-soft); margin: 0; }
+/* 首页的一句「这是什么」—— 游客走查指出首页从不解释 AUSMAT 与五科缩写 */
+.hero-note {
+  margin-top: 14px !important; padding-top: 13px;
+  border-top: 1px solid var(--line);
+  font-size: .92rem; line-height: 1.75;
+}
 
 .sec-title {
   font-size: .8rem; font-weight: 700; letter-spacing: .14em;
@@ -163,6 +173,18 @@ tr.hot td { background: var(--warn-bg); }
 
 .katex { font-size: 1.05em; }
 .katex-display { overflow-x: auto; overflow-y: hidden; padding: 4px 0; }
+
+/* ── 术语表 ─────────────────────────────────────────────── */
+table.glossary td:first-child { white-space: normal; width: 30%; }
+table.glossary .gl-full { color: var(--text-soft); font-size: .84rem; font-weight: 400; }
+table.glossary .gl-src {
+  margin-top: 7px; font-size: .78rem; color: var(--text-soft);
+  border-top: 1px dashed var(--line); padding-top: 5px;
+}
+table.glossary .gl-note {
+  margin-top: 7px; font-size: .82rem; color: var(--warn);
+  background: var(--warn-bg); border-radius: 6px; padding: 7px 10px; line-height: 1.6;
+}
 
 @media print {
   header.site nav, header.site .lang-switch, footer.site, .note-head .back { display: none; }
