@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>找不到这个页面 · 学习笔记</title>
+<link rel="stylesheet" href="assets/style.css" data-css="1">
+</head>
+<body>
+<header class="site"><div class="wrap">
+  <a class="brand" href="index.html" data-p="index.html">学习笔记</a>
+</div></header>
+<main><div class="wrap">
+<div class="note-head">
+<h1>找不到这个页面</h1>
+<div class="meta">404</div></div>
+
+<p>这个地址下没有内容。可能是链接打错了，或者这个页面已经挪走了。</p>
+
+<h2>站点里的页面</h2>
+<ul class="cards"><li><a href="index.html" data-p="index.html">首页</a></li><li><a href="notes/timetable.html" data-p="notes/timetable.html">考试日程</a></li><li><a href="notes/subjects.html" data-p="notes/subjects.html">五科要点</a></li><li><a href="notes/mindmap.html" data-p="notes/mindmap.html">知识导图</a></li><li><a href="notes/advising/index.html" data-p="notes/advising/index.html">升学自检</a></li><li><a href="notes/glossary.html" data-p="notes/glossary.html">术语表</a></li><li><a href="notes/timeline.html" data-p="notes/timeline.html">学期时间线</a></li><li><a href="notes/papers.html" data-p="notes/papers.html">真题与资料</a></li><li><a href="notes/about.html" data-p="notes/about.html">关于</a></li></ul>
+
+<p>如果你是从本站某个链接点过来的，那说明有个链接坏了 —— 上面任意一页都能继续用。</p>
+</div></main>
+<footer class="site"><div class="wrap">
+<p>AUSMAT May 2026 · 个人学习笔记</p>
+</div></footer>
+<script>
+/* 404 会在任意深度返回，所以链接要按当前路径重算根前缀。
+   先找到站点根：本仓库部署在 /ausmat-guide/ 下；本地 file:// 打开时算不出，
+   就退回 './'（此时页面本身就在站点根，相对链接是对的）。 */
+(function () {
+  var m = location.pathname.match(/^(.*?\/ausmat-guide)\//);
+  var root = m ? m[1] + '/' : './';
+  document.querySelectorAll('[data-p]').forEach(function (el) {
+    el.setAttribute('href', root + el.getAttribute('data-p'));
+  });
+  var css = document.querySelector('[data-css]');
+  if (css) css.setAttribute('href', root + 'assets/style.css');
+})();
+</script>
+</body>
+</html>
