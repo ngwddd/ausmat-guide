@@ -30,6 +30,45 @@
 .mm-toolbar button.active { background: var(--accent); border-color: var(--accent); color: #fff; }
 .mm-toolbar .spacer { flex: 1; }
 
+/* 「适应窗口」缩到下限仍放不下时的提示条 */
+.mm-hint {
+  margin: 8px 0 0; padding: 7px 12px; border-radius: 6px;
+  font-size: .82rem; color: var(--warn); background: var(--warn-bg);
+}
+
+/* ── 打印 ────────────────────────────────────────────────────────
+   学生真实需求是「打出来背」（高分学生走查原话）。
+
+   ⚠ 第一版这里只写了 `#canvasWrap svg { height: 70vh }`，**是坏的**：
+   SVG 没有 viewBox、transform 也没重置，打印出来只截当前视口那一块。
+   两位走查各自实测：全部展开后打印成 PDF，470 个知识点名命中 0 个。
+
+   而把整棵树缩到一页宽同样不可读（1156px → 180mm 时 12.5px 的字只剩 1.9px）。
+   所以打印改成输出**文本大纲**（#printOutline，由 buildPrintOutline 在
+   beforeprint 时填充）：缩进反映层级、节点带说明，可读且能自然分页。
+   画布本身在打印时隐藏，不再假装「导图能打印」。 */
+.print-only { display: none; }
+
+@media print {
+  .mm-toolbar, #fitHint, #legend, #timeline, #canvasWrap,
+  .site-nav, footer.site, .back, .lang-switch, nav { display: none !important; }
+  .print-only { display: block !important; }
+  #app, .wrap, main { max-width: none !important; width: 100% !important; }
+  body { background: #fff !important; color: #000 !important; }
+  .note-head h1, #sideTitle, #sideBody { color: #000 !important; }
+  #printOutline h1 { font-size: 15pt; margin: 0 0 2pt; }
+  #printOutline .po-meta { font-size: 9pt; color: #555; margin: 0 0 10pt; }
+  #printOutline .po-l { font-size: 10pt; line-height: 1.45; white-space: pre-wrap; }
+  #printOutline .po-n { font-size: 8.5pt; line-height: 1.4; color: #333;
+                        white-space: pre-wrap; margin: 0 0 3pt; }
+  #printOutline .po-d0 { font-weight: 700; margin-top: 8pt; }
+  #printOutline .po-d1 { font-weight: 600; margin-top: 5pt; }
+  #printOutline .po-d2 { margin-left: 10pt; }
+  #printOutline .po-d3 { margin-left: 20pt; }
+  #printOutline .po-d4 { margin-left: 30pt; }
+  @page { margin: 14mm; }
+}
+
 /* 画布卡片。高度用 vh 夹住，太高会把页脚顶到屏幕外，太矮看不清树。 */
 #canvasWrap {
   position: relative; overflow: hidden; cursor: grab;
@@ -138,6 +177,8 @@
     <button id="btnFit" data-i18n="适应窗口">适应窗口</button>
     <button id="btnTimeline" data-i18n="考试时间线">考试时间线</button>
   </div>
+  <div id="fitHint" class="mm-hint" style="display:none" data-i18n="已缩到最小可读比例，再小就看不清了；其余部分请拖动查看">已缩到最小可读比例，再小就看不清了；其余部分请拖动查看</div>
+  <div id="printOutline" class="print-only"></div>
   <div id="main">
     <div id="canvasWrap">
       <svg id="svg"><g id="viewport"></g></svg>
@@ -818,9 +859,20 @@ function wrapText(text, d, maxW){
     else cur += pt;
   }
   if (cur.trim()) lines.push(cur.trim());
-  return lines.slice(0, 3);
+  // 超出 3 行必须留痕：原来是静默丢弃，学生以为节点名就那么长。
+  if (lines.length <= 3) return lines;
+  const kept = lines.slice(0, 3);
+  kept[2] = kept[2].replace(/[\s、,，]+$/, "") + "…";
+  return kept;
 }
 
+// 画布最小缩放。低于这个值文字就只是一团灰，不如让用户自己拖。
+// 0.45 × 12.5px ≈ 5.6px —— 能看出结构，读字要靠放大。
+const MIN_READABLE_K = 0.45;
+function esc(s){
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
+                  .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
 let UID = 0;
 function normalize(n, d, color){
   n._id = UID++;
@@ -950,10 +1002,17 @@ function fit(floorK){
   const b = layout(DATA);
   const pad = 46;
   const k = Math.min((rect.width - pad*2)/b.width, (rect.height - pad*2)/b.height, 1.15);
-  view.k = Math.max(k, floorK || 0.1);
+  const floor = floorK || MIN_READABLE_K;
+  view.k = Math.max(k, floor);
+  // 缩到下限仍放不下：不要把字继续缩小（那样等于看不见），
+  // 改为横向居中、纵向回到顶部，并提示可以拖动。
+  const overflow = k < floor - 1e-6;
   view.x = pad;
-  view.y = Math.max(20, (rect.height - b.height*view.k)/2);
+  view.y = overflow ? pad
+                    : Math.max(20, (rect.height - b.height*view.k)/2);
   applyTransform();
+  const hint = document.getElementById("fitHint");
+  if (hint) hint.style.display = overflow ? "block" : "none";
 }
 function initialView(){
   refreshVisibility(DATA); layout(DATA);
@@ -1233,11 +1292,43 @@ function applyLang(lang, rerender){
 
 (function init(){
   normalize(DATA, 0, "#2f6fed");
-  DATA._open = true;
-  buildLegend(); buildTimeline(); render(); fit(0.5);
+  // 默认开到第 2 层（科目 → 单元）。原来只开根节点，一进来只看到 6 个节点，
+  // 要连着点 5 次才见到单元，低分学生走查说「不知道从哪看起」。
+  (function openTo(n, d){
+    n._open = d < 2;
+    if (n.children) n.children.forEach(function(c){ openTo(c, d + 1); });
+  })(DATA, 0);
+  buildLegend(); buildTimeline(); render();
+  // 可读比例，从根节点往下看；拖动查看其余。
+  initialView();
   // 画布尺寸随窗口变化，重新适配一次（原来没有这个监听）
   let _rzT = null;
-  window.addEventListener("resize", function(){ clearTimeout(_rzT); _rzT = setTimeout(function(){ fit(0.5); }, 150); });
+  // 打印前把当前展开的树导成缩进大纲 —— SVG 缩放打印不可读（见构建脚本注释）
+  function buildPrintOutline(){
+    const box = document.getElementById("printOutline");
+    if (!box) return;
+    const out = [];
+    (function walk(n, d){
+      if (!n._visible) return;
+      const pad = "  ".repeat(d);
+      const bullet = (n.children && n.children.length) ? "" : "· ";
+      out.push("<div class=\"po-l po-d" + Math.min(d, 4) + "\">" + pad
+        + bullet + esc(n.name) + "</div>");
+      if (n.note) out.push("<div class=\"po-n po-d" + Math.min(d, 4) + "\">"
+        + pad + esc(n.note) + "</div>");
+      if (n._open && n.children) n.children.forEach(function(c){ walk(c, d + 1); });
+    })(DATA, 0);
+    box.innerHTML = "<h1>" + esc(DATA.name) + "</h1>"
+      + "<p class=\"po-meta\">" + (LANG === "en" ? "Expanded topics only."
+        : "只含当前展开的部分。") + "</p>" + out.join("");
+  }
+  window.addEventListener("beforeprint", buildPrintOutline);
+  if (window.matchMedia) {
+    try { window.matchMedia("print").addEventListener("change", function(e){
+      if (e.matches) buildPrintOutline(); }); } catch (err) {}
+  }
+
+  window.addEventListener("resize", function(){ clearTimeout(_rzT); _rzT = setTimeout(function(){ applyTransform(); }, 150); });
 })();
 
 // 系统主题变化时重绘：节点底色读的是 CSS 变量，不会自动跟着变。

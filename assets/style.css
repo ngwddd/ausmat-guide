@@ -71,6 +71,11 @@ header.site nav a {
   color: var(--text-soft); text-decoration: none; font-size: .87rem;
   padding-bottom: 2px; border-bottom: 2px solid transparent;
 }
+/* 英文导航明显比中文宽（标签 69 字符 vs 中文 33 字），用同一套字号会在
+   780px 容器里溢出、把语言切换挤到第二行（游客走查实测：英文 607px +
+   品牌 104px + 间距 > 780px）。这里只对英文收一号。
+   中文那套的宽度是在 gap:11px + .87rem 下算过的，别动。 */
+html[lang^="en"] header.site nav a { font-size: .81rem; }
 header.site nav a:hover, header.site nav a.on {
   color: var(--accent); border-bottom-color: var(--accent);
 }
@@ -106,6 +111,19 @@ footer.site {
 .hero h1 { font-size: 1.8rem; margin: 0 0 10px; letter-spacing: -.01em; }
 .hero p  { color: var(--text-soft); margin: 0; }
 /* 首页的一句「这是什么」—— 游客走查指出首页从不解释 AUSMAT 与五科缩写 */
+/* 倒计时徽标（日程页，由 COUNTDOWN_JS 按访问当天填） */
+.due {
+  display: inline-block; margin-left: 7px; padding: 1px 7px;
+  border-radius: 999px; font-size: .74rem; white-space: nowrap;
+  color: var(--text-soft); background: var(--bg-soft); border: 1px solid var(--line);
+}
+.due.soon { color: var(--warn); background: var(--warn-bg); border-color: transparent; font-weight: 600; }
+.due.past { opacity: .7; }
+/* 过期行只略淡，不要整行降到 50% —— 36 行里有 15 行已过，
+   那样首屏几乎全灰，看起来像页面坏了（游客走查的原话）。 */
+tr.is-past > td { color: var(--text-soft); }
+
+/* 首页 hero 下方那句「这是什么」 */
 .hero-note {
   margin-top: 14px !important; padding-top: 13px;
   border-top: 1px solid var(--line);

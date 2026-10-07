@@ -1927,12 +1927,18 @@
         { country: 'Australia', field: 'Engineering', university: 'Curtin University' },
         { country: 'United Kingdom', field: 'Engineering', university: 'University of Manchester' },
       ],
+      // 科目**必须用课程代码**，不能用全名。
+      // 科目那一格是下拉，选项来自 R.vocabularies.subjects（只有 ATMAM 这类代码），
+      // 而校验也拿这份词表比对。示例原来写 'Mathematics Methods' 这种全名，
+      // 载入后下拉全部落回「— 科目 —」，点「生成报告」直接报
+      // 「无法生成报告：至少需要填写一门科目。」—— 工具自己给的输入自己判非法。
+      // 低分学生走查实测到，新用户第一分钟就撞墙。
       subjects: [
-        { subject: 'Mathematics Methods', mark: 82 },
-        { subject: 'Physics', mark: 74 },
-        { subject: 'Chemistry', mark: 58 },
-        { subject: 'English', mark: 71 },
-        { subject: 'Psychology', mark: 66 },
+        { subject: 'ATMAM', mark: 82 },
+        { subject: 'ATPHY', mark: 74 },
+        { subject: 'ATCHE', mark: 58 },
+        { subject: 'ATEALD', mark: 71 },
+        { subject: 'ATPSY', mark: 66 },
       ],
     }
   }
