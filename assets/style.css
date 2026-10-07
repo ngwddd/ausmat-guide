@@ -111,6 +111,11 @@ footer.site {
 .hero h1 { font-size: 1.8rem; margin: 0 0 10px; letter-spacing: -.01em; }
 .hero p  { color: var(--text-soft); margin: 0; }
 /* 首页的一句「这是什么」—— 游客走查指出首页从不解释 AUSMAT 与五科缩写 */
+/* 考官报告失分点那种紧凑列表 */
+ul.tight { margin: 0; padding-left: 18px; }
+ul.tight li { margin: 3px 0; line-height: 1.55; }
+small.muted { color: var(--text-soft); font-size: .78rem; }
+
 /* 倒计时徽标（日程页，由 COUNTDOWN_JS 按访问当天填） */
 .due {
   display: inline-block; margin-left: 7px; padding: 1px 7px;
