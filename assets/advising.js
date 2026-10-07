@@ -1551,7 +1551,12 @@
              (item.rule.verified ? ' · verified ' + item.rule.verified : ' · NOT VERIFIED'))
         $('reportBody').appendChild(el('span', { 'class': 'src', text: srcLine }))
     })
-    $('reportStamp').textContent = '(' + report.fired.length + ' of ' + R.rules.length + ' rules fired)'
+    $('reportStamp').textContent = (function(){
+        var zh = (typeof LANG !== 'undefined' && LANG === 'zh')
+        return (zh ? '（命中 ' : '(') + report.fired.length
+             + (zh ? ' / ' : ' of ') + R.rules.length
+             + (zh ? ' 条规则）' : ' rules fired)')
+      })()
 
     // Coverage tab
     renderCoverage(results)
