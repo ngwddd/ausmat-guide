@@ -1326,6 +1326,38 @@ function applyLang(lang, rerender){
   if (rerender) fit(0.5);
 }
 
+/* 搜索无结果时说一句话。原来只有输入框变黄，没有任何文字，
+   低分走查实测「不知道是没搜到还是搜索坏了」。
+   这里不去改搜索函数本身（它在上游源文件里），而是观察 DOM 变化。 */
+(function () {
+  function init() {
+    var input = document.getElementById('search');
+    if (!input) return;
+    var tip = document.createElement('div');
+    tip.id = 'noHitTip';
+    tip.style.cssText = 'margin:6px 0 0;padding:7px 12px;border-radius:6px;'
+      + 'font-size:.82rem;display:none;color:var(--warn);background:var(--warn-bg);';
+    var box = document.getElementById('canvasWrap') || input.parentNode;
+    box.appendChild(tip);
+    function upd() {
+      var q = (input.value || '').trim();
+      var gone = document.querySelectorAll('g.node-g').length === 0;
+      var show = q.length > 0 && gone;
+      tip.textContent = show
+        ? (LANG === 'en' ? 'No topic matches \u201c' + q + '\u201d.'
+                         : '\u6ca1\u6709\u5339\u914d\u300c' + q + '\u300d\u7684\u77e5\u8bc6\u70b9\u3002')
+        : '';
+      tip.style.display = show ? 'block' : 'none';
+    }
+    input.addEventListener('input', function () { setTimeout(upd, 80); });
+    input.addEventListener('keyup', function () { setTimeout(upd, 80); });
+    setTimeout(upd, 500);
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else { init(); }
+})();
+
 (function init(){
   normalize(DATA, 0, "#2f6fed");
   // 默认开到第 2 层（科目 → 单元）。原来只开根节点，一进来只看到 6 个节点，
@@ -1340,6 +1372,9 @@ function applyLang(lang, rerender){
   // 画布尺寸随窗口变化，重新适配一次（原来没有这个监听）
   let _rzT = null;
   // 打印前把当前展开的树导成缩进大纲 —— SVG 缩放打印不可读（见构建脚本注释）
+  function countNodes(){ var n = 0;
+    (function w(x){ if (x._visible) n++; if (x.children) x.children.forEach(w); })(DATA);
+    return n; }
   function buildPrintOutline(){
     const box = document.getElementById("printOutline");
     if (!box) return;
@@ -1355,8 +1390,11 @@ function applyLang(lang, rerender){
       if (n._open && n.children) n.children.forEach(function(c){ walk(c, d + 1); });
     })(DATA, 0);
     box.innerHTML = "<h1>" + esc(DATA.name) + "</h1>"
-      + "<p class=\"po-meta\">" + (LANG === "en" ? "Expanded topics only."
-        : "只含当前展开的部分。") + "</p>" + out.join("");
+      + "<p class=\"po-meta\">" + (LANG === "en"
+          ? ("Expanded topics only (" + countNodes() + " nodes). "
+             + "To print the whole map, press Expand all first.")
+          : ("只含当前展开的部分（" + countNodes() + " 个节点）。"
+             + "想打印全部，请先点「全部展开」。")) + "</p>" + out.join("");
   }
   window.addEventListener("beforeprint", buildPrintOutline);
   if (window.matchMedia) {

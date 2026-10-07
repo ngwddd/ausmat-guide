@@ -147,7 +147,8 @@
     return String(text || '').toLowerCase().split(/[^a-z]+/).filter(function (w) { return w.length > 3 })
   }
   function countryMatches(courseCountry, interestCountry) {
-    if (!interestCountry) return false
+    // 同 fieldMatches：没填就不筛这一维。三个匹配函数的空值语义必须一致。
+    if (!interestCountry) return true
     var a = String(courseCountry || '').toLowerCase()
     var b = String(interestCountry).toLowerCase()
     if (a === b) return true
@@ -156,7 +157,11 @@
     return false
   }
   function fieldMatches(course, interestField) {
-    if (!interestField) return false
+    // 没填方向 = 这一维不参与筛选，而不是「什么都不匹配」。
+    // 原来返回 false，而 matchingCourses 要求三者全中，于是只填国家的学生
+    // 得到 0 命中、国家那栏等于白填（走查实测）。
+    // 三个匹配函数现在行为一致：空值不限制。universityMatches 本来就是这么写的。
+    if (!interestField) return true
     var want = String(interestField).toLowerCase()
     var cat = String(course.category || '').toLowerCase()
     var name = String(course.course || '').toLowerCase()
@@ -1860,7 +1865,8 @@
       // so a student could read a missing record as a stated absence. Named
       // differently on purpose.
       tr.appendChild(el('td', { 'class': c.req ? '' : 'muted',
-        text: c.req || pick('not recorded in the source', '原表未记录') }))
+        text: c.req || pick('blank in the source table — not the same as "no requirement"',
+                             '原表这一格是空的 —— 不等于「没有要求」') }))
       var cell = el('td')
       if (c.url) {
         var mark = c.link === 'ok' ? ''
@@ -1879,12 +1885,14 @@
       var total = LIBRARY.count || (LIBRARY.rows || []).length
       note.textContent = LANG === 'zh'
         ? ('共 ' + total + ' 条课程记录，数据截至 ' + LIBRARY.snapshot + '。' +
-           (matched.length ? ('已按你填写的方向筛出 ' + matched.length + ' 条。')
-                           : '你还没有填写方向，先列出前 25 条。') +
+           (matched.length ? ('已按你填写的条件筛出 ' + matched.length + ' 条。')
+                           : '没有填国家或方向，先列出前 25 条（按课程库原顺序）。'
+                             + '填了国家或方向就会按你填的筛。') +
            '最低分每轮都会变，请以院校官网为准。')
         : (total + ' course records, snapshot ' + LIBRARY.snapshot + '. ' +
            (matched.length ? (matched.length + ' match what you entered.')
-                           : 'No field entered yet, so the first 25 are listed.') +
+                           : 'No country or field entered, so the first 25 are listed; '
+                             + 'fill either one and it will filter.') +
            ' Minimums change every intake; verify at the institution.')
     }
   }

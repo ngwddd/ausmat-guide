@@ -116,6 +116,12 @@ ul.tight { margin: 0; padding-left: 18px; }
 ul.tight li { margin: 3px 0; line-height: 1.55; }
 small.muted { color: var(--text-soft); font-size: .78rem; }
 
+/* 失分点表里的「所以怎么办」一行 */
+.fix {
+  margin-top: 3px; font-size: .9em; color: var(--text-soft);
+  border-left: 2px solid var(--line); padding-left: 8px;
+}
+
 /* 「外考」徽标：标出 WACE 外部考试的行 */
 .ext {
   display: inline-block; padding: 0 6px; border-radius: 4px;

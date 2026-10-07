@@ -4,40 +4,41 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<title>找不到这个页面 · 学习笔记</title>
-<link rel="stylesheet" href="assets/style.css" data-css="1">
+<title>找不到这个页面 / Page not found · 学习笔记</title>
+<link rel="stylesheet" href="/ausmat-guide/assets/style.css" data-css="1">
 </head>
 <body>
 <header class="site"><div class="wrap">
-  <a class="brand" href="index.html" data-p="index.html">学习笔记</a>
+  <a class="brand" href="/ausmat-guide/index.html" data-p="index.html">学习笔记 · Study Notes</a>
 </div></header>
 <main><div class="wrap">
-<div class="note-head">
+
 <h1>找不到这个页面</h1>
-<div class="meta">404</div></div>
+<p>这个地址下没有内容。可能是链接打错了，或者页面已经挪走了。下面是站点里的全部页面。</p>
 
-<p>这个地址下没有内容。可能是链接打错了，或者这个页面已经挪走了。</p>
+<ul class="cards"><li><a href="/ausmat-guide/index.html" data-p="index.html"><span class="t">首页</span><span class="d">Home</span></a></li><li><a href="/ausmat-guide/notes/timetable.html" data-p="notes/timetable.html"><span class="t">考试日程</span><span class="d">Timetable</span></a></li><li><a href="/ausmat-guide/notes/subjects.html" data-p="notes/subjects.html"><span class="t">五科要点</span><span class="d">Subjects</span></a></li><li><a href="/ausmat-guide/notes/mindmap.html" data-p="notes/mindmap.html"><span class="t">知识导图</span><span class="d">Mind Map</span></a></li><li><a href="/ausmat-guide/notes/advising/index.html" data-p="notes/advising/index.html"><span class="t">升学自检</span><span class="d">Advising</span></a></li><li><a href="/ausmat-guide/notes/glossary.html" data-p="notes/glossary.html"><span class="t">术语表</span><span class="d">Glossary</span></a></li><li><a href="/ausmat-guide/notes/timeline.html" data-p="notes/timeline.html"><span class="t">学期时间线</span><span class="d">Timeline</span></a></li><li><a href="/ausmat-guide/notes/papers.html" data-p="notes/papers.html"><span class="t">真题与资料</span><span class="d">Past Papers</span></a></li><li><a href="/ausmat-guide/notes/about.html" data-p="notes/about.html"><span class="t">关于</span><span class="d">About</span></a></li></ul>
 
-<h2>站点里的页面</h2>
-<ul class="cards"><li><a href="index.html" data-p="index.html">首页</a></li><li><a href="notes/timetable.html" data-p="notes/timetable.html">考试日程</a></li><li><a href="notes/subjects.html" data-p="notes/subjects.html">五科要点</a></li><li><a href="notes/mindmap.html" data-p="notes/mindmap.html">知识导图</a></li><li><a href="notes/advising/index.html" data-p="notes/advising/index.html">升学自检</a></li><li><a href="notes/glossary.html" data-p="notes/glossary.html">术语表</a></li><li><a href="notes/timeline.html" data-p="notes/timeline.html">学期时间线</a></li><li><a href="notes/papers.html" data-p="notes/papers.html">真题与资料</a></li><li><a href="notes/about.html" data-p="notes/about.html">关于</a></li></ul>
+<hr>
 
-<p>如果你是从本站某个链接点过来的，那说明有个链接坏了 —— 上面任意一页都能继续用。</p>
+<h1>Page not found</h1>
+<p>There is nothing at this address. The link may be mistyped, or the page may have moved.
+Every page on the site is listed above.</p>
+
+<p><small>404</small></p>
 </div></main>
 <footer class="site"><div class="wrap">
-<p>AUSMAT May 2026 · 个人学习笔记</p>
+<p>AUSMAT May 2026 · 个人学习笔记 / personal study notes</p>
 </div></footer>
 <script>
-/* 404 会在任意深度返回，所以链接要按当前路径重算根前缀。
-   先找到站点根：本仓库部署在 /ausmat-guide/ 下；本地 file:// 打开时算不出，
-   就退回 './'（此时页面本身就在站点根，相对链接是对的）。 */
+/* 唯一的用途：本地用 file:// 打开预览时，把站点根绝对路径换回相对路径。
+   线上（GitHub Pages）走不到这里 —— 绝对路径本来就对，禁用 JS 也照样能用。 */
 (function () {
-  var m = location.pathname.match(/^(.*?\/ausmat-guide)\//);
-  var root = m ? m[1] + '/' : './';
+  if (location.protocol !== 'file:') return;
   document.querySelectorAll('[data-p]').forEach(function (el) {
-    el.setAttribute('href', root + el.getAttribute('data-p'));
+    el.setAttribute('href', './' + el.getAttribute('data-p'));
   });
   var css = document.querySelector('[data-css]');
-  if (css) css.setAttribute('href', root + 'assets/style.css');
+  if (css) css.setAttribute('href', './assets/style.css');
 })();
 </script>
 </body>
