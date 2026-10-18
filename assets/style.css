@@ -100,10 +100,12 @@ footer.site {
   padding: 20px 0 40px; color: var(--text-soft); font-size: .85rem;
 }
 
-/* ── 语言显示规则 ────────────────────────────────────────── */
-/* 默认显示中文，隐藏英文；html[data-lang="en"] 时反过来 */
-[data-lang="zh"] .en { display: none !important; }
-[data-lang="en"] .zh { display: none !important; }
+/* 语言显示规则：这里原本有两条
+     [data-lang="zh"] .en { display: none }
+     [data-lang="en"] .zh { display: none }
+   以及打印时的 revert。中英早就改成「两套独立页面」了，全站再没有任何
+   .zh / .en 元素，这两条永远不会命中 —— 2026-10 删除。
+   （data-lang 属性本身还在用：升学自检的脚本靠它选文案。） */
 
 /* ── 首页 ───────────────────────────────────────────────── */
 
@@ -228,7 +230,6 @@ table.glossary .gl-note {
 
 @media print {
   header.site nav, header.site .lang-switch, footer.site, .note-head .back { display: none; }
-  [data-lang] .en, [data-lang] .zh { display: revert !important; }
   body { background: #fff; color: #000; font-size: 11pt; }
   a { color: #000; text-decoration: none; }
   .callout, .notice, .box { break-inside: avoid; }
@@ -264,7 +265,10 @@ table.glossary .gl-note {
 
   /* 列数 ≥4 的表在 390px 下会被压成「一列一个字」——升学自检那张意向表里
      「目标大学」四个字就是竖着排下来的。给个宽度下限让它横滚，而不是压扁。
-     :has() 不被支持时这条整个失效，退化成现在这样，不会更差。 */
+     :has() 不被支持时这条整个失效，退化成现在这样，不会更差。
+     5 列的日程表再放宽一档：日期列里现在带「几点考 / 多久 / 允许带什么」，
+     480px 下那段小字会被挤成一列一个字。 */
   .tw > table:has(th:nth-child(4)) { min-width: 480px; }
+  .tw > table:has(th:nth-child(5)) { min-width: 600px; }
 }
 

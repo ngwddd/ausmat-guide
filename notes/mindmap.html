@@ -182,7 +182,9 @@
 </div>
 <div id="app">
   <div class="mm-toolbar">
-    <input id="search" placeholder="搜索知识点…">
+    <input id="search" type="search" placeholder="搜索知识点…" aria-label="搜索知识点"
+           data-ph-zh="搜索知识点…" data-ph-en="Search topics…"
+           data-al-zh="搜索知识点" data-al-en="Search topics">
     <button id="btnExpand" data-i18n="全部展开">全部展开</button>
     <button id="btnCollapse" data-i18n="全部收起">全部收起</button>
     <button id="btnFit" data-i18n="适应窗口">适应窗口</button>
@@ -1354,6 +1356,11 @@ function applyLang(lang, rerender){
     });
     const si = document.getElementById("search");
     if (si) si.placeholder = lang === "en" ? UI_EN["搜索知识点…"] : "搜索知识点…";
+    // placeholder 不是可访问名：读屏软件不会念它。真正要更新的是 aria-label，
+    // 文案从元素自己的 data-* 取，省得再往字典里加一份。
+    if (si) si.setAttribute("aria-label",
+      (lang === "en" ? si.getAttribute("data-al-en") : si.getAttribute("data-al-zh"))
+      || (lang === "en" ? "Search topics" : "搜索知识点"));
     document.documentElement.lang = lang === "en" ? "en" : "zh-CN";
     // 顶栏标题结构是 <h1 id="mmTitle">文字<small id="stat">计数</small></h1>。
     // 之前逐节点删除文本节点的写法把 <small> 也弄丢了（stat 变 null，render 报错），

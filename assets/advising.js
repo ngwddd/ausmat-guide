@@ -1111,13 +1111,17 @@
   function addInterestRow(preset) {
     preset = preset || {}
     var tr = el('tr')
-    var country = el('select', { 'class': 'i-country' }, [])
-    country.appendChild(options(R.vocabularies.countries, preset.country, '— country —'))
-    var field = el('select', { 'class': 'i-field' }, [])
-    field.appendChild(options(R.vocabularies.fields, preset.field, '— field —'))
-    var uni = el('select', { 'class': 'i-uni' }, [])
+    var country = el('select', { 'class': 'i-country', 'aria-label': pick('Country/region', '国家/地区') }, [])
+    country.appendChild(options(R.vocabularies.countries, preset.country, pick('— country —', '— 国家/地区 —')))
+    var field = el('select', { 'class': 'i-field', 'aria-label': pick('Field of study', '专业方向') }, [])
+    field.appendChild(options(R.vocabularies.fields, preset.field, pick('— field —', '— 专业方向 —')))
+    var uni = el('select', { 'class': 'i-uni', 'aria-label': pick('Institution', '院校') }, [])
     var recorded = el('td', { 'class': 'muted num' })
-    var bin = el('button', { 'class': 'ghost mini', text: '×' })
+    var bin = el('button', {
+      'class': 'ghost mini', text: '×',
+      'aria-label': pick('Remove this row', '删除这一行'),
+      title: pick('Remove this row', '删除这一行'),
+    })
     bin.addEventListener('click', function () { tr.remove() })
 
     // Rebuilt on every country change, keeping the current pick only while the
@@ -1201,11 +1205,20 @@
   function addSubjectRow(preset) {
     preset = preset || {}
     var tr = el('tr')
-    var subject = el('select', { 'class': 's-subject' }, [])
+    var subject = el('select', { 'class': 's-subject', 'aria-label': pick('Subject', '科目') }, [])
     subject.appendChild(options(R.vocabularies.subjects, preset.subject, '— ' + (LANG === 'zh' ? '科目' : 'subject') + ' —'))
-    var mark = el('input', { 'class': 's-mark', type: 'number', min: '0', max: '100' })
+    var mark = el('input', {
+      'class': 's-mark', type: 'number', min: '0', max: '100',
+      'aria-label': pick('Mark (%)', '成绩 (%)'),
+    })
     mark.value = preset.mark === null || preset.mark === undefined ? '' : preset.mark
-    var bin = el('button', { 'class': 'ghost mini', text: '×' })
+    // The visible text is a multiplication sign; without a name a screen reader
+    // announces only "button", which says nothing about what gets removed.
+    var bin = el('button', {
+      'class': 'ghost mini', text: '×',
+      'aria-label': pick('Remove this subject', '删除这门科目'),
+      title: pick('Remove this subject', '删除这门科目'),
+    })
     bin.addEventListener('click', function () { tr.remove() })
     tr.appendChild(el('td', {}, [subject]))
     tr.appendChild(el('td', {}, [mark]))
