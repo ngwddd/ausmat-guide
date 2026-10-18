@@ -15,7 +15,6 @@
      少一处会算错的地方。（注释里也不要写星号：它会被输出到每个页面上。） -->
 <link rel="alternate" hreflang="en" href="en/index.html">
 <link rel="stylesheet" href="assets/style.css">
-<link rel="stylesheet" href="vendor/katex/katex.min.css">
 </head>
 <body>
 <header class="site">
@@ -24,7 +23,7 @@
     <nav><a href="index.html" class="on">首页</a>
       <a href="notes/timetable.html">考试日程</a>
       <a href="notes/subjects.html">五科要点</a>
-      <a href="notes/mindmap.html">知识导图</a>
+      <a href="notes/mindmap.html?lang=zh">知识导图</a>
       <a href="notes/advising/index.html">升学自检</a>
       <a href="notes/glossary.html">术语表</a>
       <a href="notes/timeline.html">学期时间线</a>
@@ -48,7 +47,7 @@
 <ul class="cards">
 <li><a href="notes/timetable.html"><span class="t">考试日程表</span><span class="d">共 36 项考核任务的日期与权重 · 2026/05 → 2027/02</span></a></li>
 <li><a href="notes/advising/index.html"><span class="t">升学自检</span><span class="d">填一份情况，按规则库汇总出适用的升学建议 · 30 条规则可逐条查看</span></a></li>
-<li><a href="notes/mindmap.html"><span class="t">知识导图</span><span class="d">五科知识点全览，可搜索、可展开</span></a></li>
+<li><a href="notes/mindmap.html?lang=zh"><span class="t">知识导图</span><span class="d">五科知识点全览，可搜索、可展开</span></a></li>
 <li><a href="notes/timeline.html"><span class="t">学期时间线</span><span class="d">37 周（末周 4 天）的节奏、假期与三次密集期</span></a></li>
 <li><a href="notes/subjects.html"><span class="t">五科要点</span><span class="d">各科权重构成，以及每项考核覆盖哪些内容</span></a></li>
 <li><a href="notes/papers.html"><span class="t">真题与资料</span><span class="d">五科历年 WACE 试卷的官方与社区入口</span></a></li>
@@ -58,43 +57,5 @@
 
 </div></main>
 <footer class="site"><div class="wrap">AUSMAT May 2026 · 个人学习笔记</div></footer>
-<script src="vendor/katex/katex.min.js"></script>
-<script>
-// 只为渲染公式而存在。页面内容与导航不依赖 JS——
-// 语言切换是普通链接，禁用 JS 也能用。
-(function () {
-  if (typeof katex === 'undefined') return;
-  var SKIP = { SCRIPT: 1, STYLE: 1, CODE: 1, PRE: 1 };
-  var RE = /\$\$([\s\S]+?)\$\$|\$([^$\n]+?)\$/g;
-  function render(node) {
-    var text = node.nodeValue;
-    if (text.indexOf('$') === -1) return;
-    var frag = document.createDocumentFragment(), last = 0, m;
-    RE.lastIndex = 0;
-    while ((m = RE.exec(text)) !== null) {
-      if (m.index > last) frag.appendChild(document.createTextNode(text.slice(last, m.index)));
-      var display = m[1] !== undefined, tex = display ? m[1] : m[2];
-      var span = document.createElement('span');
-      try {
-        span.innerHTML = katex.renderToString(tex.trim(), { displayMode: display, throwOnError: false });
-      } catch (e) { span.textContent = m[0]; }
-      frag.appendChild(span);
-      last = m.index + m[0].length;
-    }
-    if (last === 0) return;
-    if (last < text.length) frag.appendChild(document.createTextNode(text.slice(last)));
-    node.parentNode.replaceChild(frag, node);
-  }
-  var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
-    acceptNode: function (n) {
-      if (SKIP[n.parentNode.nodeName]) return NodeFilter.FILTER_REJECT;
-      return n.nodeValue.indexOf('$') === -1 ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
-    }
-  });
-  var nodes = [], n;
-  while ((n = walker.nextNode())) nodes.push(n);
-  nodes.forEach(render);
-})();
-</script>
 </body>
 </html>

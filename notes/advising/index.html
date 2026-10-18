@@ -16,7 +16,7 @@
     <nav><a href="../../index.html">首页</a>
       <a href="../../notes/timetable.html">考试日程</a>
       <a href="../../notes/subjects.html">五科要点</a>
-      <a href="../../notes/mindmap.html">知识导图</a>
+      <a href="../../notes/mindmap.html?lang=zh">知识导图</a>
       <a href="index.html" class="on">升学自检</a>
       <a href="../../notes/glossary.html">术语表</a>
       <a href="../../notes/timeline.html">学期时间线</a>
@@ -47,19 +47,19 @@
   <section class="card">
     <h2>升学意向</h2>
     <p class="muted">只想算 ATAR 的话这一块可以留空；填了才会有目的国、专业、先修科目、语言和费用这几类建议。</p>
-    <table><thead><tr><th style="width:26%">国家/地区</th>
+    <div class="tw"><table><thead><tr><th style="width:26%">国家/地区</th>
       <th style="width:26%">专业方向</th><th>目标大学</th>
       <th style="width:14%">记录最低 ATAR（门数）</th><th style="width:38px"></th></tr></thead>
-      <tbody id="interestRows"></tbody></table>
+      <tbody id="interestRows"></tbody></table></div>
     <button class="ghost mini" id="addInterest">+ 增加一行</button>
   </section>
 
   <section class="card">
     <h2>选课与成绩</h2>
-    <table><thead><tr><th>科目</th>
+    <div class="tw"><table><thead><tr><th>科目</th>
       <th style="width:18%">成绩 (%)</th>
       <th style="width:38px"></th></tr></thead>
-      <tbody id="subjectRows"></tbody></table>
+      <tbody id="subjectRows"></tbody></table></div>
     <button class="ghost mini" id="addSubject">+ 增加一门</button>
   </section>
 
@@ -112,10 +112,10 @@
   <section class="card">
     <h2>课程最低 ATAR 参考</h2>
     <p class="muted" id="courseNote"></p>
-    <table><thead><tr><th>院校</th><th>专业</th>
+    <div class="tw"><table><thead><tr><th>院校</th><th>专业</th>
       <th style="width:9%">最低 ATAR</th><th>除分数外的要求</th>
       <th style="width:12%">来源</th></tr></thead>
-      <tbody id="courseRows"></tbody></table>
+      <tbody id="courseRows"></tbody></table></div>
   </section>
 </div>
 
@@ -123,9 +123,9 @@
   <div id="coverageSummary"></div>
   <section class="card">
     <h2>规则总览</h2>
-    <table><thead><tr><th style="width:15%">类别</th><th>规则</th>
+    <div class="tw"><table><thead><tr><th style="width:15%">类别</th><th>规则</th>
       <th style="width:9%">命中</th><th style="width:14%">核实状态</th></tr></thead>
-      <tbody id="coverageRows"></tbody></table>
+      <tbody id="coverageRows"></tbody></table></div>
   </section>
 </div>
 

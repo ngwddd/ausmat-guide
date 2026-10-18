@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://ngwddd.github.io/ausmat-guide/sitemap.xml

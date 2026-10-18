@@ -222,11 +222,49 @@ table.glossary .gl-note {
   background: var(--warn-bg); border-radius: 6px; padding: 7px 10px; line-height: 1.6;
 }
 
+/* 表格横向滚动容器。构建时给每张表套一层 <div class="tw">（见 build-site.py
+   的 wrap_tables），窄屏下靠它横滚，而不是让整页溢出。 */
+.tw { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
 @media print {
   header.site nav, header.site .lang-switch, footer.site, .note-head .back { display: none; }
   [data-lang] .en, [data-lang] .zh { display: revert !important; }
   body { background: #fff; color: #000; font-size: 11pt; }
   a { color: #000; text-decoration: none; }
   .callout, .notice, .box { break-inside: avoid; }
+  .tw { overflow: visible; }
+}
+
+/* ── 窄屏（手机）───────────────────────────────────────────────
+   两件事必须在这一层解决，否则「考试日程」这一页在手机上没法用：
+
+   1. 9 项导航在 390px 下折成 3 行、EN 按钮再另起一行，顶栏高到 192px（桌面
+      只有 65px）。它还 position:sticky，等于每屏常驻吃掉 23% 的高度。窄屏改回
+      普通文档流——滚走就滚走，比一直挡着强。
+
+   2. 那张表天然要 530px，比 390px 视口还宽 163px，最右的「日期」列直接被切在
+      屏幕外。横向滚动交给上面的 .tw 容器，页面本身不再横向溢出。 */
+@media (max-width: 700px) {
+  header.site { position: static; padding: 10px 0; }
+  header.site .wrap { gap: 8px 10px; }
+  /* 让导航独占一行：品牌与语言开关就能并排留在第一行，
+     不然 EN 按钮自己再占一行，顶栏白白多出 40px。
+     DOM 顺序是 品牌 → 导航 → 语言开关，靠 order 把开关提到导航之前。 */
+  header.site .brand { order: 1; }
+  header.site .lang-switch { order: 2; margin-left: auto; }
+  header.site nav { order: 3; width: 100%; gap: 7px 10px; }
+  header.site nav a { font-size: .82rem; }
+  html[lang^="en"] header.site nav a { font-size: .78rem; }
+
+  body { font-size: 15px; }
+  main { padding: 26px 0 48px; }
+  .hero h1 { font-size: 1.5rem; }
+  .note-head h1 { font-size: 1.4rem; }
+  th, td { padding: 7px 9px; }
+
+  /* 列数 ≥4 的表在 390px 下会被压成「一列一个字」——升学自检那张意向表里
+     「目标大学」四个字就是竖着排下来的。给个宽度下限让它横滚，而不是压扁。
+     :has() 不被支持时这条整个失效，退化成现在这样，不会更差。 */
+  .tw > table:has(th:nth-child(4)) { min-width: 480px; }
 }
 

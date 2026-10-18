@@ -16,7 +16,7 @@
     <nav><a href="../../en/index.html">Home</a>
       <a href="../../en/notes/timetable.html">Timetable</a>
       <a href="../../en/notes/subjects.html">Subjects</a>
-      <a href="../../notes/mindmap.html">Mind Map</a>
+      <a href="../../notes/mindmap.html?lang=en">Mind Map</a>
       <a href="en.html" class="on">Advising</a>
       <a href="../../en/notes/glossary.html">Glossary</a>
       <a href="../../en/notes/timeline.html">Timeline</a>
@@ -47,19 +47,19 @@
   <section class="card">
     <h2>Destinations & academic interests</h2>
     <p class="muted">Leave this blank if all you want is the ATAR. Filling it in is what unlocks the destination, course, prerequisite, language and funding advice.</p>
-    <table><thead><tr><th style="width:26%">Country</th>
+    <div class="tw"><table><thead><tr><th style="width:26%">Country</th>
       <th style="width:26%">Field</th><th>Target university</th>
       <th style="width:14%">Recorded min. (count)</th><th style="width:38px"></th></tr></thead>
-      <tbody id="interestRows"></tbody></table>
+      <tbody id="interestRows"></tbody></table></div>
     <button class="ghost mini" id="addInterest">+ Add row</button>
   </section>
 
   <section class="card">
     <h2>Subjects & results</h2>
-    <table><thead><tr><th>Subject</th>
+    <div class="tw"><table><thead><tr><th>Subject</th>
       <th style="width:18%">Mark (%)</th>
       <th style="width:38px"></th></tr></thead>
-      <tbody id="subjectRows"></tbody></table>
+      <tbody id="subjectRows"></tbody></table></div>
     <button class="ghost mini" id="addSubject">+ Add subject</button>
   </section>
 
@@ -112,10 +112,10 @@
   <section class="card">
     <h2>Recorded minimums</h2>
     <p class="muted" id="courseNote"></p>
-    <table><thead><tr><th>Institution</th><th>Course</th>
+    <div class="tw"><table><thead><tr><th>Institution</th><th>Course</th>
       <th style="width:9%">Min. ATAR</th><th>Requirements beyond the score</th>
       <th style="width:12%">Source</th></tr></thead>
-      <tbody id="courseRows"></tbody></table>
+      <tbody id="courseRows"></tbody></table></div>
   </section>
 </div>
 
@@ -123,9 +123,9 @@
   <div id="coverageSummary"></div>
   <section class="card">
     <h2>Rule coverage</h2>
-    <table><thead><tr><th style="width:15%">Domain</th><th>Rule</th>
+    <div class="tw"><table><thead><tr><th style="width:15%">Domain</th><th>Rule</th>
       <th style="width:9%">Fired</th><th style="width:14%">Verification</th></tr></thead>
-      <tbody id="coverageRows"></tbody></table>
+      <tbody id="coverageRows"></tbody></table></div>
   </section>
 </div>
 
