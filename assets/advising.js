@@ -976,7 +976,7 @@
   function numOrNull(v) {
     if (v === '' || v === null || v === undefined) return null
     var n = Number(v)
-    return isNaN(n) ? null : n
+    return Number.isFinite(n) ? n : null
   }
   function boolOrNull(v) {
     if (v === '') return null
@@ -1011,7 +1011,7 @@
     Array.prototype.forEach.call($('subjectRows').querySelectorAll('tr'), function (tr) {
       var subject = tr.querySelector('.s-subject').value.trim()
       var mark = numOrNull(tr.querySelector('.s-mark').value)
-      if (subject) {
+      if (subject || mark !== null) {
         subjects.push({ subject: subject, mark: mark })
       }
     })
@@ -1208,7 +1208,7 @@
     var subject = el('select', { 'class': 's-subject', 'aria-label': pick('Subject', '科目') }, [])
     subject.appendChild(options(R.vocabularies.subjects, preset.subject, '— ' + (LANG === 'zh' ? '科目' : 'subject') + ' —'))
     var mark = el('input', {
-      'class': 's-mark', type: 'number', min: '0', max: '100',
+      'class': 's-mark', type: 'number', min: '0', max: '100', step: 'any',
       'aria-label': pick('Mark (%)', '成绩 (%)'),
     })
     mark.value = preset.mark === null || preset.mark === undefined ? '' : preset.mark
@@ -1233,28 +1233,41 @@
    * -------------------------------------------------------------------*/
   function validate(rec) {
     var errors = []
-    var warnings = []
     if (rec.subjects.length === 0) errors.push(pick('At least one subject is required.', '至少需要填写一门科目。'))
+    return { errors: errors.concat(markErrors(rec), ruleErrors()), warnings: interestWarnings(rec) }
+  }
+
+  function markErrors(rec) {
+    var errors = []
+    var seen = Object.create(null)
     rec.subjects.forEach(function (s, i) {
       if (!s.subject) errors.push('Subject ' + (i + 1) + pick(': subject name is empty.', '：科目名为空。'))
       if (s.mark !== null && (s.mark < 0 || s.mark > 100)) errors.push('Subject ' + (i + 1) + pick(': mark must be between 0 and 100.', '：成绩必须在 0 到 100 之间。'))
-    })
-    var seen = {}
-    rec.subjects.forEach(function (s) {
-      if (s.subject && seen[s.subject]) warnings.push(pick('Duplicate subject recorded: ', '科目重复：') + s.subject + '.')
+      if (s.subject && seen[s.subject]) errors.push(pick('Duplicate subject recorded: ', '科目重复：') + s.subject + '.')
       seen[s.subject] = true
     })
+    if (rec.targetAtar !== null && (rec.targetAtar < 0 || rec.targetAtar > 99.95)) {
+      errors.push(pick('Target ATAR must be between 0 and 99.95.', '目标 ATAR 必须在 0 到 99.95 之间。'))
+    }
+    return errors
+  }
+
+  function interestWarnings(rec) {
+    var warnings = []
     rec.interests.forEach(function (it, i) {
       if (!it.country) warnings.push('Interest ' + (i + 1) + pick(': no country selected, so destination rules cannot fire.', '：未选择国家，方向类规则不会触发。'))
       if (!it.field) warnings.push('Interest ' + (i + 1) + pick(': no field selected, so course rules cannot fire.', '：未选择专业方向，专业类规则不会触发。'))
     })
     if (rec.targetAtar !== null && rec.computedAtar !== null && rec.computedAtar > rec.targetAtar + 20) {
-      warnings.push('The computed ATAR exceeds the target by more than 20 points — confirm the target was entered in the same direction.')
+      warnings.push(pick('The estimated ATAR exceeds the target by over 20 points. Check the target.', '估算 ATAR 比目标高出 20 分以上，请检查目标是否填对。'))
     }
-    Object.keys(compileErrors).forEach(function (id) {
-      errors.push(pick('Rule "' + id + '" cannot be evaluated: ', '规则「' + id + '」无法求值：') + compileErrors[id] + '.')
+    return warnings
+  }
+
+  function ruleErrors() {
+    return Object.keys(compileErrors).map(function (id) {
+      return pick('Rule "' + id + '" cannot be evaluated: ', '规则「' + id + '」无法求值：') + compileErrors[id] + '.'
     })
-    return { errors: errors, warnings: warnings }
   }
 
   /* ---------------------------------------------------------------------
@@ -1331,6 +1344,7 @@
    * `aggregateMax` defines what a full mark is and anything above it is a likely
    * data-entry error rather than a very good student. */
   function bestAggregate(rec) {
+    if (markErrors(rec).length) return null
     var n = R.calibration.aggregateSize
     var marks = rec.subjects
       .map(function (s) { return s.mark })
@@ -1401,12 +1415,7 @@
    * -------------------------------------------------------------------*/
   function recordToRow(rec) {
     var interest = (rec.interests && rec.interests[0]) || {}
-    var marks = (rec.subjects || []).map(function (s) { return s.mark })
-      .filter(function (m) { return typeof m === 'number' })
-      .sort(function (a, b) { return b - a })
-    var agg = marks.length >= R.calibration.aggregateSize
-      ? marks.slice(0, R.calibration.aggregateSize).reduce(function (a, b) { return a + b }, 0)
-      : null
+    var agg = bestAggregate(rec)
     var atar = agg === null ? null : aggregateToAtar(agg)
     return {
       country: interest.country || '',
@@ -1447,6 +1456,16 @@
    * id of the rule that produced it.
    * -------------------------------------------------------------------*/
   var generated = null
+
+  function resetReport() {
+    generated = null
+    ;['reportBody', 'reportWarnings', 'reportStamp', 'copyStatus'].forEach(function (id) {
+      if ($(id)) $(id).textContent = ''
+    })
+    ;['btnPrint', 'btnCopy', 'btnDownload', 'btnCsv'].forEach(function (id) {
+      if ($(id)) $(id).disabled = true
+    })
+  }
 
   function buildReport(rec, results) {
     var order = {}
@@ -1542,8 +1561,10 @@
     var box = $('validationBox')
     box.innerHTML = ''
     if (check.errors.length) {
+      resetReport()
       box.appendChild(el('div', { 'class': 'note err', html: '<strong>' + pick('Cannot generate a report:', '无法生成报告：') + '</strong><ul style="margin:6px 0 0 18px">' +
         check.errors.map(function (e) { return '<li>' + escapeHtml(e) + '</li>' }).join('') + '</ul>' }))
+      return
     } else if (check.warnings.length) {
       box.appendChild(el('div', { 'class': 'note', html: '<strong>' + pick('Worth checking:', '有几处值得核对：') + '</strong><ul style="margin:6px 0 0 18px">' +
         check.warnings.map(function (e) { return '<li>' + escapeHtml(e) + '</li>' }).join('') + '</ul>' }))
@@ -1554,6 +1575,10 @@
     var results = evaluate(rec)
     var report = buildReport(rec, results)
     generated = { record: rec, report: report, results: results, check: check }
+    ;['btnPrint', 'btnCopy', 'btnDownload', 'btnCsv'].forEach(function (id) {
+      if ($(id)) $(id).disabled = false
+    })
+    if ($('copyStatus')) $('copyStatus').textContent = ''
 
     // Report tab
     if ($('reportBody')) $('reportBody').innerHTML = ''
@@ -1673,8 +1698,13 @@
     var box = $('atarBox')
     if (!box) return
     var rec = readRecord()
-    var p = atarPicture(rec)
     box.innerHTML = ''
+    var errors = markErrors(rec)
+    if (errors.length) {
+      errors.forEach(function (error) { box.appendChild(el('p', { 'class': 'warn', text: error })) })
+      return
+    }
+    var p = atarPicture(rec)
     var n = R.calibration.aggregateSize
     if (p.status === 'unavailable') {
       box.appendChild(el('p', { 'class': 'warn', text: U.atar_unavailable }))
@@ -1944,7 +1974,8 @@
     })
   }
 
-  var STORAGE_KEY = 'advising-workbook-record-v2-' + LANG
+  var STORAGE_KEY = 'advising-workbook-record-v3'
+  var LEGACY_STORAGE_KEY = 'advising-workbook-record-v2-'
 
   function sample() {
     return {
@@ -1974,7 +2005,12 @@
   on('addSubject', 'click', function () { addSubjectRow() })
   on('btnGenerate', 'click', renderReport)
   on('btnSample', 'click', function () { writeRecord(sample()); renderReport() })
-  on('btnClear', 'click', function () { writeRecord({ interests: [], subjects: [] }); $('validationBox').innerHTML = '' })
+  on('btnClear', 'click', function () {
+    writeRecord({ interests: [], subjects: [] })
+    $('validationBox').innerHTML = ''
+    $('atarBox').textContent = ''
+    resetReport()
+  })
   on('btnSave', 'click', function () {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(readRecord()))
@@ -1984,13 +2020,42 @@
     }
   })
   on('btnLoad', 'click', function () {
-    var raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) { $('validationBox').innerHTML = '<div class="note">' + pick('Nothing saved in this browser yet.', '本浏览器里还没有保存过记录。') + '</div>'; return }
-    writeRecord(JSON.parse(raw))
+    var box = $('validationBox')
+    box.textContent = ''
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY + LANG) ||
+        localStorage.getItem(LEGACY_STORAGE_KEY + (LANG === 'zh' ? 'en' : 'zh'))
+      if (!raw) {
+        box.appendChild(el('div', { 'class': 'note', text: pick('Nothing saved in this browser yet.', '本浏览器里还没有保存过记录。') }))
+        return
+      }
+      var rec = JSON.parse(raw)
+      if (!rec || ![rec.interests, rec.subjects].every(function (list) {
+        return Array.isArray(list) && list.every(function (row) { return row && typeof row === 'object' && !Array.isArray(row) })
+      })) throw new Error('Invalid saved record')
+      writeRecord(rec)
+      $('atarBox').textContent = ''
+      resetReport()
+      box.appendChild(el('div', { 'class': 'note ok', text: pick('Saved record loaded.', '已读取保存的记录。') }))
+    } catch (error) {
+      box.appendChild(el('div', { 'class': 'note err', text: pick('The saved record could not be read. The current form is unchanged.', '无法读取已保存的记录，当前表单已保留。') }))
+    }
   })
-  on('btnPrint', 'click', function () { window.print() })
-  on('btnCopy', 'click', function () {
-    if (generated) navigator.clipboard.writeText(generated.report.text)
+  on('btnPrint', 'click', function () { if (generated) window.print() })
+  on('btnCopy', 'click', async function () {
+    if (!generated) return
+    var text = generated.report.text
+    var status = $('copyStatus')
+    try {
+      await navigator.clipboard.writeText(text)
+      status.textContent = pick('Copied to clipboard.', '已复制到剪贴板。')
+    } catch (error) {
+      status.textContent = pick('Clipboard unavailable. Copy the text below or download the report.', '剪贴板不可用，可以手动复制下方内容或下载报告。')
+      var field = el('textarea', { readonly: '', rows: '8', 'aria-label': pick('Report text', '报告文本') })
+      field.value = text
+      status.appendChild(field)
+      field.select()
+    }
   })
   on('btnDownload', 'click', function () {
     if (!generated) return
@@ -2005,8 +2070,8 @@
   // pages but the guest page has no CSV button, and an unguarded listener on a
   // missing node is what once killed the whole engine on the guest page.
   on('btnCsv', 'click', function () {
-    var rec = readRecord()
-    var csv = CSV_HEADERS.join(',') + '\r\n' + recordToCsv(rec)
+    if (!generated) return
+    var csv = CSV_HEADERS.join(',') + '\r\n' + recordToCsv(generated.record)
     // The BOM is what makes Excel open UTF-8 correctly; without it a Chinese
     // name arrives as mojibake, which is the one thing that would make this
     // export useless for the people most likely to use it.
@@ -2028,6 +2093,7 @@
   if ($('appSub')) $('appSub').textContent = R.meta.subtitle + ' · v' + R.meta.version + ' · ' + R.meta.contentPolicy
 
   writeRecord({ interests: [], subjects: [] })
+  resetReport()
   // The coverage tab is a catalogue, not a report, so it can be filled on
   // arrival: the reader sees the full rule list, what the current (empty) form
   // trips, and which claims are still unverified, without pressing anything.
