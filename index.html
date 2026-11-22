@@ -1,61 +1,80 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>首页 · 学习笔记</title>
-<meta name="description" content="AUSMAT（西澳 WACE 课程）2026 年 5 月入学的学习笔记：五科考核日程与权重、知识点导图、术语表、升学自检。中英双语，可打印。">
-<meta property="og:title" content="首页 · 学习笔记">
-<meta property="og:description" content="AUSMAT（西澳 WACE 课程）2026 年 5 月入学的学习笔记：五科考核日程与权重、知识点导图、术语表、升学自检。中英双语，可打印。">
-<meta property="og:type" content="website">
-<meta name="twitter:card" content="summary">
-<!-- hreflang 指的是目标页的语言，不是当前页的。
-     原来这里用了当前页的语言去描述另一语言的地址，等于反着说。
-     自指那一条（hreflang 指向本页）Google 只是建议、不是必须，就不加了 ——
-     少一处会算错的地方。（注释里也不要写星号：它会被输出到每个页面上。） -->
-<link rel="alternate" hreflang="en" href="en/index.html">
-<link rel="stylesheet" href="assets/style.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="AUSMAT 五科资料、考试日程、复习计划和升学自检。">
+  <title>AUSMAT 学习工作台</title>
+  <link rel="alternate" hreflang="en" href="en/index.html">
+  <link rel="stylesheet" href="assets/theme.css">
+  <link rel="stylesheet" href="assets/studio.css">
 </head>
 <body>
-<header class="site">
-  <div class="wrap">
-    <a class="brand" href="index.html">学习笔记</a>
-    <nav><a href="index.html" class="on">首页</a>
-      <a href="notes/timetable.html">考试日程</a>
-      <a href="notes/subjects.html">五科要点</a>
-      <a href="notes/mindmap.html?lang=zh">知识导图</a>
-      <a href="notes/advising/index.html">升学自检</a>
-      <a href="notes/glossary.html">术语表</a>
-      <a href="notes/timeline.html">学期时间线</a>
-      <a href="notes/papers.html">真题与资料</a>
-      <a href="notes/about.html">关于</a></nav>
-    <div class="lang-switch">
-      <a class="lang-link" href="en/index.html" hreflang="en" lang="en">EN</a>
+  <header class="top">
+    <div class="wrap top-inner">
+      <a class="brand" href="#home"><span class="brand-icon" aria-hidden="true">∿</span> AUSMAT 学习工作台</a>
+      <nav aria-label="主要导航">
+        <a data-view="home" href="#home">学习面板</a>
+        <a data-view="resources" href="#resources">资料库</a>
+        <a href="notes/timetable.html">考试日程</a>
+        <a href="notes/mindmap.html?lang=zh">思维导图</a>
+        <a href="notes/advising/index.html">ATAR</a>
+      </nav>
+      <a class="locale" id="locale" href="en/index.html" lang="en">EN</a>
     </div>
-  </div>
-</header>
-<main><div class="wrap">
-
-<div class="hero"><h1>AUSMAT 学习笔记</h1>
-<p>完整学期的考核日程、五科权重构成与内容范围。中英双语，可打印。</p>
-<p class="hero-note">AUSMAT 是西澳 <strong>WACE / ATAR</strong> 体系的大学预科课程（Australian Matriculation），
-在马来西亚授课、考西澳的课程与考试。本站记录的是这个体系里一届学生的五门 AT 科目：
-<strong>数学方法 MAM</strong>、<strong>人体生物学 HBY</strong>、<strong>物理 PHY</strong>、
-<strong>英语 ELD</strong>、<strong>计算机科学 CSC</strong>。
-不明白的缩写见<a href="notes/glossary.html">术语表</a>。</p></div>
-<div class="sec-title">快速入口</div>
-<ul class="cards">
-<li><a href="notes/timetable.html"><span class="t">考试日程表</span><span class="d">共 37 项考核任务的日期与权重 · 2026/05 → 2027/02</span></a></li>
-<li><a href="notes/advising/index.html"><span class="t">升学自检</span><span class="d">填一份情况，按规则库汇总出适用的升学建议 · 30 条规则可逐条查看</span></a></li>
-<li><a href="notes/mindmap.html?lang=zh"><span class="t">知识导图</span><span class="d">五科知识点全览，可搜索、可展开</span></a></li>
-<li><a href="notes/timeline.html"><span class="t">学期时间线</span><span class="d">37 周（末周 4 天）的节奏、假期与三次密集期</span></a></li>
-<li><a href="notes/subjects.html"><span class="t">五科要点</span><span class="d">各科权重构成，以及每项考核覆盖哪些内容</span></a></li>
-<li><a href="notes/papers.html"><span class="t">真题与资料</span><span class="d">五科历年 WACE 试卷的官方与社区入口</span></a></li>
-<li><a href="notes/about.html"><span class="t">关于本站</span><span class="d">内容说明</span></a></li>
-</ul>
-<div class="notice"><p>本站只包含个人整理的通用信息与原创讲解，不含学校发放的讲义、练习卷、试卷及其答案，也不含任何个人信息。知识导图里会提到某些资料的名称与页数——那是对我手头材料的 <strong>索引</strong>，不是资料本身。升学自检在你的浏览器里运行。点击保存后，记录保存在此浏览器，可在中英文页面读取。</p></div>
-
-</div></main>
-<footer class="site"><div class="wrap">AUSMAT May 2026 · 个人学习笔记</div></footer>
+  </header>
+  <main class="wrap" id="main">
+    <section id="view-home" aria-labelledby="home-title">
+      <header class="welcome">
+        <div class="welcome-copy">
+          <h1 id="home-title">AUSMAT 学习工作台</h1>
+          <p>整理五科复习资料、跟进考核日程，再用思维导图串联知识点，或用 ATAR 工具核对升学目标。</p>
+          <div class="actions">
+            <a class="button primary" href="#resources">打开资料库</a>
+            <a class="button secondary" href="notes/advising/index.html">ATAR 估算与升学自检</a>
+          </div>
+        </div>
+        <div class="welcome-art" aria-hidden="true"><div class="orbit"><span></span></div></div>
+      </header>
+      <div class="dashboard">
+        <section class="panel" aria-labelledby="subjects-title">
+          <div class="section-heading"><h2 id="subjects-title">五科复习</h2><a href="notes/subjects.html">考核范围与权重</a></div>
+          <ul class="subjects" id="subjects"></ul>
+        </section>
+        <section class="panel" aria-labelledby="upcoming-title">
+          <div class="section-heading"><h2 id="upcoming-title">接下来的考核</h2><a href="notes/timetable.html">完整日程</a></div>
+          <ul class="due" id="upcoming"></ul>
+          <p class="hint">2026 年 5 月批次记录。最新安排以学校通知为准。</p>
+          <div class="tool-row">
+            <h2>学习工具</h2>
+            <ul class="tools">
+              <li><a href="notes/mindmap.html?lang=zh">知识思维导图</a></li>
+              <li><a href="notes/advising/index.html">ATAR 估算</a></li>
+              <li><a href="notes/papers.html">历年真题</a></li>
+              <li><a href="notes/timeline.html">学期时间线</a></li>
+              <li><a href="notes/glossary.html">术语表</a></li>
+            </ul>
+          </div>
+        </section>
+      </div>
+    </section>
+    <section id="view-resources" hidden aria-labelledby="resources-title">
+      <header class="page-heading">
+        <h1 id="resources-title">AUSMAT 资料库</h1>
+        <p>五科大纲、公式卡片、复习清单和升学来源。按科目筛选，也可以直接搜知识点。</p>
+      </header>
+      <div class="filters" id="resource-filters"></div>
+      <nav class="resource-route" id="subject-links" hidden aria-label="科目快捷入口"></nav>
+      <p class="status" id="resource-status" role="status"></p>
+      <div class="cards-grid" id="resource-grid"></div>
+      <p class="hint">复习条目根据五科课程索引、Unit 3–4 大纲核查和物理公式笔记整理。招生与考试安排请查条目附带的官方入口。</p>
+    </section>
+  </main>
+  <footer>
+    <div class="wrap">AUSMAT v2.1 · 独立学习笔记 · <a href="notes/about.html">关于本站</a></div>
+  </footer>
+  <script src="assets/studio-data.js"></script>
+  <script src="assets/studio-events.js"></script>
+  <script src="assets/studio.js"></script>
 </body>
 </html>

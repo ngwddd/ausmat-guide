@@ -157,6 +157,8 @@
 </style>
 <link rel="stylesheet" href="../assets/style.css">
 <meta name="description" content="AUSMAT 五科知识点总览：MAM 数学方法、HBY 人体生物学、PHY 物理、ELD 英语、CSC 计算机科学的知识节点与中文说明，可搜索、可缩放、可展开，另附考试时间线。">
+<link rel="stylesheet" href="../assets/theme.css">
+<link rel="stylesheet" href="../assets/reading.css">
 </head>
 <body>
 <header class="site">
@@ -181,7 +183,8 @@
   <div class="meta" data-i18n="五科知识点总览 · 可搜索、可缩放、可展开">五科知识点总览 · 可搜索、可缩放、可展开</div>
 </div>
 <div id="app">
-  <div class="mm-toolbar">
+  <nav class="reading-links" aria-label="Related resources"><a class="link-zh" href="../index.html#resources">打开五科资料库</a><a class="link-en" href="../en/index.html#resources">Browse subject resources</a></nav>
+<div class="mm-toolbar">
     <input id="search" type="search" placeholder="搜索知识点…" aria-label="搜索知识点"
            data-ph-zh="搜索知识点…" data-ph-en="Search topics…"
            data-al-zh="搜索知识点" data-al-en="Search topics">
@@ -1534,5 +1537,6 @@ try {
 // 不能放进上面的 IIFE：那时 var UI_EN / var I18N 还未赋值。
 if (LANG === 'en') loadI18N(function(){ applyLang('en', true); });
 </script>
+<script src="../assets/reading.js"></script>
 </body>
 </html>

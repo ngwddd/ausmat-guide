@@ -1,61 +1,80 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Home · Study Notes</title>
-<meta name="description" content="Study notes for AUSMAT (WA WACE) starting May 2026: assessment schedule and weightings for five subjects, a topic mind map, a glossary and an ATAR self-check.">
-<meta property="og:title" content="Home · Study Notes">
-<meta property="og:description" content="Study notes for AUSMAT (WA WACE) starting May 2026: assessment schedule and weightings for five subjects, a topic mind map, a glossary and an ATAR self-check.">
-<meta property="og:type" content="website">
-<meta name="twitter:card" content="summary">
-<!-- hreflang 指的是目标页的语言，不是当前页的。
-     原来这里用了当前页的语言去描述另一语言的地址，等于反着说。
-     自指那一条（hreflang 指向本页）Google 只是建议、不是必须，就不加了 ——
-     少一处会算错的地方。（注释里也不要写星号：它会被输出到每个页面上。） -->
-<link rel="alternate" hreflang="zh-CN" href="../index.html">
-<link rel="stylesheet" href="../assets/style.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="AUSMAT subject resources, assessment schedule, study planner and advising.">
+  <title>AUSMAT Study Studio</title>
+  <link rel="alternate" hreflang="zh-CN" href="../index.html">
+  <link rel="stylesheet" href="../assets/theme.css">
+  <link rel="stylesheet" href="../assets/studio.css">
 </head>
 <body>
-<header class="site">
-  <div class="wrap">
-    <a class="brand" href="index.html">Study Notes</a>
-    <nav><a href="index.html" class="on">Home</a>
-      <a href="notes/timetable.html">Timetable</a>
-      <a href="notes/subjects.html">Subjects</a>
-      <a href="../notes/mindmap.html?lang=en">Mind Map</a>
-      <a href="../notes/advising/en.html">Advising</a>
-      <a href="notes/glossary.html">Glossary</a>
-      <a href="notes/timeline.html">Timeline</a>
-      <a href="notes/papers.html">Papers</a>
-      <a href="notes/about.html">About</a></nav>
-    <div class="lang-switch">
-      <a class="lang-link" href="../index.html" hreflang="zh" lang="zh">中文</a>
+  <header class="top">
+    <div class="wrap top-inner">
+      <a class="brand" href="#home"><span class="brand-icon" aria-hidden="true">∿</span> AUSMAT Study Studio</a>
+      <nav aria-label="Main navigation">
+        <a data-view="home" href="#home">Dashboard</a>
+        <a data-view="resources" href="#resources">Resources</a>
+        <a href="notes/timetable.html">Assessments</a>
+        <a href="../notes/mindmap.html?lang=en">Mind map</a>
+        <a href="../notes/advising/en.html">ATAR</a>
+      </nav>
+      <a class="locale" id="locale" href="../index.html" lang="zh-CN">中文</a>
     </div>
-  </div>
-</header>
-<main><div class="wrap">
-
-<div class="hero"><h1>AUSMAT Study Notes</h1>
-<p>A full-course assessment timetable, subject weightings and content covered. Bilingual, printable.</p>
-<p class="hero-note">AUSMAT is the Australian Matriculation programme: a pre-university year taught in
-Malaysia that sits the Western Australian <strong>WACE / ATAR</strong>. This site documents one intake of
-it, covering five AT subjects: <strong>Mathematics Methods (MAM)</strong>, <strong>Human Biology (HBY)</strong>,
-<strong>Physics (PHY)</strong>, <strong>English EAL/D (ELD)</strong> and <strong>Computer Science (CSC)</strong>.
-Unfamiliar abbreviations are defined in the <a href="notes/glossary.html">glossary</a>.</p></div>
-<div class="sec-title">Quick links</div>
-<ul class="cards">
-<li><a href="notes/timetable.html"><span class="t">Assessment Timetable</span><span class="d">37 tasks with their dates and weightings · May 2026 – Feb 2027</span></a></li>
-<li><a href="../notes/advising/en.html"><span class="t">Advising self-check</span><span class="d">Fill in one record and get the advice that applies · 30 rules, readable one by one</span></a></li>
-<li><a href="../notes/mindmap.html?lang=en"><span class="t">Mind Map</span><span class="d">Every topic across five subjects · searchable</span></a></li>
-<li><a href="notes/timeline.html"><span class="t">Semester Timeline</span><span class="d">37 weeks (the last one 4 days), the breaks, and three crunch periods</span></a></li>
-<li><a href="notes/subjects.html"><span class="t">Five Subjects</span><span class="d">Weightings, and what each assessment covers</span></a></li>
-<li><a href="notes/papers.html"><span class="t">Past Papers</span><span class="d">Official and community sources for all five subjects</span></a></li>
-<li><a href="notes/about.html"><span class="t">About</span><span class="d">What this site does and does not contain</span></a></li>
-</ul>
-<div class="notice"><p>This site contains only general information I compiled and explanations I wrote. It does not include school-issued handouts, worksheets, exam papers or their solutions. The advising tool runs in your browser. When you choose to save, your record stays in this browser and can be loaded from either language. The mind map names some course materials and their page counts as an <strong>index</strong>.</p></div>
-
-</div></main>
-<footer class="site"><div class="wrap">AUSMAT May 2026 · personal study notes</div></footer>
+  </header>
+  <main class="wrap" id="main">
+    <section id="view-home" aria-labelledby="home-title">
+      <header class="welcome">
+        <div class="welcome-copy">
+          <h1 id="home-title">AUSMAT Study Studio</h1>
+          <p>Organise five subjects, keep up with assessments, connect topics on the mind map and check your ATAR goals.</p>
+          <div class="actions">
+            <a class="button primary" href="#resources">Browse resources</a>
+            <a class="button secondary" href="../notes/advising/en.html">ATAR estimate and advising</a>
+          </div>
+        </div>
+        <div class="welcome-art" aria-hidden="true"><div class="orbit"><span></span></div></div>
+      </header>
+      <div class="dashboard">
+        <section class="panel" aria-labelledby="subjects-title">
+          <div class="section-heading"><h2 id="subjects-title">Five subjects</h2><a href="notes/subjects.html">Assessment scope and weights</a></div>
+          <ul class="subjects" id="subjects"></ul>
+        </section>
+        <section class="panel" aria-labelledby="upcoming-title">
+          <div class="section-heading"><h2 id="upcoming-title">Upcoming assessments</h2><a href="notes/timetable.html">Full schedule</a></div>
+          <ul class="due" id="upcoming"></ul>
+          <p class="hint">May 2026 cohort schedule. Check college notices for updates.</p>
+          <div class="tool-row">
+            <h2>Study tools</h2>
+            <ul class="tools">
+              <li><a href="../notes/mindmap.html?lang=en">Subject mind map</a></li>
+              <li><a href="../notes/advising/en.html">ATAR estimate</a></li>
+              <li><a href="notes/papers.html">Past exams</a></li>
+              <li><a href="notes/timeline.html">Term timeline</a></li>
+              <li><a href="notes/glossary.html">Glossary</a></li>
+            </ul>
+          </div>
+        </section>
+      </div>
+    </section>
+    <section id="view-resources" hidden aria-labelledby="resources-title">
+      <header class="page-heading">
+        <h1 id="resources-title">AUSMAT Resource Library</h1>
+        <p>Find subject guides, formula cards, study checklists and admissions sources. Filter by subject or search for a topic.</p>
+      </header>
+      <div class="filters" id="resource-filters"></div>
+      <nav class="resource-route" id="subject-links" hidden aria-label="Subject shortcuts"></nav>
+      <p class="status" id="resource-status" role="status"></p>
+      <div class="cards-grid" id="resource-grid"></div>
+      <p class="hint">Revision entries draw on the five-subject index, Unit 3–4 syllabus review and physics formula notes. Follow the official links for admissions and examination arrangements.</p>
+    </section>
+  </main>
+  <footer>
+    <div class="wrap">AUSMAT v2.1 · Independent study notes · <a href="notes/about.html">About this site</a></div>
+  </footer>
+  <script src="../assets/studio-data.js"></script>
+  <script src="../assets/studio-events.js"></script>
+  <script src="../assets/studio.js"></script>
 </body>
 </html>

@@ -8,6 +8,8 @@
 <link rel="alternate" hreflang="en" href="en.html">
 <link rel="stylesheet" href="../../assets/style.css">
 <link rel="stylesheet" href="../../assets/advising.css">
+<link rel="stylesheet" href="../../assets/theme.css">
+<link rel="stylesheet" href="../../assets/reading.css">
 </head>
 <body class="advising advising-wide">
 <header class="site">
@@ -32,7 +34,8 @@
 
 <div class="note-head"><a class="back" href="../../index.html">← 首页</a>
 <h1>升学自检</h1>
-<div class="meta">填四门成绩和目标 ATAR，工具算出合成分与对应 ATAR，再按规则库汇总出适用的建议。每条建议都标出它来自哪条规则，规则库本身可以逐条查看。</div></div>
+<div class="meta">填四门成绩和目标 ATAR，工具算出合成分与对应 ATAR，再按规则库汇总出适用的建议。每条建议都标出它来自哪条规则，规则库本身可以逐条查看。</div>
+<nav class="reading-links" aria-label="相关入口"><a href="../../index.html#resources">查找科目资料</a><a href="../../notes/papers.html">按科目找真题</a><a href="../../notes/timetable.html">查看考试日程</a></nav></div>
 
 <nav class="tabs" role="tablist">
   <button role="tab" aria-selected="true" data-tab="student">1 · 学生情况</button>
@@ -47,7 +50,7 @@
   <section class="card">
     <h2>升学意向</h2>
     <p class="muted">只想算 ATAR 的话这一块可以留空；填了才会有目的国、专业、先修科目、语言和费用这几类建议。</p>
-    <div class="tw"><table><thead><tr><th style="width:26%">国家/地区</th>
+    <p class="scroll-hint">在表格内向左右滑动可查看所有列。</p><div class="tw"><table><thead><tr><th style="width:26%">国家/地区</th>
       <th style="width:26%">专业方向</th><th>目标大学</th>
       <th style="width:14%">记录最低 ATAR（门数）</th><th style="width:38px"></th></tr></thead>
       <tbody id="interestRows"></tbody></table></div>
@@ -138,5 +141,6 @@
 <script src="courses.js"></script>
 <script src="history.js"></script>
 <script src="../../assets/advising.js"></script>
+<script src="../../assets/reading.js"></script>
 </body>
 </html>

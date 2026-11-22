@@ -1,0 +1,67 @@
+@media screen {
+  :root {
+    --text:var(--ink); --text-soft:var(--muted);
+    --bg-soft:var(--surface); --bg-code:var(--soft); --accent:var(--blue);
+    --accent-bg:var(--soft); --warn:var(--warning); --warn-bg:var(--warning-bg);
+    --maxw:1160px;
+  }
+  body { font:16px/1.65 var(--font); background:var(--bg); color:var(--ink) }
+  .wrap, body.advising-wide .wrap { width:min(1160px,calc(100% - 56px)); max-width:none; padding:0 }
+  header.site { background:var(--nav); color:var(--nav-ink); border:0; padding:10px 0; position:static }
+  header.site .wrap { min-height:46px; justify-content:space-between; gap:8px 14px }
+  header.site .brand { display:inline-flex; align-items:center; gap:10px; color:inherit; font-size:1rem; letter-spacing:-.03em }
+  header.site .brand::before { content:"∿"; display:grid; place-items:center; width:33px; height:33px; border-radius:8px; background:#cae1ff; color:#152849; font-size:20px; flex:none }
+  header.site nav { gap:4px; flex:1 1 auto; justify-content:center }
+  header.site nav a, html[lang^="en"] header.site nav a { border:0; border-radius:7px; padding:6px 9px; color:inherit; font-size:.9rem }
+  header.site nav a:hover, header.site nav a.on { background:var(--nav-hover); color:inherit }
+  .lang-switch { margin-left:0 }
+  .lang-link { color:var(--nav-ink); background:transparent; border-color:#65789b; border-radius:7px; font:inherit; font-size:.9rem; cursor:pointer }
+  .lang-link:hover { background:var(--nav-hover); color:var(--nav-ink) }
+  a { color:var(--blue); text-underline-offset:.17em }
+  :is(a,button,input,select,summary,[tabindex]):focus-visible { outline:3px solid var(--focus); outline-offset:3px }
+  main { padding:32px 0 52px }
+  .note-head { margin:0 0 20px }
+  .note-head h1 { font-size:clamp(2rem,5vw,3.1rem); line-height:1.14; margin:10px 0; letter-spacing:-.045em }
+  .note-head .meta,.note-head .back { color:var(--muted); font-size:.94rem }
+  h2 { font-size:1.36rem; letter-spacing:-.024em; scroll-margin-top:1rem }
+  h3 { font-size:1.1rem }
+  .callout,.notice,.box { background:var(--surface); border-color:var(--line); border-radius:var(--radius) }
+  ul.cards li a { background:var(--surface); border-color:var(--line); border-radius:var(--radius) }
+  table { font-size:.94rem; background:var(--surface); margin:12px 0 18px }
+  th { background:var(--soft) }
+  .tw { max-width:100%; overflow:auto; overscroll-behavior-inline:contain }
+  footer.site { color:var(--muted); background:transparent; border-color:var(--line); font-size:.9rem }
+  .reading-links { display:flex; flex-wrap:wrap; gap:8px; margin:0 0 18px }
+  .reading-links a { display:inline-flex; align-items:center; gap:6px; min-height:44px; padding:6px 10px; border:1px solid var(--line); border-radius:8px; background:var(--surface); text-decoration:none; font-size:.91rem; font-weight:650 }
+  .reading-links a:hover { background:var(--soft); border-color:var(--blue) }
+  .reading-links .link-en, html:lang(en) .reading-links .link-zh { display:none }
+  html:lang(en) .reading-links .link-en { display:inline-flex }
+  .reading-filter { display:flex; align-items:center; flex-wrap:wrap; gap:9px; color:var(--muted); margin-bottom:10px }
+  .reading-filter select { min-height:44px; max-width:100%; font:inherit; color:var(--text); background:var(--surface); border:1px solid var(--input-line); border-radius:8px; padding:5px 9px }
+  .scroll-hint { display:none; color:var(--muted); margin:0 0 8px; font-size:.88rem }
+  [hidden] { display:none !important }
+  .advising .card { min-width:0; padding:12px 16px 16px }
+  .advising .card > h2 { margin:4px 0 12px; font-size:1.12rem; letter-spacing:-.015em; text-transform:none; color:var(--text) }
+  .advising .field,.advising [class*="row"],.advising .grid > * { min-width:0 }
+  .advising :is(input,select,textarea) { font-size:1rem !important; min-height:44px; border-color:var(--input-line) !important; background:var(--surface) !important }
+  .advising :is(button,.tabs button),.mm-toolbar button { min-height:44px }
+  .advising button.action,.advising nav.tabs button[aria-selected="true"],.mm-toolbar button.active { color:var(--button-ink); background:var(--button-bg); border-color:var(--button-bg) }
+  #canvasWrap { max-width:100%; min-width:0 }
+  @media (max-width:700px) {
+    .wrap,body.advising-wide .wrap { width:calc(100% - 28px) }
+    main { padding:23px 0 36px }
+    header.site nav { justify-content:start; flex-wrap:nowrap; overflow-x:auto; padding:4px; width:100%; flex-basis:100%; gap:4px }
+    header.site nav a, html[lang^="en"] header.site nav a { display:inline-flex; align-items:center; flex:none; white-space:nowrap; min-height:44px; font-size:.9rem }
+    .lang-link { min-height:44px; display:inline-flex; align-items:center }
+    .scroll-hint { display:block }
+    .tw > table:has(th:nth-child(4)) { min-width:510px }
+    .tw > table:has(th:nth-child(5)) { min-width:600px }
+    .advising .card { padding:10px 12px 13px }
+    .mm-toolbar input { width:100%; min-height:44px; font-size:1rem }
+    .mm-toolbar .spacer { display:none }
+  }
+}
+@media print {
+  .reading-links,.reading-filter,.scroll-hint { display:none !important }
+  .tw { overflow:visible !important }
+}
