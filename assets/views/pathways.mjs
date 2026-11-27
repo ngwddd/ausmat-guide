@@ -9,6 +9,11 @@ export function mount({root, lang}) {
   const en = lang === 'en';
   const t = (english, chinese) => en ? english : chinese;
   const names = new Map([['Australia','澳大利亚'],['Malaysia','马来西亚'],['Singapore','新加坡'],['Hong Kong SAR','中国香港'],['United Kingdom','英国'],['New Zealand','新西兰'],['Ireland','爱尔兰']]);
+  const qualifications = {
+    wace:t('WACE or WA listed','明列 WACE 或西澳学历'),
+    ausmat:t('AUSMAT listed','明列 AUSMAT'),
+    atar:t('Australian ATAR listed','列出澳洲 ATAR'),
+  };
   const field = (label, input) => {
     const node = document.createElement('label');
     node.className = 'field';
@@ -20,6 +25,8 @@ export function mount({root, lang}) {
   country.append(new Option(t('All destinations','所有地区'), ''), ...countries.map(value => new Option(t(value,names.get(value) ?? value),value)));
   const search = document.createElement('input');
   search.type = 'search';
+  const qualification = document.createElement('select');
+  qualification.append(new Option(t('All pathways','全部学历路径'),''), ...Object.entries(qualifications).map(([key,label])=>new Option(label,key)));
   const rank = document.createElement('input');
   rank.type = 'number';
   rank.min = '0';
@@ -27,7 +34,7 @@ export function mount({root, lang}) {
   rank.step = '0.05';
   const results = root.querySelector('#pathway-results');
   const status = root.querySelector('#pathway-status');
-  root.querySelector('#pathway-filters').append(field(t('Destination','留学地区'),country), field(t('Course or institution','专业或院校'),search), field(t('Maximum published ATAR','最高门槛 ATAR'),rank));
+  root.querySelector('#pathway-filters').append(field(t('Destination','留学地区'),country), field(t('Qualification evidence','学历依据'),qualification), field(t('Course or institution','专业或院校'),search), field(t('Maximum published ATAR','最高门槛 ATAR'),rank));
   function render() {
     const max = rank.valueAsNumber;
     if (rank.value && (!Number.isFinite(max) || max < 0 || max > 99.95)) {
@@ -37,7 +44,8 @@ export function mount({root, lang}) {
     }
     const phrase = search.value.trim().toLowerCase();
     const rows = pathways.filter(row => (!country.value || row.country === country.value) &&
-      (!Number.isFinite(max) || row.atar <= max) && [row.course,row.university,row.country,names.get(row.country)].join(' ').toLowerCase().includes(phrase));
+      (!qualification.value || row.qualification === qualification.value) &&
+      (!Number.isFinite(max) || row.atar <= max) && [row.course,row.university,row.country,names.get(row.country),qualifications[row.qualification]].join(' ').toLowerCase().includes(phrase));
     status.textContent = t(`${rows.length} records · checked ${checkedOn}`, `${rows.length} 条记录 · 核对于 ${checkedOn}`);
     results.replaceChildren(...rows.map(row => {
       const card = document.createElement('article');
@@ -51,14 +59,17 @@ export function mount({root, lang}) {
       score.textContent = 'ATAR ' + row.atar + ' · ' + (row.kind === 'program' ? t('Course threshold','专业门槛') : t('Qualification benchmark','学历申请参考'));
       const detail = document.createElement('p');
       detail.textContent = t(row.req,row.reqZh);
+      const credential = document.createElement('p');
+      credential.textContent = qualifications[row.qualification];
       const link = document.createElement('a');
       link.href = row.url;
       link.textContent = t('Check the university source','查看院校出处');
-      card.append(title,place,score,detail,link);
+      card.append(title,place,score,credential,detail,link);
       return card;
     }));
   }
   country.addEventListener('change',render);
+  qualification.addEventListener('change',render);
   search.addEventListener('input',render);
   rank.addEventListener('input',render);
   render();

@@ -1,16 +1,13 @@
-import {additionalSubjects, studyReview, studyTutorial, syllabus} from './subject-guide.mjs';
+import {studyReview, studyTutorial, syllabus} from './subject-guide.mjs';
 
 export const courses = [
   ['MAM', '数学方法', 'Mathematics Methods', '微分、积分与统计推断', 'Calculus and statistical inference'],
   ['HBY', '人体生物学', 'Human Biology', '稳态、疾病与人类演化', 'Homeostasis, disease and human evolution'],
   ['PHY', '物理', 'Physics', '引力、相对论、电磁学与现代物理', 'Gravity, relativity, electromagnetism and modern physics'],
   ['CSC', '计算机科学', 'Computer Science', '编程、网络、数据库与网络安全概念', 'Programming, networks, databases and security concepts'],
-  ...additionalSubjects.map(subject => subject.slice(0,5)),
 ];
 
 export const resources = [
-  ...additionalSubjects.map(([code, zh, en, topicZh, topicEn, taskEn, taskZh]) =>
-    [code,'guide',zh + '复习入口',en + ' study guide',topicZh,topicEn,[taskZh],[taskEn],syllabus]),
   ['all','drill','闭卷检索与间隔重练','Retrieval and spaced review',
     '先回忆，再核对，把错题安排到下一次复习。','Recall before checking, then revisit mistakes on a later day.',
     ['闭卷画出人体稳态环路，或写出微积分题第一步。','隔一天重做错题，之后再与其他题型混练。'],

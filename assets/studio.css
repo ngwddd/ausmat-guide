@@ -53,7 +53,7 @@ h2 { margin: 0; font-size: 1.26rem; letter-spacing: -.023em }
 .code { display:grid; place-items:center; min-width:44px; height:34px; padding:0 5px; border-radius:6px; color:#29498b; background:#eaf0fe; font-size:.82rem; font-weight:750 }
 .code[data-code="HBY"] { background:#e4f5eb; color:#195d45 }
 .code[data-code="PHY"] { background:#f3eaff; color:#673b95 }
-.code[data-code="EALD"] { background:#faefdc; color:#794812 }
+.code[data-code="ELD"] { background:#faefdc; color:#794812 }
 .code[data-code="CSC"] { background:#e2f4f5; color:#15575b }
 .due-row time { white-space:nowrap; font-variant-numeric:tabular-nums; color:var(--muted); font-size:.87rem }
 .assessment-prepare { color:var(--ink); font-weight:700; text-decoration:none }
@@ -97,6 +97,8 @@ footer { border-top:1px solid var(--line); color:var(--muted); padding:15px 0 22
 #score-result { font-weight:700; overflow-wrap:anywhere }
 .note-head h1, .section-heading a, .course strong, .resource h2, #sideTitle, #sideBody { overflow-wrap:anywhere }
 #pathway-filters .field { max-width:100%; min-width:0 }
+.node-rect-themed { fill:var(--bg) }
+.node-label-themed { fill:var(--text) }
 @media (max-width: 740px) {
   .top-inner { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:6px; padding:8px 0 }
   .top .brand { white-space:normal; line-height:1.25; gap:6px; min-width:0 }
@@ -104,6 +106,10 @@ footer { border-top:1px solid var(--line); color:var(--muted); padding:15px 0 22
   .top nav { grid-column:1 / -1; order:3; min-width:0; flex-wrap:nowrap; overflow-x:auto; padding:4px 3px; overscroll-behavior-inline:contain }
   .top nav a, .locale { flex:none; min-height:44px; display:flex; align-items:center }
   .score-layout { grid-template-columns:minmax(0,1fr) }
+  .mm-toolbar button, .mm-toolbar input { min-height:44px; max-width:100% }
+  .mm-toolbar input { width:100%; font-size:1rem }
+  .mm-toolbar .spacer { display:none }
+  #mmTitle small { display:block; margin-inline-start:0 }
 }
 @media (max-width: 820px) {
   .wrap { width:calc(100% - 34px) }
@@ -126,4 +132,6 @@ footer { border-top:1px solid var(--line); color:var(--muted); padding:15px 0 22
   .field.grow { flex-basis:100% }
   .panel { padding:14px }
   .section-heading a { white-space:normal }
+  #timeline { padding:12px }
+  #timeline th, #timeline td { padding:6px }
 }

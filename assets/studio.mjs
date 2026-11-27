@@ -1,6 +1,5 @@
 import {courses, resources} from './catalog.mjs';
 import {assessments} from './assessments.mjs';
-import {syllabus} from './subject-guide.mjs';
 
 export function mountStudio({root, lang, href}) {
   const en = lang === 'en';
@@ -98,7 +97,7 @@ export function mountStudio({root, lang, href}) {
 
   const examPaths = {
     MAM:'mathematics-methods', HBY:'human-biology', PHY:'physics',
-    ELD:'english-as-an-additional-languagedialect', CSC:'computer-science',
+    CSC:'computer-science',
   };
   const exams = 'https://senior-secondary.scsa.wa.edu.au/further-resources/past-atar-course-exams/';
   function renderSubjectLinks() {
@@ -108,11 +107,6 @@ export function mountStudio({root, lang, href}) {
     box.hidden = !code;
     if (!code) return;
     const subject = courseLabel(code);
-    if (!Object.hasOwn(examPaths, code)) {
-      box.append(link(t(subject + ' · SCSA 官方大纲', subject + ' · SCSA syllabus'), syllabus, 'button'),
-        link(t('Sunway 开课与选科', 'Sunway intakes and subject choices'), href('program'), 'button'));
-      return;
-    }
     const paper = link(t(subject + ' · SCSA 真题与评分指南', subject + ' · SCSA exams and marking keys'), exams + examPaths[code] + '-past-atar-course-exams', 'button');
     paper.target = '_blank';
     paper.rel = 'noopener noreferrer';
@@ -172,5 +166,8 @@ export function mountStudio({root, lang, href}) {
     if (page !== 'resources') return;
     courseFilter.value = courses.some(([code]) => code === argument) ? argument : '';
     renderResources();
+    if (argument && !courseFilter.value) {
+      byId('resource-status').textContent = t('此科目的备考资料已下架。下方是目前可用的资料。','This subject’s preparation materials have been removed. Available resources are listed below.');
+    }
   };
 }
