@@ -36,7 +36,7 @@ export function mountStudio({root, lang, href}) {
   }
 
   function codeChip(code) {
-    const chip = el('span', 'code', code);
+    const chip = el('span', 'code', code === 'EALD' ? 'EAL/D' : code);
     chip.dataset.code = code;
     return chip;
   }

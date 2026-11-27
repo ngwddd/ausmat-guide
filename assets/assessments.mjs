@@ -1,4 +1,5 @@
 import {applyAssessmentUpdates} from './assessment-updates.mjs';
+import {ealdCalendar} from './eald-calendar.mjs';
 
 const cohortRecords = {
   "zh": [
@@ -400,6 +401,6 @@ const cohortRecords = {
 };
 
 export const assessments = {
-  en: applyAssessmentUpdates(cohortRecords.en, 'en'),
-  zh: applyAssessmentUpdates(cohortRecords.zh, 'zh'),
+  en: applyAssessmentUpdates([...cohortRecords.en, ...ealdCalendar('en')], 'en'),
+  zh: applyAssessmentUpdates([...cohortRecords.zh, ...ealdCalendar('zh')], 'zh'),
 };

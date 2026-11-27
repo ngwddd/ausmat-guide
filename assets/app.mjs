@@ -7,25 +7,34 @@ const locale = document.querySelector('#locale');
 const status = document.querySelector('#route-status');
 let current;
 let request = 0;
+let headerLanguage;
+let activeNavLink;
 
 function updateShell({lang, page, argument, params}) {
   const en = lang === 'en';
-  document.documentElement.lang = en ? 'en' : 'zh-CN';
   document.title = (routes[page]?.[Number(en)] ?? (en ? 'Page not found' : '找不到页面')) + ' · AUSMAT';
-  nav.setAttribute('aria-label', en ? 'Main navigation' : '主要导航');
-  for (const link of nav.querySelectorAll('[data-route]')) {
-    const target = link.dataset.route;
-    link.textContent = routes[target][Number(en)];
-    link.href = routeHref(lang, target);
-    if (page === target) link.setAttribute('aria-current', 'page');
-    else link.removeAttribute('aria-current');
+  if (headerLanguage !== lang) {
+    headerLanguage = lang;
+    document.documentElement.lang = en ? 'en' : 'zh-CN';
+    nav.setAttribute('aria-label', en ? 'Main navigation' : '主要导航');
+    for (const link of nav.querySelectorAll('[data-route]')) {
+      const target = link.dataset.route;
+      link.textContent = routes[target][Number(en)];
+      link.href = routeHref(lang, target);
+    }
+    document.querySelector('.brand').href = routeHref(lang, 'home');
+    document.querySelector('#brand-label').textContent = en ? 'AUSMAT Study Studio' : 'AUSMAT 学习工作台';
+    document.querySelector('#about-link').href = routeHref(lang, 'about');
+    document.querySelector('#about-link').textContent = routes.about[Number(en)];
+    locale.textContent = en ? '中文' : 'EN';
+    locale.lang = en ? 'zh-CN' : 'en';
   }
-  document.querySelector('.brand').href = routeHref(lang, 'home');
-  document.querySelector('#brand-label').textContent = en ? 'AUSMAT Study Studio' : 'AUSMAT 学习工作台';
-  document.querySelector('#about-link').href = routeHref(lang, 'about');
-  document.querySelector('#about-link').textContent = routes.about[Number(en)];
-  locale.textContent = en ? '中文' : 'EN';
-  locale.lang = en ? 'zh-CN' : 'en';
+  const selected = nav.querySelector(`[data-route="${page}"]`);
+  if (activeNavLink !== selected) {
+    activeNavLink?.removeAttribute('aria-current');
+    selected?.setAttribute('aria-current', 'page');
+    activeNavLink = selected;
+  }
   locale.href = routeHref(en ? 'zh' : 'en', page, argument, params);
 }
 

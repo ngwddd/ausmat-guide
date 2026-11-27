@@ -19,11 +19,12 @@ export function mountAssessmentFilter({root, lang, href}) {
   });
   return next => {
     route = next;
-    const subject = route.params.get('subject') ?? '';
+    const code = route.params.get('subject') ?? '';
+    const subject = code === 'ELD' ? 'EALD' : code;
     filter.value = [...filter.options].some(option => option.value === subject) ? subject : '';
     let shown = 0;
     for (const row of rows) {
-      row.hidden = Boolean(filter.value && row.cells[0].textContent.trim() !== filter.value);
+      row.hidden = Boolean(filter.value && (row.dataset.subject ?? row.cells[0].textContent.trim()) !== filter.value);
       if (!row.hidden) shown++;
     }
     status.textContent = lang === 'en' ? shown + ' assessments' : '显示 ' + shown + ' 项考核';
