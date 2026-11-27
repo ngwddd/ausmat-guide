@@ -1,0 +1,47 @@
+name: Publish AUSMAT v2.2 to v2.5
+
+on:
+  push:
+    branches: [publish-v2-2-to-v2-5]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ausmat-release-backfill
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.repository == 'ngwddd/ausmat-guide'
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ngwddd/ausmat-guide
+    steps:
+      - name: Verify targets and publish missing releases
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          release() {
+            local tag="$1" commit="$2" latest="$3" note="$4" target
+            gh api "repos/$GH_REPO/commits/$commit" --jq .sha | grep -Fx "$commit"
+            if target=$(gh api "repos/$GH_REPO/git/ref/tags/$tag" --jq .object.sha); then
+              test "$target" = "$commit"
+            else
+              gh api --method POST "repos/$GH_REPO/git/refs" -f "ref=refs/tags/$tag" -f "sha=$commit" --jq .ref
+            fi
+            if gh release view "$tag" --json tagName >/dev/null 2>&1; then
+              if test "$latest" = true; then
+                gh release edit "$tag" --latest
+              fi
+            else
+              gh release create "$tag" --verify-tag --title "AUSMAT Study Studio $tag" --notes "$note" --latest="$latest"
+            fi
+          }
+
+          release v2.2 fe1d02ad6615e0473699d46eb2f4103f7e485a91 false '单页路由与模块化重构，保留旧入口跳转。公开快照已清理个人备考内容。'
+          release v2.3 fd82492e0cfc7d293ed77800b7ca023ff579a740 false '新增国际升学与学制指南，补充物理实验考核时间。公开快照已清理个人备考内容。'
+          release v2.4 6803b09d2ca82fe98437c40a84545cc5a0068e1a false '简化 ATAR 估算和目标反推，扩充升学库，改善移动端显示。'
+          release v2.5 0cc9c0db060a037888093fcab41c143703064218 true '优化导图拖动与缩放，恢复 9 条 EAL/D 考试日程。'
