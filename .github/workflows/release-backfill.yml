@@ -45,3 +45,5 @@ jobs:
           release v2.3 fd82492e0cfc7d293ed77800b7ca023ff579a740 false '新增国际升学与学制指南，补充物理实验考核时间。公开快照已清理个人备考内容。'
           release v2.4 6803b09d2ca82fe98437c40a84545cc5a0068e1a false '简化 ATAR 估算和目标反推，扩充升学库，改善移动端显示。'
           release v2.5 0cc9c0db060a037888093fcab41c143703064218 true '优化导图拖动与缩放，恢复 9 条 EAL/D 考试日程。'
+
+          test "$(gh api "repos/$GH_REPO/releases/latest" --jq .tag_name)" = v2.5
