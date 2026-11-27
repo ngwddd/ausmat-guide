@@ -1,12 +1,11 @@
-window.STUDIO_COURSES = [
+export const courses = [
   ['MAM', '数学方法', 'Mathematics Methods', '微分、积分与统计推断', 'Calculus and statistical inference'],
   ['HBY', '人体生物学', 'Human Biology', '稳态、疾病与人类演化', 'Homeostasis, disease and human evolution'],
   ['PHY', '物理', 'Physics', '引力、相对论、电磁学与现代物理', 'Gravity, relativity, electromagnetism and modern physics'],
-  ['ELD', '英语 EAL/D', 'English EAL/D', '文本理解、论证、写作与口语', 'Text analysis, argument, writing and speaking'],
   ['CSC', '计算机科学', 'Computer Science', '编程、网络、数据库与网络安全概念', 'Programming, networks, databases and security concepts'],
 ];
 
-window.STUDIO_RESOURCES = [
+export const resources = [
   ['MAM','guide','Unit 3–4 复习路线','Unit 3–4 revision route',
     '把微积分、概率和统计推断拆成三条练习线。','Separate practice into calculus, probability and inference.',
     ['先辨别变化率、函数值和累计量，再决定求导或积分。','遇到统计题，先写抽样对象、参数和所用分布。','文字题最后一句回到原题情境并注明单位。'],
@@ -31,14 +30,6 @@ window.STUDIO_RESOURCES = [
     '从桌面的 PHY 公式笔记整理运动、场和力矩的常用式。','A compact formula check based on the desktop PHY notes.',
     ['恒加速度：v = u + at，s = ut + ½at²。抛体的水平与垂直分量分开处理。','圆周运动：a = v²/r。引力：F = Gm₁m₂/r²；r 是两物体质心相距。','力矩：τ = rF sinθ。静力平衡同时检查合力与合力矩为零。','带电粒子受力：F = qE；磁力大小 |F| = |q|vB sinθ，方向随电荷正负改变。'],
     ['Constant acceleration: v = u + at and s = ut + ½at². Treat projectile components separately.','Circular acceleration: a = v²/r. Gravitation: F = Gm₁m₂/r², where r is centre-to-centre.','Torque: τ = rF sinθ. Static equilibrium requires zero net force and zero net torque.','Electric force: F = qE. Magnetic force magnitude: |F| = |q|vB sinθ; direction depends on charge sign.']],
-  ['ELD','guide','文本分析与写作','Text analysis and writing',
-    '从受众、语境和目的定位文本，再组织证据。','Identify audience, context and purpose before organising evidence.',
-    ['用一处具体证据支持一个判断。','解释语言选择对受众的影响。','根据题目要求选择论述、说服或叙事写法。'],
-    ['Use one specific piece of evidence per claim.','Explain the effect of a language choice on the audience.','Match the mode of writing to the prompt.']],
-  ['ELD','drill','口语练习与自评','Speaking practice and review',
-    '用录音复盘清晰度与论证结构。','Review clarity and argument structure using a recording.',
-    ['给回答写一句主张、两个支撑点和一句结尾。','回放录音，记录一个表达问题和一个内容问题。'],
-    ['Prepare one claim, two supporting points and a conclusion.','On replay, identify one delivery issue and one content issue.']],
   ['CSC','guide','编程与网络','Programming and networking',
     '用小题练设计、实现和测试，再复习网络概念。','Practise design, implementation and testing, then review network concepts.',
     ['写出输入、处理和输出，再开始写伪代码。','为算法记录正常、边界和无效输入的测试结果。','用数据流说明客户端、服务端和网络设备的职责。'],

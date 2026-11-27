@@ -3,78 +3,34 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="AUSMAT 五科资料、考试日程、复习计划和升学自检。">
+  <meta name="description" content="AUSMAT 五科资料、考试日程、思维导图和升学自检。">
   <title>AUSMAT 学习工作台</title>
-  <link rel="alternate" hreflang="en" href="en/index.html">
+  <link rel="alternate" hreflang="en" href="#en/home">
+  <link rel="stylesheet" href="assets/style.css">
   <link rel="stylesheet" href="assets/theme.css">
+  <link rel="stylesheet" href="assets/reading.css">
+  <link rel="stylesheet" href="assets/mindmap.css">
   <link rel="stylesheet" href="assets/studio.css">
 </head>
 <body>
   <header class="top">
     <div class="wrap top-inner">
-      <a class="brand" href="#home"><span class="brand-icon" aria-hidden="true">∿</span> AUSMAT 学习工作台</a>
-      <nav aria-label="主要导航">
-        <a data-view="home" href="#home">学习面板</a>
-        <a data-view="resources" href="#resources">资料库</a>
-        <a href="notes/timetable.html">考试日程</a>
-        <a href="notes/mindmap.html?lang=zh">思维导图</a>
-        <a href="notes/advising/index.html">ATAR</a>
+      <a class="brand" href="#home"><span class="brand-icon" aria-hidden="true">∿</span> <span id="brand-label">AUSMAT 学习工作台</span></a>
+      <nav id="site-nav" aria-label="主要导航">
+        <a data-route="home" href="#home">学习面板</a>
+        <a data-route="resources" href="#resources">资料库</a>
+        <a data-route="timetable" href="#timetable">考试日程</a>
+        <a data-route="mindmap" href="#mindmap">思维导图</a>
+        <a data-route="advising" href="#advising">ATAR</a>
       </nav>
-      <a class="locale" id="locale" href="en/index.html" lang="en">EN</a>
+      <a class="locale" id="locale" href="#en/home" lang="en">EN</a>
     </div>
   </header>
-  <main class="wrap" id="main">
-    <section id="view-home" aria-labelledby="home-title">
-      <header class="welcome">
-        <div class="welcome-copy">
-          <h1 id="home-title">AUSMAT 学习工作台</h1>
-          <p>整理五科复习资料、跟进考核日程，再用思维导图串联知识点，或用 ATAR 工具核对升学目标。</p>
-          <div class="actions">
-            <a class="button primary" href="#resources">打开资料库</a>
-            <a class="button secondary" href="notes/advising/index.html">ATAR 估算与升学自检</a>
-          </div>
-        </div>
-        <div class="welcome-art" aria-hidden="true"><div class="orbit"><span></span></div></div>
-      </header>
-      <div class="dashboard">
-        <section class="panel" aria-labelledby="subjects-title">
-          <div class="section-heading"><h2 id="subjects-title">五科复习</h2><a href="notes/subjects.html">考核范围与权重</a></div>
-          <ul class="subjects" id="subjects"></ul>
-        </section>
-        <section class="panel" aria-labelledby="upcoming-title">
-          <div class="section-heading"><h2 id="upcoming-title">接下来的考核</h2><a href="notes/timetable.html">完整日程</a></div>
-          <ul class="due" id="upcoming"></ul>
-          <p class="hint">2026 年 5 月批次记录。最新安排以学校通知为准。</p>
-          <div class="tool-row">
-            <h2>学习工具</h2>
-            <ul class="tools">
-              <li><a href="notes/mindmap.html?lang=zh">知识思维导图</a></li>
-              <li><a href="notes/advising/index.html">ATAR 估算</a></li>
-              <li><a href="notes/papers.html">历年真题</a></li>
-              <li><a href="notes/timeline.html">学期时间线</a></li>
-              <li><a href="notes/glossary.html">术语表</a></li>
-            </ul>
-          </div>
-        </section>
-      </div>
-    </section>
-    <section id="view-resources" hidden aria-labelledby="resources-title">
-      <header class="page-heading">
-        <h1 id="resources-title">AUSMAT 资料库</h1>
-        <p>五科大纲、公式卡片、复习清单和升学来源。按科目筛选，也可以直接搜知识点。</p>
-      </header>
-      <div class="filters" id="resource-filters"></div>
-      <nav class="resource-route" id="subject-links" hidden aria-label="科目快捷入口"></nav>
-      <p class="status" id="resource-status" role="status"></p>
-      <div class="cards-grid" id="resource-grid"></div>
-      <p class="hint">复习条目根据五科课程索引、Unit 3–4 大纲核查和物理公式笔记整理。招生与考试安排请查条目附带的官方入口。</p>
-    </section>
-  </main>
+  <main class="wrap" id="main"><noscript>请启用 JavaScript 以打开 AUSMAT 学习工作台。</noscript></main>
+  <p id="route-status" class="wrap" role="status"></p>
   <footer>
-    <div class="wrap">AUSMAT v2.1 · 独立学习笔记 · <a href="notes/about.html">关于本站</a></div>
+    <div class="wrap">AUSMAT v2.2 · 独立学习笔记 · <a id="about-link" href="#about">关于本站</a></div>
   </footer>
-  <script src="assets/studio-data.js"></script>
-  <script src="assets/studio-events.js"></script>
-  <script src="assets/studio.js"></script>
+  <script type="module" src="assets/app.mjs"></script>
 </body>
 </html>

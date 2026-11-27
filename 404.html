@@ -1,49 +1,8 @@
 <!doctype html>
 <html lang="zh-CN">
-<head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="robots" content="noindex">
-<title>找不到这个页面 / Page not found · 学习笔记</title>
-<meta name="description" content="这个地址下没有内容，页面可能已经挪走。这里有本站全部页面的入口。">
-<link rel="stylesheet" href="/ausmat-guide/assets/style.css" data-css="1">
-<link rel="stylesheet" href="/ausmat-guide/assets/theme.css">
-<link rel="stylesheet" href="/ausmat-guide/assets/reading.css">
-</head>
-<body>
-<header class="site"><div class="wrap">
-  <a class="brand" href="/ausmat-guide/index.html" data-p="index.html">学习笔记 · Study Notes</a>
-</div></header>
-<main><div class="wrap">
-
-<h1>找不到这个页面</h1>
-<p>这个地址下没有内容。可能是链接打错了，或者页面已经挪走了。下面是站点里的全部页面。</p>
-
-<ul class="cards"><li><a href="/ausmat-guide/index.html" data-p="index.html"><span class="t">首页</span><span class="d">Home</span></a></li><li><a href="/ausmat-guide/notes/timetable.html" data-p="notes/timetable.html"><span class="t">考试日程</span><span class="d">Timetable</span></a></li><li><a href="/ausmat-guide/notes/subjects.html" data-p="notes/subjects.html"><span class="t">五科要点</span><span class="d">Subjects</span></a></li><li><a href="/ausmat-guide/notes/mindmap.html" data-p="notes/mindmap.html"><span class="t">知识导图</span><span class="d">Mind Map</span></a></li><li><a href="/ausmat-guide/notes/advising/index.html" data-p="notes/advising/index.html"><span class="t">升学自检</span><span class="d">Advising</span></a></li><li><a href="/ausmat-guide/notes/glossary.html" data-p="notes/glossary.html"><span class="t">术语表</span><span class="d">Glossary</span></a></li><li><a href="/ausmat-guide/notes/timeline.html" data-p="notes/timeline.html"><span class="t">学期时间线</span><span class="d">Timeline</span></a></li><li><a href="/ausmat-guide/notes/papers.html" data-p="notes/papers.html"><span class="t">真题与资料</span><span class="d">Past Papers</span></a></li><li><a href="/ausmat-guide/notes/about.html" data-p="notes/about.html"><span class="t">关于</span><span class="d">About</span></a></li></ul>
-
-<hr>
-
-<h2>Page not found</h2>
-<p>There is nothing at this address. The link may be mistyped, or the page may have moved.
-Every page on the site is listed above.</p>
-
-<p><small>404</small></p>
-</div></main>
-<footer class="site"><div class="wrap">
-<p>AUSMAT May 2026 · 个人学习笔记 / personal study notes</p>
-</div></footer>
-<script>
-/* 唯一的用途：本地用 file:// 打开预览时，把站点根绝对路径换回相对路径。
-   线上（GitHub Pages）走不到这里 —— 绝对路径本来就对，禁用 JS 也照样能用。 */
-(function () {
-  if (location.protocol !== 'file:') return;
-  document.querySelectorAll('[data-p]').forEach(function (el) {
-    el.setAttribute('href', './' + el.getAttribute('data-p'));
-  });
-  var css = document.querySelector('[data-css]');
-  if (css) css.setAttribute('href', './assets/style.css');
-})();
-</script>
-<script src="/ausmat-guide/assets/reading.js"></script>
-</body>
+<title>AUSMAT · 404</title>
+<h1>找不到页面 · Page not found</h1>
+<p><a href="/ausmat-guide/#home">打开 AUSMAT 学习工作台 · Open AUSMAT</a></p>
 </html>
