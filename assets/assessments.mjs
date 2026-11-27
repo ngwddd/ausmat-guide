@@ -1,4 +1,6 @@
-export const assessments = {
+import {applyAssessmentUpdates} from './assessment-updates.mjs';
+
+const cohortRecords = {
   "zh": [
     {
       "date": "2026-06-08",
@@ -395,4 +397,9 @@ export const assessments = {
       "row": "<tr data-due=\"2027-02-13\" data-span=\"1\"><td>PHY</td><td><span class=\"ext\" title=\"WACE external examination (set by SCSA)\">EXT</span> Task 6</td><td>Final Evaluation</td><td>30%</td><td>2027-01-29 – 2027-02-13<br><small>All of Units 3 and 4</small><span class=\"due\"></span></td></tr>"
     }
   ]
+};
+
+export const assessments = {
+  en: applyAssessmentUpdates(cohortRecords.en, 'en'),
+  zh: applyAssessmentUpdates(cohortRecords.zh, 'zh'),
 };

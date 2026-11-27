@@ -1,4 +1,4 @@
-# AUSMAT 学习工作台 · v2.2
+# AUSMAT 学习工作台 · v2.3
 
 面向 AUSMAT / WACE 学生的中英双语学习网站，包含科目资料、考核日程、知识导图、ATAR 估算和国际升学资料。
 
@@ -12,12 +12,13 @@
 - [知识导图](https://ngwddd.github.io/ausmat-guide/#mindmap)支持搜索、分支展开、拖动和缩放。
 - [ATAR 估算](https://ngwddd.github.io/ausmat-guide/#advising)使用站点历史模型。正式排名请查阅 [TISC 计分规则](https://www.tisc.edu.au/static/guide/atar-about.tisc)。
 
-
+可在 [国际升学资料库](https://ngwddd.github.io/ausmat-guide/#pathways)按地区、学历依据和 ATAR 门槛筛选。
 
 ## 版本记录
 
 | 版本 | 更新 |
 | --- | --- |
+| v2.3 | 新增国际升学与学制学习指南，补充物理实验考核时间。 |
 | v2.2 | 单页路由与模块化重构，保留旧入口跳转。 |
 
 历史快照保留各版本的主要功能，并统一采用清理后的知识导图与 ATAR 页面。个人备考内容、分组标识和旧升学自检已从公开快照移除。

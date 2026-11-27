@@ -23,7 +23,7 @@ function page(en) {
       <p id="score-result" role="status" aria-live="polite"></p>
       <dl id="score-details" class="score-details"></dl>
       <p class="hint">${t('This estimate uses the site’s calibrated model and the best four marks you enter. TISC uses scaled scores and applies its own eligibility and aggregation rules.', '本站按你输入的最高四科和既有校准模型估算。TISC 正式排名使用换算成绩和官方资格、计分规则。')}</p>
-      <div class="reading-links"><a href="${tisc}">${t('TISC official ATAR rules','TISC 官方 ATAR 规则')}</a></div>
+      <div class="reading-links"><a href="${tisc}">${t('TISC official ATAR rules','TISC 官方 ATAR 规则')}</a><a href="${link}">${t('Find courses in Global admissions','去国际升学库查专业')}</a></div>
     </section>
   </div>`;
 }

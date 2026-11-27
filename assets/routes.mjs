@@ -5,6 +5,8 @@ export const routes = {
   subjects: ['五科要点', 'Subject notes'],
   mindmap: ['思维导图', 'Mind map'],
   advising: ['ATAR 与升学', 'ATAR & advising'],
+  pathways: ['国际升学', 'Global admissions'],
+  program: ['学制与学习方法', 'Programme & study'],
   glossary: ['术语表', 'Glossary'],
   timeline: ['学期时间线', 'Term timeline'],
   papers: ['历年真题', 'Past exams'],
@@ -14,7 +16,7 @@ export const routes = {
 export function parseRoute(hash) {
   const [path, query = ''] = hash.replace(/^#/, '').split('?');
   const parts = path.split('/');
-  const lang = parts[0] === 'en' ? parts.shift() : 'zh';
+  const lang = parts[0] === 'en' ? parts.shift() : path === '' ? 'en' : 'zh';
   const [page = '', argument = ''] = parts;
   return {
     lang,

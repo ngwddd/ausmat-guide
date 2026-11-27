@@ -1,11 +1,24 @@
+import {additionalSubjects, studyReview, studyTutorial, syllabus} from './subject-guide.mjs';
+
 export const courses = [
   ['MAM', '数学方法', 'Mathematics Methods', '微分、积分与统计推断', 'Calculus and statistical inference'],
   ['HBY', '人体生物学', 'Human Biology', '稳态、疾病与人类演化', 'Homeostasis, disease and human evolution'],
   ['PHY', '物理', 'Physics', '引力、相对论、电磁学与现代物理', 'Gravity, relativity, electromagnetism and modern physics'],
   ['CSC', '计算机科学', 'Computer Science', '编程、网络、数据库与网络安全概念', 'Programming, networks, databases and security concepts'],
+  ...additionalSubjects.map(subject => subject.slice(0,5)),
 ];
 
 export const resources = [
+  ...additionalSubjects.map(([code, zh, en, topicZh, topicEn, taskEn, taskZh]) =>
+    [code,'guide',zh + '复习入口',en + ' study guide',topicZh,topicEn,[taskZh],[taskEn],syllabus]),
+  ['all','drill','闭卷检索与间隔重练','Retrieval and spaced review',
+    '先回忆，再核对，把错题安排到下一次复习。','Recall before checking, then revisit mistakes on a later day.',
+    ['闭卷画出人体稳态环路，或写出微积分题第一步。','隔一天重做错题，之后再与其他题型混练。'],
+    ['Recall a homeostasis loop or the first step in a calculus problem without notes.','Retry mistakes on another day, then mix in other problem types.'],studyReview],
+  ['all','drill','错题解释与混合练习','Error analysis and mixed practice',
+    '记录哪里出错、为什么出错，以及下次如何识别题型。','Record where you went wrong, why, and how you will recognise the problem type.',
+    ['先分题型学会，再混合练习。','对照评分指南写出一个可以检验的改进动作。'],
+    ['Get comfortable with each problem type before mixing them.','Use the marking guide to turn each error into one specific next action.'],studyTutorial],
   ['MAM','guide','Unit 3–4 复习路线','Unit 3–4 revision route',
     '把微积分、概率和统计推断拆成三条练习线。','Separate practice into calculus, probability and inference.',
     ['先辨别变化率、函数值和累计量，再决定求导或积分。','遇到统计题，先写抽样对象、参数和所用分布。','文字题最后一句回到原题情境并注明单位。'],

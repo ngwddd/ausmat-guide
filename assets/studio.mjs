@@ -1,5 +1,6 @@
 import {courses, resources} from './catalog.mjs';
 import {assessments} from './assessments.mjs';
+import {syllabus} from './subject-guide.mjs';
 
 export function mountStudio({root, lang, href}) {
   const en = lang === 'en';
@@ -107,6 +108,11 @@ export function mountStudio({root, lang, href}) {
     box.hidden = !code;
     if (!code) return;
     const subject = courseLabel(code);
+    if (!Object.hasOwn(examPaths, code)) {
+      box.append(link(t(subject + ' · SCSA 官方大纲', subject + ' · SCSA syllabus'), syllabus, 'button'),
+        link(t('Sunway 开课与选科', 'Sunway intakes and subject choices'), href('program'), 'button'));
+      return;
+    }
     const paper = link(t(subject + ' · SCSA 真题与评分指南', subject + ' · SCSA exams and marking keys'), exams + examPaths[code] + '-past-atar-course-exams', 'button');
     paper.target = '_blank';
     paper.rel = 'noopener noreferrer';
